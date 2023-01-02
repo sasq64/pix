@@ -1,0 +1,14 @@
+build/
+_build/
+_skbuild/
+.cache/
+.idea/
+dist/
+stubs/
+.DS_Store
+*.egg-info/
+*.so
+*.dat
+__pycache__/
+cmake-build-*/
+

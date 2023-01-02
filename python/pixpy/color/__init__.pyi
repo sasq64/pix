@@ -1,0 +1,42 @@
+from __future__ import annotations
+import pixpy._pixpy.color
+import typing
+
+__all__ = [
+    "BLACK",
+    "BLUE",
+    "BROWN",
+    "CYAN",
+    "DARK_GREY",
+    "GREEN",
+    "GREY",
+    "LIGHT_BLUE",
+    "LIGHT_GREEN",
+    "LIGHT_GREY",
+    "LIGHT_RED",
+    "ORANGE",
+    "PURPLE",
+    "RED",
+    "TRANSP",
+    "WHITE",
+    "YELLOW"
+]
+
+
+BLACK = 255
+BLUE = 43775
+BROWN = 1715732735
+CYAN = 2868899327
+DARK_GREY = 858993663
+GREEN = 13391103
+GREY = 2004318207
+LIGHT_BLUE = 8912895
+LIGHT_GREEN = 2868864767
+LIGHT_GREY = 3132799743
+LIGHT_RED = 4286019583
+ORANGE = 3716633855
+PURPLE = 3427060991
+RED = 2264924415
+TRANSP = 0
+WHITE = 4294967295
+YELLOW = 3991762943
