@@ -1,7 +1,7 @@
 from skbuild import setup
 setup(
     name="pixpy",
-    version="0.1.8",
+    version="0.1.9",
     packages=["pixpy", "pixpy.color", "pixpy.event", "pixpy.key"],
     package_dir={"": "python"},
     cmake_install_dir="python/pixpy",
