@@ -145,7 +145,7 @@ screen.draw(con)
 ```
 
 #### Text input
-`console.read_line()` can be used to read lines of text. The result will be posted as a _TextEvent_.
+`console.read_line()` can be used to read lines of text. The result will be posted as a _Text_ event.
 
 ```python
 import pixpy as pix
@@ -169,7 +169,7 @@ while pix.run_loop():
 Tiles can be both text and graphics. We can easily add more tiles to the
 console by copying images into it.
 
-Note that the `split()` call below is (as we mentioned) cheap -- we only create new views into the original image.
+Note that the `split()` call below is (as we mentioned) cheap &mdash; we only create new views into the original image.
 
 ```python
 import pixpy as pix

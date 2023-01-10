@@ -99,11 +99,30 @@ size : Float2
 
 The size of the window/screen
 
+==== seconds
+[source,python]
+seconds : float
+
+Number of seconds since screen opened.
+
+==== delta
+[source,python]
+delta : float
+
+Number of seconds since last frame.
+
+==== fps
+[source,python]
+fps : int
+
+Current target fps. Set this to `0` to not lock to a specific frame rate. In
+that case you need to make sure all your movements are time based.
+
 === pix.Image
 
 An Image is a reference to an array of pixels. More specifically, it is a set of UV coordinates and a reference to an Open GL/GLES Texture.
 
-An Image can be associated with a `Context` (see below) so you can render to it.
+An Image can be associated with a `Context` (see below), so you can render to it.
 
 ==== Constructors
 [source,python]
@@ -128,6 +147,12 @@ split(width: int, height: int) -> List[Image]
 
 Splits the image into as many _width_ * _height_ images as possible, first going left to right, then top to bottom.
 
+==== crop
+[source,python]
+crop(top_left: Int2, size: Int2) -> Image
+
+Crop the image. Returns a new view into the image.
+
 ==== copy_from
 [source,python]
 copy_from(image: Image)
@@ -136,6 +161,12 @@ Replace the pixels of this image with the pixels of another image.
 
 Images can be of different sizes. In practice, the source image is used as
 a texture and rendered onto the destination image.
+
+==== copy_to
+[source,python]
+copy_to(image: Image)
+
+The inverse of `copy_from()`, copy this image onto another image.
 
 [discrete]
 ==== Attributes
@@ -159,9 +190,18 @@ After _splitting_ an image into parts, _pos_ can be used to still render the ima
 
 ==== make_image
 [source,python]
-make_image(text: str, size:int, color: int) -> Image
+make_image(text: str, size:int, color: int = pix.color.WHITE) -> Image
 
 Create an image from the given text.
+
+==== Static attributes
+
+==== UNSCII_FONT
+
+[source,python]
+Font.UNSCII_FONT: Font
+
+Static reference to the _unscii_ font, used as default font for the console.
 
 
 === pix.Context
@@ -190,17 +230,27 @@ clear(color: int = pix.color.BLACK)
 
 Clear the render target with the color
 
+
 ==== filled_circle
 [source,python]
 filled_circle(center: Float2, radius: float)
+
+Draw a filled circle.
+
 
 ==== circle
 [source,python]
 circle(center: Float2, radius: float)
 
+Draw a circle.
+
+
 ==== filled_rect
 [source,python]
 filled_rect(top_left: Float2, size: Float2)
+
+Draw a filled rectangle.
+
 
 ==== line
 [source,python]
@@ -209,9 +259,33 @@ line(start: Float2, end: Float2)
 [source,python]
 line(end: Float2)
 
+Draw a line.
+
+
 ==== rect
 [source,python]
 rect(top_left: Float2, size: Float2)
+
+Draw a rectangle from lines.
+
+
+==== polygon
+[source,python]
+polygon(points: List[Float2])
+
+Draw a convex polygon using the list of points.
+
+
+==== plot
+[source,python]
+plot(point: Float2, color: int)
+
+[source,python]
+plot(points: List[float], colors: List[int])
+
+Draw a point or list of points with the given color. Uses hardware points
+which may or may not be round, and may or may not be affected by `context.point_size`.
+
 
 ==== draw
 [source,python]
@@ -222,9 +296,25 @@ draw(image: Image, center: Float2 = None, size: Float2 = (0,0), rot = 0)
 
 Draw an `image` on to a context at the location given by `top_left`
 
-If `size` is given, scale the image to that size (in screen coordinates).
+If `size` is given, scale the image to that size (in screen coordinates). Size can be negative to flip the image.
 
 If `rot` is given, rotate image around `center`
+
+
+==== set_pixel
+[source,python]
+set_pixel(point: Int2, color: int)
+
+Write a pixel directly into a CPU side copy of the texture. Use `flush()` to
+flush changes back into the the actual texture.
+
+====  flush()
+[source,python]
+flush()
+
+Flush pixel operations by uploading the CPU side pixel array to the texture,
+and then removing the array.
+
 
 [discrete]
 ==== Attributes
@@ -241,6 +331,20 @@ line_width : float
 
 The width of lines and rects
 
+
+==== point_size
+[source,python]
+point_size : float
+
+The radius of points. May not be supported on all platforms.
+
+==== clip_top_left
+[source,python]
+clip_top_left : Int2
+
+==== clip_size
+[source,python]
+clip_size : Int2
 
 === pix.Console
 
@@ -291,7 +395,6 @@ the console. Normally used to define your own tiles;
 [source,python]
 read_line()
 
-
 Puts the console in _line edit mode_.
 
 A cursor will be shown and all text events will be captured by the console
@@ -309,6 +412,21 @@ Cancels line editing.
 set_line(text: str)
 
 Updates the contents of the edited line
+
+
+==== get_tiles
+[source,python]
+get_tiles() -> List[int]
+
+Get all the tiles and colors as an array of ints.
+
+Format is: `[tile0, fg0, bg0, tile1, fg1, bg1 ...]` etc.
+
+==== set_tiles
+[source,python]
+set_tiles(List[int])
+
+Set all the tiles and colors from an array of ints.
 
 
 [discrete]
@@ -354,7 +472,7 @@ pos: Float2
 buttons: int
 
 ==== Text
-Event sent when text was input in the window
+Event sent when text was input in the window. This event is used by `Console.read_line()` to post its result.
 
 [source,python]
 text: str
