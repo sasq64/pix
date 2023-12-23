@@ -162,9 +162,16 @@ endif ()
 
 find_package(Threads REQUIRED)
 
+if (RASPBERRY_PI)
+    set(SYSTEM src/pi_system.cpp)
+else ()
+    set(SYSTEM src/glfw_system.cpp)
+endif ()
+
 
 set(PIX src/)
 add_library(pix STATIC
+    ${SYSTEM}
     ${PIX}/image.cpp
     ${PIX}/font.cpp
     ${PIX}/context.cpp
@@ -179,14 +186,5 @@ target_link_libraries(pix PRIVATE Warnings PUBLIC
     Graphics
     Freetype::Freetype)
 
-if (RASPBERRY_PI)
-    set(SYSTEM src/pi_system.cpp)
-else ()
-    set(SYSTEM src/glfw_system.cpp)
-endif ()
+add_library(pix::pix ALIAS pix)
 
-add_subdirectory(external/pybind11)
-
-pybind11_add_module(_pixpy src/python.cpp ${SYSTEM})
-target_link_libraries(_pixpy PUBLIC Warnings pix Extra)
-install(TARGETS _pixpy DESTINATION .)
