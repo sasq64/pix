@@ -12,7 +12,6 @@
 #include <tuple>
 
 namespace py = pybind11;
-namespace gl = gl_wrap;
 
 inline std::vector<gl::TexRef> split_wh(gl::TexRef img, int cols, int rows,
                                         int w, int h)
@@ -55,7 +54,7 @@ inline auto add_image_class(py::module_ const& mod)
     using namespace pybind11::literals;
 
     // Image
-    return py::class_<gl_wrap::TexRef>(mod, "Image")
+    return py::class_<gl::TexRef>(mod, "Image")
         .def(py::init<int32_t, int32_t>(), "width"_a, "height"_a,
              "Create an empty image of the given size.")
         .def(py::init<>(&image_from_vec2), "size"_a,
@@ -84,6 +83,6 @@ inline auto add_image_class(py::module_ const& mod)
             "size",
             [](gl::TexRef const& t) { return Vec2f(t.width(), t.height()); },
             "Size of the image in (fractional) pixels.")
-        .def_property_readonly("width", &gl_wrap::TexRef::width)
-        .def_property_readonly("height", &gl_wrap::TexRef::height);
+        .def_property_readonly("width", &gl::TexRef::width)
+        .def_property_readonly("height", &gl::TexRef::height);
 }

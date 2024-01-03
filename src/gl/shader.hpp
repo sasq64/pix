@@ -5,7 +5,7 @@
 #include <array>
 #include <string_view>
 
-namespace gl_wrap {
+namespace gl {
 
 template <ShaderType ShaderType>
 struct Shader

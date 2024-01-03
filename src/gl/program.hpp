@@ -7,7 +7,7 @@
 #include <cassert>
 #include <vector>
 
-namespace gl_wrap {
+namespace gl {
 
 struct Program
 {

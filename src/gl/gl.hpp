@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace gl_wrap {
+namespace gl {
 
 template <typename T>
 constexpr typename std::enable_if_t<std::is_enum_v<T>, GLint> to_glenum(T f)

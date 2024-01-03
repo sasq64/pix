@@ -9,7 +9,7 @@
 #include <memory>
 #include <vector>
 
-namespace gl_wrap {
+namespace gl {
 
 struct Texture
 {
@@ -255,12 +255,12 @@ public:
 
     operator bool() const { return tex != nullptr; }
 
-    void copy_from(gl_wrap::TexRef const& src) const
+    void copy_from(gl::TexRef const& src) const
     {
-        using gl_wrap::ProgramCache;
+        using gl::ProgramCache;
         GLint fb = 0;
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fb);
-        auto old = gl_wrap::getViewport();
+        auto old = gl::getViewport();
         set_target();
         src.bind();
         float dx = 0;
@@ -274,7 +274,7 @@ public:
         std::array vertexData{x0,  y0,  x1,  y0,  x1,  y1,  x0,  y1,
                               0.F, 1.F, 1.F, 1.F, 1.F, 0.F, 0.F, 0.F};
         std::copy(src._uvs.begin(), src._uvs.end(), vertexData.begin() + 8);
-        gl_wrap::ArrayBuffer<GL_STREAM_DRAW> vbo{vertexData};
+        gl::ArrayBuffer<GL_STREAM_DRAW> vbo{vertexData};
 
         // TODO: It might be better to let Texture have its own program
         //       then to depend on ProgramCache.
@@ -287,15 +287,15 @@ public:
         auto uv = program.getAttribute("in_uv");
         pos.enable();
         uv.enable();
-        gl_wrap::vertexAttrib(pos, 2, gl_wrap::Type::Float, 0 * sizeof(GLfloat),
+        gl::vertexAttrib(pos, 2, gl::Type::Float, 0 * sizeof(GLfloat),
                               0);
-        gl_wrap::vertexAttrib(uv, 2, gl_wrap::Type::Float, 0 * sizeof(GLfloat),
+        gl::vertexAttrib(uv, 2, gl::Type::Float, 0 * sizeof(GLfloat),
                               8 * 4);
-        gl_wrap::drawArrays(gl_wrap::Primitive::TriangleFan, 0, 4);
+        gl::drawArrays(gl::Primitive::TriangleFan, 0, 4);
         pos.disable();
         uv.disable();
         glBindFramebuffer(GL_FRAMEBUFFER, fb);
-        gl_wrap::setViewport(old);
+        gl::setViewport(old);
     }
 
     void set_target() const { tex->set_target(); }

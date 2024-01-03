@@ -28,7 +28,6 @@
 #include <thread>
 
 namespace fs = std::filesystem;
-namespace gl = gl_wrap;
 namespace py = pybind11;
 
 using namespace pybind11::literals; // NOLINT
@@ -88,7 +87,6 @@ std::shared_ptr<Screen> open_display(int width, int height, bool full_screen)
         return System::Propagate::Pass;
     });
 
-    m.sys->init_input();
     return m.screen;
 }
 

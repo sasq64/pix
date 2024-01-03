@@ -27,7 +27,7 @@ class TileSet
 public:
     std::unordered_map<char32_t, uint32_t> char_uvs;
     std::unordered_map<uint32_t, char32_t> reverse_chars;
-    std::shared_ptr<gl_wrap::Texture> tile_texture;
+    std::shared_ptr<gl::Texture> tile_texture;
     int char_width = -1;
     int char_height = -1;
     TileSet(std::string const& font_file, int size,
@@ -39,7 +39,7 @@ public:
 
     char32_t get_char_from_uv(uint32_t uv);
 
-    gl_wrap::TexRef get_texture_for_char(char32_t c);
+    gl::TexRef get_texture_for_char(char32_t c);
 
     std::pair<float, float> get_uvscale() const;
     void add_char(char32_t c);

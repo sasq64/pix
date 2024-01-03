@@ -42,8 +42,7 @@ public:
     //void set_cursor(int x, int y) { cursor = {x,y}; }
     void set_cursor(Vec2i xy) { cursor = xy; }
 
-
-    gl_wrap::TexRef get_font_texture();
+    gl::TexRef get_font_texture();
 
     Vec2i get_pixel_size() const;
 
@@ -88,7 +87,7 @@ public:
         console->fill(fg, bg);
     }
 
-    gl_wrap::TexRef get_texture_for_char(int32_t c)
+    gl::TexRef get_texture_for_char(int32_t c)
     {
         return console->get_texture_for_char(c);
     }

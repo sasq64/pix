@@ -224,7 +224,6 @@ public:
         return !quit;
     }
 
-    virtual void init_input() {}
     virtual bool is_pressed(uint32_t /*code*/, int /*device*/ = -1)
     {
         return false;

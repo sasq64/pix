@@ -7,7 +7,7 @@
 #include <string>
 #include <tuple>
 
-namespace gl_wrap {
+namespace gl {
 
 class gl_exception : public std::exception
 {

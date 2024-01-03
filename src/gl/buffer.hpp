@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace gl_wrap {
+namespace gl {
 
 enum class BufferTarget
 {

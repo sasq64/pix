@@ -2,7 +2,6 @@
 
 namespace pix {
 
-namespace gl = gl_wrap;
 using gl::ProgramCache;
 
 void Context::set_color(gl::Color const& col)
@@ -186,7 +185,7 @@ Context::Context(float w, float h, GLuint fb)
 }
 
 template <typename CO>
-void Context::draw_filled(const CO& container, gl_wrap::Primitive primitive)
+void Context::draw_filled(const CO& container, gl::Primitive primitive)
 {
     set_target();
 
@@ -194,12 +193,12 @@ void Context::draw_filled(const CO& container, gl_wrap::Primitive primitive)
     filled.setUniform("frag_color", fg);
     auto pos = filled.getAttribute("in_pos");
     pos.enable();
-    gl_wrap::ArrayBuffer<GL_STREAM_DRAW> vbo{container};
+    gl::ArrayBuffer<GL_STREAM_DRAW> vbo{container};
     vbo.bind();
-    gl_wrap::vertexAttrib(pos, gl_wrap::Size<2>{}, gl_wrap::Type::Float,
+    gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float,
                           0 * sizeof(GLfloat), 0);
     int len = static_cast<int>(container.size()) / 2;
-    gl_wrap::drawArrays(primitive, 0, len);
+    gl::drawArrays(primitive, 0, len);
     pos.disable();
 }
 
@@ -234,7 +233,7 @@ void Context::set_target() const
 }
 
 template <typename CO>
-void Context::draw_textured(const CO& container, gl_wrap::Primitive primitive)
+void Context::draw_textured(const CO& container, gl::Primitive primitive)
 {
     set_target();
 
@@ -244,20 +243,20 @@ void Context::draw_textured(const CO& container, gl_wrap::Primitive primitive)
     pos.enable();
     auto uv = textured.getAttribute("in_uv");
     uv.enable();
-    gl_wrap::ArrayBuffer<GL_STREAM_DRAW> vbo{container};
+    gl::ArrayBuffer<GL_STREAM_DRAW> vbo{container};
     vbo.bind();
     int len = static_cast<int>(container.size()) / 2;
-    gl_wrap::vertexAttrib(pos, gl_wrap::Size<2>{}, gl_wrap::Type::Float,
+    gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float,
                           0 * sizeof(GLfloat), 0);
-    gl_wrap::vertexAttrib(uv, gl_wrap::Size<2>{}, gl_wrap::Type::Float,
+    gl::vertexAttrib(uv, gl::Size<2>{}, gl::Type::Float,
                           0 * sizeof(GLfloat), len * 4);
 
-    gl_wrap::drawArrays(primitive, 0, len / 2);
+    gl::drawArrays(primitive, 0, len / 2);
     pos.disable();
     uv.disable();
 }
 
-void Context::clear(const gl_wrap::Color& col) const
+void Context::clear(const gl::Color& col) const
 {
     glBindFramebuffer(GL_FRAMEBUFFER, target);
     gl::setViewport({target_size.x * vpscale, target_size.y * vpscale});
@@ -265,7 +264,7 @@ void Context::clear(const gl_wrap::Color& col) const
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void Context::plot(Vec2f point, gl_wrap::Color col)
+void Context::plot(Vec2f point, gl::Color col)
 {
     auto p = to_screen(point);
     points.push_back(p.x);
@@ -293,14 +292,14 @@ void Context::draw_points()
     auto cola = colored.getAttribute("in_color");
     pos.enable();
     cola.enable();
-    gl_wrap::ArrayBuffer<GL_STREAM_DRAW> vbo{points};
+    gl::ArrayBuffer<GL_STREAM_DRAW> vbo{points};
     vbo.bind();
-    gl_wrap::vertexAttrib(pos, gl_wrap::Size<2>{}, gl_wrap::Type::Float,
+    gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float,
                           6 * sizeof(GLfloat), 0);
-    gl_wrap::vertexAttrib(cola, gl_wrap::Size<4>{}, gl_wrap::Type::Float,
+    gl::vertexAttrib(cola, gl::Size<4>{}, gl::Type::Float,
                           6 * sizeof(GLfloat), 8);
     int len = static_cast<int>(points.size()) / 6;
-    gl_wrap::drawArrays(gl_wrap::Primitive::Points, 0, len);
+    gl::drawArrays(gl::Primitive::Points, 0, len);
     pos.disable();
     cola.disable();
 }

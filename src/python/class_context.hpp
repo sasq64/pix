@@ -14,7 +14,6 @@
 #include <tuple>
 
 namespace py = pybind11;
-namespace gl = gl_wrap;
 
 inline std::shared_ptr<pix::Context> make_context(Vec2f size)
 {
@@ -92,7 +91,7 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
     cls.def(
         "plot",
         [](T& self, Vec2f const& to, uint32_t color) {
-            context_from(self)->plot(to, gl_wrap::Color(color));
+            context_from(self)->plot(to, gl::Color(color));
         },
         "center"_a, "color"_a, "Draw a point.");
 
@@ -129,7 +128,7 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
 
     cls.def(
         "draw",
-        [](T& self, gl_wrap::TexRef& tr, std::optional<Vec2f> xy,
+        [](T& self, gl::TexRef& tr, std::optional<Vec2f> xy,
            std::optional<Vec2f> center, Vec2f size, float rot) {
             context_from(tr)->flush();
             pix::Context* ctx = context_from(self);

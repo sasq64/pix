@@ -5,9 +5,7 @@
 
 #include <algorithm>
 
-namespace gl = gl_wrap;
-
-std::string PixConsole::vertex_shader{R"gl( 
+std::string PixConsole::vertex_shader{R"gl(
     #ifdef GL_ES
         precision mediump float;
     #endif
@@ -35,13 +33,13 @@ std::string PixConsole::fragment_shader{R"gl(
         void main() {
               vec4 up = texture2D(uv_tex, out_uv);
               vec4 color = texture2D(col_tex, out_uv);
-              vec4 fg_color = vec4(up.wz, color.a, 1.0);
-              vec4 bg_color = vec4(color.rgb, 1.0);
+              vec3 fg_color = vec3(up.wz, color.a);
+              vec3 bg_color = color.rgb;
               vec2 ux = (up.xy * 255.0) / 256.0;
               vec2 uvf = fract(out_uv * console_size);
               vec2 uv = ux + uvf * uv_scale;
               vec4 col = texture2D(in_tex, uv);
-              gl_FragColor = fg_color * col * col.a + bg_color * (1.0 - col.a);
+              gl_FragColor = vec4(fg_color * col.rgb * col.a + bg_color * (1.0 - col.a), col.a);
         })gl"};
 /*
 PixConsole::PixConsole(int w, int h, std::string const& font_file, int size)

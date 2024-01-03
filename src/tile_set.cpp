@@ -80,7 +80,7 @@ void TileSet::init()
     std::fill(data.begin(), data.end(), 0);
 
     tile_texture =
-        std::make_shared<gl_wrap::Texture>(texture_width, texture_height, data);
+        std::make_shared<gl::Texture>(texture_width, texture_height, data);
     std::fill(char_array.begin(), char_array.end(), 0xffffffff);
     if (font_ptr) {
         for (char32_t c = 0x20; c <= 0x7f; c++) {
@@ -120,7 +120,7 @@ std::pair<int, int> TileSet::get_size() const
     return font_ptr->get_size();
 }
 
-gl_wrap::TexRef TileSet::get_texture_for_char(char32_t c)
+gl::TexRef TileSet::get_texture_for_char(char32_t c)
 {
     auto fx = texture_width / 256;
     auto fy = texture_height / 256;
@@ -143,7 +143,7 @@ gl_wrap::TexRef TileSet::get_texture_for_char(char32_t c)
     auto du = static_cast<float>(char_width * dx);
     auto dv = static_cast<float>(char_height * dy);
 
-    gl_wrap::TexRef tr{tile_texture,
+    gl::TexRef tr{tile_texture,
                        std::array{u, v, u + du, v, u + du, v + dv, u, v + dv}};
     return tr;
 }

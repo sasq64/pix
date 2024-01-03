@@ -53,7 +53,7 @@ struct Image
     unsigned format = 0;
 };
 
-gl_wrap::TexRef load_png(std::filesystem::path const& name);
+gl::TexRef load_png(std::filesystem::path const& name);
 Image load_jpg(std::filesystem::path const& name);
 void save_png(Image const& image, std::string_view name);
 

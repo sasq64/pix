@@ -65,14 +65,14 @@ Image load_png_image(fs::path const& name)
     return image;
 }
 
-gl_wrap::TexRef load_png(fs::path const& file_name)
+gl::TexRef load_png(fs::path const& file_name)
 {
     auto image = pix::load_png_image(file_name);
     image.flip();
 
-    auto tex = std::make_shared<gl_wrap::Texture>(
+    auto tex = std::make_shared<gl::Texture>(
         image.width, image.height, image.ptr, GL_RGBA, image.format);
-    return gl_wrap::TexRef{tex};
+    return gl::TexRef{tex};
 }
 
 void save_png(Image const& image, std::string_view name)

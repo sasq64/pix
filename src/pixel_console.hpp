@@ -17,15 +17,15 @@ class PixConsole
     static std::string vertex_shader;
     static std::string fragment_shader;
 
-    gl_wrap::Program program;
+    gl::Program program;
 
     std::shared_ptr<TileSet> tile_set;
 
     int cols;
     int rows;
 
-    gl_wrap::Texture uv_texture;
-    gl_wrap::Texture col_texture;
+    gl::Texture uv_texture;
+    gl::Texture col_texture;
 
     std::vector<uint32_t> uvdata;
     std::vector<uint32_t> coldata;
@@ -54,12 +54,12 @@ public:
     template <typename T = int> std::pair<T, T> get_char_size() const;
     std::pair<int, int> get_pixel_size() const;
 
-    std::shared_ptr<gl_wrap::Texture> get_font_texture() const
+    std::shared_ptr<gl::Texture> get_font_texture() const
     {
         return tile_set->tile_texture;
     }
 
-    gl_wrap::TexRef get_texture_for_char(char32_t c)
+    gl::TexRef get_texture_for_char(char32_t c)
     {
         return tile_set->get_texture_for_char(c);
     }

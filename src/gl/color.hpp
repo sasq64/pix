@@ -2,7 +2,7 @@
 #include "gl.hpp"
 #include <array>
 
-namespace gl_wrap {
+namespace gl {
 
 struct Color
 {

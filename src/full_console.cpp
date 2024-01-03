@@ -69,9 +69,9 @@ FullConsole::~FullConsole()
     if (listener >= 0) { system->remove_listener(listener); }
 }
 
-gl_wrap::TexRef FullConsole::get_font_texture()
+gl::TexRef FullConsole::get_font_texture()
 {
-    return gl_wrap::TexRef{console->get_font_texture()};
+    return gl::TexRef{console->get_font_texture()};
 }
 
 Vec2i FullConsole::get_pixel_size() const
@@ -145,8 +145,8 @@ void FullConsole::render(pix::Context* context, Vec2f xy, Vec2f sz)
         context->filled_rect(xy, {cw, ch});
         auto c = console->get_char(cursor.x + xpos, cursor.y);
         auto tex = console->get_texture_for_char(c);
-        gl_wrap::ProgramCache::get_instance()
-            .get_program<gl_wrap::ProgramCache::Textured>()
+        gl::ProgramCache::get_instance()
+            .get_program<gl::ProgramCache::Textured>()
             .use();
         context->set_color(color::white);
         context->blit(tex, xy, {cw, ch});

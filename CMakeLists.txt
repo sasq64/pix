@@ -187,4 +187,9 @@ target_link_libraries(pix PRIVATE Warnings PUBLIC
     Freetype::Freetype)
 
 add_library(pix::pix ALIAS pix)
-
+if (BUILD_PIXPY)
+    add_subdirectory(external/pybind11)
+    pybind11_add_module(_pixpy src/python.cpp)
+    target_link_libraries(_pixpy PUBLIC Warnings pix Extra)
+    install(TARGETS _pixpy DESTINATION .)
+endif()

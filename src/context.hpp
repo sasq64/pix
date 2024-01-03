@@ -29,7 +29,7 @@ public:
     Vec2i clip_start{0,0};
     Vec2i clip_size{0,0};
 
-    std::shared_ptr<gl_wrap::Texture> texture;
+    std::shared_ptr<gl::Texture> texture;
 
     // Viewport scale (for when window size != framebuffer size)
     float vpscale = 1.0F;
@@ -40,22 +40,22 @@ public:
 
     float line_width = 1;
     float point_size = 2;
-    gl_wrap::Color fg;
+    gl::Color fg;
 
     std::vector<float> points;
 
 private:
     Vec2f last_point{0,0};
 
-    gl_wrap::Program& colored;
-    gl_wrap::Program& textured;
-    gl_wrap::Program& filled;
+    gl::Program& colored;
+    gl::Program& textured;
+    gl::Program& filled;
 
     template <typename CO>
-    void draw_filled(CO const& container, gl_wrap::Primitive primitive);
+    void draw_filled(CO const& container, gl::Primitive primitive);
 
     template <typename CO>
-    void draw_textured(CO const& container, gl_wrap::Primitive primitive);
+    void draw_textured(CO const& container, gl::Primitive primitive);
 
     std::vector<float> generate_circle(Vec2f center, float radius,
                                        bool include_center = true) const;
@@ -99,7 +99,7 @@ public:
     void flush_pixels();
 
 
-    void set_color(gl_wrap::Color const& col);
+    void set_color(gl::Color const& col);
 
     void circle(Vec2f const& v, float r);
     void filled_circle(Vec2f const& v, float r);
@@ -107,14 +107,14 @@ public:
     void line(Vec2f to);
     void filled_rect(Vec2f top_left, Vec2f size);
     void rect(Vec2f top_left, Vec2f size);
-    void blit(gl_wrap::TexRef const& tex, Vec2f pos, Vec2f size);
-    void draw(gl_wrap::TexRef const& tex, Vec2f center, Vec2f size, float rot);
+    void blit(gl::TexRef const& tex, Vec2f pos = {0,0}, Vec2f size = {0,0});
+    void draw(gl::TexRef const& tex, Vec2f center, Vec2f size, float rot);
 
-    void plot(Vec2f point, gl_wrap::Color col);
+    void plot(Vec2f point, gl::Color col);
     void flush();
 
 
-    void clear(gl_wrap::Color const& col) const;
+    void clear(gl::Color const& col) const;
     void draw_polygon(const Vec2f* points, size_t count);
 };
 } // namespace pix

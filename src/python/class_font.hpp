@@ -12,7 +12,6 @@
 #include <string>
 
 namespace py = pybind11;
-namespace gl = gl_wrap;
 
 inline gl::TexRef text_to_image(FreetypeFont& font, std::string const& text,
                                 int size, uint32_t color)
@@ -25,7 +24,7 @@ inline gl::TexRef text_to_image(FreetypeFont& font, std::string const& text,
     font.render_text(text, reinterpret_cast<uint32_t*>(img.ptr), color,
                      img.width, img.width, img.height);
     img.flip();
-    auto tex = std::make_shared<gl_wrap::Texture>(img.width, img.height,
+    auto tex = std::make_shared<gl::Texture>(img.width, img.height,
                                                   img.ptr, GL_RGBA, img.format);
     return gl::TexRef{tex};
 }

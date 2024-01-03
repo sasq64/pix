@@ -1,6 +1,8 @@
 
 all :
-	ninja -C cmake-build-debug _pixpy
+	mkdir -p build
+	cmake -S . -B build -GNinja -DBUILD_PIXPY=1 -DCMAKE_BUILD_TYPE=Release
+	ninja -C build _pixpy
 
 run:
 	PYTHONPATH=build python3 test.py

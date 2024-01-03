@@ -9,7 +9,7 @@
 #include <string>
 #include <string_view>
 
-namespace gl_wrap {
+namespace gl {
 
 struct ProgramCache
 {
