@@ -84,12 +84,12 @@ def main(_):
         if not wf.find('from typing'):
             wf.add_after('from __future__',
                          'from typing import Union, Tuple, List')
-        if not wf.find('color as color'):
-            wf.add_all_after('import os', [
-                'import pixpy.color as color',
-                'import pixpy.event as event',
-                'import pixpy.key as key',
-            ])
+        # if not wf.find('color as color'):
+        #     wf.add_all_after('import os', [
+        #         'import pixpy.color as color',
+        #         'import pixpy.event as event',
+        #         'import pixpy.key as key',
+        #     ])
         wf.replace_all(r': Float2', ': Union[Float2, Tuple[float, float]]')
         wf.replace_all(r': Int2', ': Union[Int2, Tuple[int, int]]')
         wf.replace_all(r': os.PathLike', ': str')
@@ -109,7 +109,7 @@ def main(_):
                 if a is not None and b is not None and b == a + 2:
                     wf.swap_line(a, b)
 
-    with WorkFile('python/pixpy/event/__init__.pyi') as wf:
+    with WorkFile('python/pixpy/event.pyi') as wf:
         line_no = wf.find('class AnyEvent')
         if line_no is not None:
             wf.remove_line(line_no)

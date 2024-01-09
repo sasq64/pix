@@ -27,7 +27,7 @@ inline std::shared_ptr<TileSet> make_tileset2(Vec2f size)
 inline void add_tileset_class(py::module_ const& mod)
 {
     using namespace pybind11::literals;
-    py::class_<TileSet, std::shared_ptr<TileSet>>(mod, "TileSet")
+    auto ts = py::class_<TileSet, std::shared_ptr<TileSet>>(mod, "TileSet")
         .def(py::init<>(&make_tileset), "font_file"_a, "size"_a,
              "Create a TileSet from a ttf font with the given size. The tile "
              "size will be derived from the font size.")
@@ -38,4 +38,5 @@ inline void add_tileset_class(py::module_ const& mod)
              "to redefine that tile with new graphics. Will allocate a new "
              "tile if necessary. Will throw an exception if there is no room "
              "for the new tile in the tile texture.");
+    ts.doc() = "A tileset is a texture split up into tiles for rendering.";
 }

@@ -24,6 +24,7 @@ inline void add_vec2_class(py::module_& mod)
             .def(py::init<double, int>(), py::arg("x") = 0, py::arg("y") = 0)
             .def(py::init<double, double>(), py::arg("x") = 0, py::arg("y") = 0)
             .def(py::init<std::pair<int, int>>());
+        vi.doc() = "Represents an integer coordinate or size";
 
     auto vd =
         py::class_<Vec2f>(mod, "Float2")
@@ -101,8 +102,10 @@ inline void add_vec2_class(py::module_& mod)
             .def("angle", &Vec2f::angle,
                  "Get the angle between the vector and (1,0).")
             .def("cossin", &Vec2f::cossin)
-            .def_readonly_static("ONE", &vec2_one)
-            .def_readonly_static("ZERO", &vec2_zero);
+            .def_readonly_static("ONE", &vec2_one, "Constant (1,1)")
+            .def_readonly_static("ZERO", &vec2_zero, "Constant (0,0)");
+
+    vd.doc() = "Represents an floating pont coordinate or size";
 
     vi.def("__len__", &Vec2i::len)
         .def("clamp", &Vec2i::clamp, py::arg("low"), py::arg("high"))
@@ -170,6 +173,6 @@ inline void add_vec2_class(py::module_& mod)
         .def("__sub__", &Vec2i::subs)
         .def("__sub__",
              [](Vec2i self, double other) { return Vec2f{self} - other; })
-        .def_readonly_static("ONE", &vec2i_one)
-        .def_readonly_static("ZERO", &vec2i_zero);
+        .def_readonly_static("ONE", &vec2i_one, "Constant (1,1)")
+        .def_readonly_static("ZERO", &vec2i_zero, "Constant (0,0)");
 }

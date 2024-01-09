@@ -17,12 +17,13 @@ inline void add_event_mod(py::module_ const& mod)
     // Events
 
     (void)py::class_<NoEvent>(mod, "NoEvent");
-    (void)py::class_<QuitEvent>(mod, "Quit");
+    py::class_<QuitEvent>(mod, "Quit").doc() = "Event sent when window/app wants to close.";
     py::class_<ResizeEvent>(mod, "Resize")
         .def_readonly("x", &ResizeEvent::w)
-        .def_readonly("y", &ResizeEvent::h);
+        .def_readonly("y", &ResizeEvent::h)
+        .doc() = "Event sent when the window was resized";
 
-    py::class_<MoveEvent>(mod, "Move")
+    auto me = py::class_<MoveEvent>(mod, "Move")
         .def_property_readonly("pos",
                                [](MoveEvent const& e) {
                                    return Vec2f{e.x, e.y};
@@ -34,8 +35,10 @@ inline void add_event_mod(py::module_ const& mod)
              [](MoveEvent const& e) {
                  return "Move(" + std::to_string(e.x) + "," +
                         std::to_string(e.y) + ")";
-             })
-        .attr("__match_args__") = std::make_tuple("pos", "buttons");
+             });
+
+        me.attr("__match_args__") = std::make_tuple("pos", "buttons");
+        me.doc() = "Event sent when mouse was moved.";
 
     py::class_<ClickEvent>(mod, "Click")
         .def_property_readonly("pos",
@@ -65,11 +68,12 @@ inline void add_event_mod(py::module_ const& mod)
              })
         .attr("__match_args__") = std::make_tuple("key");
 
-    py::class_<TextEvent>(mod, "Text")
+    auto te = py::class_<TextEvent>(mod, "Text")
         .def_readonly("text", &TextEvent::text)
         .def("__repr__",
-             [](TextEvent const& e) { return "Text(\""s + e.text + "\")"; })
-        .attr("__match_args__") = std::make_tuple("text");
+             [](TextEvent const& e) { return "Text(\""s + e.text + "\")"; });
+    te.attr("__match_args__") = std::make_tuple("text");
+    te.doc() = "Event send when text was input into the window.";
 
     (void)py::class_<AnyEvent>(mod, "AnyEvent");
 }

@@ -188,6 +188,7 @@ target_link_libraries(pix PRIVATE Warnings PUBLIC
 
 add_library(pix::pix ALIAS pix)
 
+set (PYBIND11_PYTHON_VERSION "3.11")
 add_subdirectory(external/pybind11)
 pybind11_add_module(_pixpy src/python.cpp)
 target_link_libraries(_pixpy PUBLIC Warnings pix Extra)
