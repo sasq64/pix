@@ -193,6 +193,9 @@ class Context:
     def target_size(self) -> Float2:
         ...
 class Float2:
+    """
+    Represents an floating pont coordinate or size
+    """
     ONE: typing.ClassVar[Float2]  # value = Float2(1.000000, 1.000000)
     ZERO: typing.ClassVar[Float2]  # value = Float2(0.000000, 0.000000)
     __hash__: typing.ClassVar[None] = None
@@ -460,6 +463,9 @@ class Image:
     def width(self) -> float:
         ...
 class Int2:
+    """
+    Represents an integer coordinate or size
+    """
     ONE: typing.ClassVar[Int2]  # value = Int2(1, 1)
     ZERO: typing.ClassVar[Int2]  # value = Int2(0, 0)
     __hash__: typing.ClassVar[None] = None
@@ -689,6 +695,9 @@ class Screen:
     def width(self) -> int:
         ...
 class TileSet:
+    """
+    A tileset is a texture split up into tiles for rendering.
+    """
     @typing.overload
     def __init__(self, font_file: str, size: int) -> None:
         """

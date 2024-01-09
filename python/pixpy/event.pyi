@@ -33,6 +33,9 @@ class Key:
     def mods(self) -> int:
         ...
 class Move:
+    """
+    Event sent when mouse was moved.
+    """
     __match_args__: typing.ClassVar[tuple] = ('pos', 'buttons')
     def __repr__(self) -> str:
         ...
@@ -51,8 +54,13 @@ class Move:
 class NoEvent:
     pass
 class Quit:
-    pass
+    """
+    Event sent when window/app wants to close.
+    """
 class Resize:
+    """
+    Event sent when the window was resized
+    """
     @property
     def x(self) -> int:
         ...
@@ -60,6 +68,9 @@ class Resize:
     def y(self) -> int:
         ...
 class Text:
+    """
+    Event send when text was input into the window.
+    """
     __match_args__: typing.ClassVar[tuple] = ('text')
     def __repr__(self) -> str:
         ...
