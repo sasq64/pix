@@ -26,7 +26,11 @@ static bool swapped = false;
 class GLFWWindow : public Screen
 {
     int frame_counter = 0;
+#ifdef __APPLE__
     int fps = 60;
+#else
+    int fps = 0;
+#endif
     using clk = std::chrono::steady_clock;
     clk::time_point last_end{};
     clk::time_point real_t{};

@@ -22,18 +22,19 @@ inline auto add_screen_class(py::module_ const& mod)
     screen.def_property_readonly(
         "seconds",
         [](Screen const& screen) { return screen.get_time().seconds; },
-        "Total seconds elapsed.");
+        "Total seconds elapsed since starting pix.");
     screen.def_property_readonly(
         "delta", [](Screen const& screen) { return screen.get_time().delta; },
         "Time in seconds for last frame.");
     screen.def_property(
         "fps", [](Screen const& screen) { return screen.get_time().fps; },
-        [](Screen& screen, int fps) { screen.set_fps(fps); });
+        [](Screen& screen, int fps) { screen.set_fps(fps); },
+        "Current FPS. Set to 0 to disable fixed FPS. Then use `seconds` or "
+        "`delta` to sync your movement.");
     screen.def_property_readonly(
         "context",
         [](Screen const&) { return Machine::get_instance().context; },
-        "Current FPS. Set to 0 to disable fixed FPS. Then use `seconds` or "
-        "`delta` to sync your movement.");
+        "Get the screen context.");
     screen.def_property_readonly(
         "size", [](Screen const& screen) { return Vec2i{screen.get_size()}; }, "Size (in pixels) of screen.");
     screen.def_property_readonly(
@@ -48,7 +49,7 @@ inline auto add_screen_class(py::module_ const& mod)
             m.context->flush();
             screen->swap();
         },
-        "Synchronize with the frame rate of the display and swap buffers. This "
+        "Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This "
         "is normally the last thing you do in your render loop.");
 
     return screen;

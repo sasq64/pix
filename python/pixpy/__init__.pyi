@@ -330,6 +330,10 @@ class Float2:
         ...
 class Font:
     UNSCII_FONT: typing.ClassVar[Font]  # value = <Font object>
+    def __init__(self, font_file: str = '', font_size: int = 16) -> None:
+        """
+        Create a font from a TTF file.
+        """
     def make_image(self, text: str, size: int, color: int = 4294967295) -> Image:
         """
         Create an image containing the given text.
@@ -589,7 +593,6 @@ class Int2:
 class Screen:
     clip_size: Union[Int2, Tuple[int, int]]
     clip_top_left: Union[Int2, Tuple[int, int]]
-    fps: int
     def circle(self, center: Union[Float2, Tuple[float, float]], radius: float) -> None:
         """
         Draw an (outline) circle
@@ -654,7 +657,7 @@ class Screen:
         """
     def swap(self) -> None:
         """
-        Synchronize with the frame rate of the display and swap buffers. This is normally the last thing you do in your render loop.
+        Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This is normally the last thing you do in your render loop.
         """
     @property
     def context(self) -> Context:
@@ -671,6 +674,14 @@ class Screen:
         """
     @draw_color.setter
     def draw_color(self, arg1: int) -> None:
+        ...
+    @property
+    def fps(self) -> int:
+        """
+        Current FPS. Set to 0 to disable fixed FPS. Then use `seconds` or `delta` to sync your movement.
+        """
+    @fps.setter
+    def fps(self, arg1: int) -> None:
         ...
     @property
     def frame_counter(self) -> int:
@@ -697,7 +708,7 @@ class Screen:
     @property
     def seconds(self) -> float:
         """
-        Total seconds elapsed.
+        Total seconds elapsed since starting pix.
         """
     @property
     def size(self) -> Float2:

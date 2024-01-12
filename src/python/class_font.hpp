@@ -29,11 +29,19 @@ inline gl::TexRef text_to_image(FreetypeFont& font, std::string const& text,
     return gl::TexRef{tex};
 }
 
+inline std::shared_ptr<FreetypeFont> make_font(std::string const& font_name, int font_size)
+{
+    return std::make_shared<FreetypeFont>(font_name.c_str(), font_size);
+}
+
 inline auto add_font_class(py::module_ const& mod)
 {
+    using namespace pybind11::literals;
     py::class_<FreetypeFont, std::shared_ptr<FreetypeFont>>(mod, "Font")
-        .def("make_image", &text_to_image, py::arg("text"), py::arg("size"),
-             py::arg("color") = 0xffffffff,
+        .def(py::init<>(&make_font), "font_file"_a = "", "font_size"_a = 16,
+             "Create a font from a TTF file.")
+        .def("make_image", &text_to_image, py::arg("text"), "size"_a,
+             "color"_a = 0xffffffff,
              "Create an image containing the given text.")
         .def_readonly_static("UNSCII_FONT", &FreetypeFont::unscii,
                              "Get a reference to the built in unscii font.");
