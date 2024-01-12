@@ -84,6 +84,14 @@ std::shared_ptr<Screen> open_display(int width, int height, bool full_screen)
             auto [w, h] = m.screen->get_size();
             m.context->resize(Vec2f(w,h), m.screen->get_scale());
         }
+        if (std::holds_alternative<KeyEvent>(e)) {
+            auto ke = std::get<KeyEvent>(e);
+            if (ke.key == 'c' && (ke.mods & 2) != 0)
+            {
+                m.sys->post_event(QuitEvent{});
+                return System::Propagate::Stop;
+            }
+        }
         return System::Propagate::Pass;
     });
 
@@ -138,6 +146,8 @@ PYBIND11_MODULE(_pixpy, mod)
     auto tc = add_image_class(mod);
     auto ctx = add_context_class(mod);
 
+    add_font_class(mod);
+
     add_tileset_class(mod);
 
     add_console_class(mod);
@@ -146,7 +156,6 @@ PYBIND11_MODULE(_pixpy, mod)
     tc.def_property_readonly(
         "size", [](gl::TexRef& self) { return Vec2f{self.width(), self.height()}; });
 
-    add_font_class(mod);
 
     add_draw_functions(ctx);
 
@@ -159,10 +168,14 @@ PYBIND11_MODULE(_pixpy, mod)
     mod.def("open_display", &open_display, "width"_a = -1, "height"_a = -1,
             "full_screen"_a = false,
             "Opens a new window with the given size. This also initializes pix "
-            "and is expected to have been called before any other pix calls.");
+            "and is expected to have been called before any other pix calls.\n"
+            "Subsequent calls to this method returns the same screen instance, "
+            "since you can only have one active display in pix.");
     mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false,
             "Opens a new window with the given size. This also initializes pix "
-            "and is expected to have been called before any other pix calls.");
+            "and is expected to have been called before any other pix calls.\n"
+            "Subsequent calls to this method returns the same screen instance, "
+            "since you can only have one active display in pix.");
     mod.def("get_display", [] { return m.screen; });
     mod.def(
         "all_events", [] { return m.sys->all_events(); },

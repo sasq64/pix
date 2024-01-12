@@ -94,15 +94,19 @@ void FullConsole::write(char32_t ch)
         cursor.x = 0;
         cursor.y++;
         if (cursor.y >= rows) {
-            console->scroll(-1, 0);
-            console->clear_area(0, rows - 1, cols, 1, fg, bg);
+            if (wrap) {
+                console->scroll(-1, 0);
+                console->clear_area(0, rows - 1, cols, 1, fg, bg);
+            }
             cursor.y--;
         }
         return;
     }
+    if (!wrap && cursor.x >= cols) { return; }
+
     console->put(cursor.x, cursor.y, fg, bg, ch);
     cursor.x++;
-    if (cursor.x >= cols) {
+    if (cursor.x >= cols && wrap) {
         cursor.x = 0;
         cursor.y++;
         if (cursor.y >= rows) {

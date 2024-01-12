@@ -28,6 +28,7 @@ class FullConsole
     void refresh();
     int listener = -1;
 
+
     System::Propagate put_event(KeyEvent const& event);
     System::Propagate put_event(TextEvent const& te);
 
@@ -37,6 +38,9 @@ public:
                 std::shared_ptr<System> const& sys);
 
     ~FullConsole();
+
+    bool wrap = true;
+    void set_wrap(bool on) { wrap = on; }
 
     Vec2i get_cursor() const { return cursor; }
     //void set_cursor(int x, int y) { cursor = {x,y}; }

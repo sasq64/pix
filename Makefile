@@ -1,8 +1,13 @@
 
 all :
 	mkdir -p build
-	cmake -S . -B build -GNinja -DBUILD_PIXPY=1 -DCMAKE_BUILD_TYPE=Release
+	cmake -S . -B build -GNinja -DPYTHON_MODULE=ON -DCMAKE_BUILD_TYPE=Release
 	ninja -C build _pixpy
+	cp build/_pixpy.cpython-312-darwin.so python/pixpy/
+
+dist: stubs
+	python3 setup.py sdist
+	python3 setup.py bdist_wheel
 
 run:
 	PYTHONPATH=build python3 test.py
@@ -15,7 +20,7 @@ PYI0 = python/pixpy/__init__.pyi
 
 stubs: all
 	find python -name \*.pyi -exec rm {} \;
-	PYTHONPATH=python3.12 pybind11-stubgen pixpy
+	PYTHONPATH=python pybind11-stubgen pixpy
 	cp -a stubs/pixpy/_pixpy/* python/pixpy/
 	python3.12 ./stubfix.py
 

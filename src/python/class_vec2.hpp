@@ -112,8 +112,8 @@ inline void add_vec2_class(py::module_& mod)
         .def("sign", &Vec2i::sign)
         .def(
             "tof",
-            [](Vec2f self) {
-                return Vec2f{self.x, self.y};
+            [](Vec2i self) {
+                return Vec2f{(double)self.x, (double)self.y};
             },
             "Convert a `Int2` to an `Float2`. Convenience function, since it "
             "converts automatically.")

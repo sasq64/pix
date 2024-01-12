@@ -178,7 +178,7 @@ public:
         return result;
     }
 
-    void post_event(AnyEvent const& event)
+    virtual void post_event(AnyEvent const& event)
     {
         posted_events.emplace_back(event);
     }

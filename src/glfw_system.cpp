@@ -246,6 +246,11 @@ public:
 
     std::deque<AnyEvent> event_queue;
 
+    void post_event(AnyEvent const& event) override
+    {
+        event_queue.emplace_back(event);
+    }
+
     void mouse_move(double x, double y)
     {
         int buttons = glfwGetMouseButton(window, 0);
@@ -349,7 +354,7 @@ public:
         }
         swapped = false;
         loop_called = true;
-        event_queue.clear();
+        //event_queue.clear();
         pressed.clear();
         glfwPollEvents();
         if (new_size) {
@@ -360,7 +365,9 @@ public:
         }
         auto should_close = glfwWindowShouldClose(window) != 0;
         if (should_close) { event_queue.emplace_back(QuitEvent{}); }
-        return event_queue;
+        auto qcp = event_queue;
+        event_queue.clear();
+        return qcp;
     }
 };
 

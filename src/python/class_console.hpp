@@ -34,6 +34,13 @@ inline std::shared_ptr<FullConsole> make_console(int32_t cols, int32_t rows,
 
     return fcon;
 }
+inline std::shared_ptr<FullConsole> make_console2(int32_t cols, int32_t rows,
+                                                  std::shared_ptr<TileSet> const& tile_set)
+{
+    auto con = std::make_shared<PixConsole>(cols, rows, tile_set);
+    auto fcon = std::make_shared<FullConsole>(con, Machine::get_instance().sys);
+    return fcon;
+}
 
 inline void add_console_class(py::module_ const& mod)
 {
@@ -41,11 +48,14 @@ inline void add_console_class(py::module_ const& mod)
     // Console
     py::class_<FullConsole, std::shared_ptr<FullConsole>>(mod, "Console")
         .def(py::init<>(&make_console), "cols"_a = 80, "rows"_a = 50,
-             "font_file"_a = "", "tile_size"_a = Vec2i{0, 0},
+             "font_file"_a = "", "tile_size"_a = Vec2i{-1, -1},
              "font_size"_a = 16,
              "Create a new Console holding cols*row tiles. Optionally set a "
              "backing font. If `tile_size` is not provided it will be derived "
              "from the font size.")
+        .def(py::init<>(&make_console2), "cols"_a = 80, "rows"_a = 50,
+             "tile_set"_a,
+             "Create a new Console holding cols*row tiles. Use the provided tile_set.")
         .def("render", &FullConsole::render, "context"_a, "pos"_a = Vec2f(0, 0),
              "size"_a = Vec2f(-1, -1), "Render the console to a context.")
         .def("put", &FullConsole::put, "pos"_a, "tile"_a, "fg"_a = std::nullopt,
@@ -55,6 +65,8 @@ inline void add_console_class(py::module_ const& mod)
         .def("get", &FullConsole::get, "Get tile at position")
         .def_readwrite("cursor_on", &FullConsole::cursor_on,
                        "Determine if the cursor should be visible.")
+        .def_readwrite("wrapping", &FullConsole::wrap,
+                       "Should we wrap when passing right edge (and scroll when passing bottom edge) ?")
         .def_property("cursor_pos", &FullConsole::get_cursor,
                       &FullConsole::set_cursor,
                       "The current location of the cursor. This will be used "

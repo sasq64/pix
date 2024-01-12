@@ -10,9 +10,15 @@ from . import event
 from . import key
 __all__ = ['Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'all_events', 'color', 'event', 'get_display', 'get_pointer', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_loop', 'save_png', 'was_pressed']
 class Console:
+    @typing.overload
     def __init__(self, cols: int = 80, rows: int = 50, font_file: str = '', tile_size: Union[Float2, Tuple[float, float]] = ..., font_size: int = 16) -> None:
         """
         Create a new Console holding cols*row tiles. Optionally set a backing font. If `tile_size` is not provided it will be derived from the font size.
+        """
+    @typing.overload
+    def __init__(self, cols: int = 80, rows: int = 50, tile_set: TileSet) -> None:
+        """
+        Create a new Console holding cols*row tiles. Use the provided tile_set.
         """
     def cancel_line(self) -> None:
         """
@@ -94,6 +100,14 @@ class Console:
         """
         Get size of a single tile
         """
+    @property
+    def wrapping(self) -> bool:
+        """
+        Should we wrap when passing right edge (and scroll when passing bottom edge) ?
+        """
+    @wrapping.setter
+    def wrapping(self, arg0: bool) -> None:
+        ...
 class Context:
     clip_size: Union[Int2, Tuple[int, int]]
     clip_top_left: Union[Int2, Tuple[int, int]]
@@ -562,7 +576,7 @@ class Int2:
         ...
     def sign(self) -> Int2:
         ...
-    def tof(self: Union[Float2, Tuple[float, float]]) -> Float2:
+    def tof(self) -> Float2:
         """
         Convert a `Int2` to an `Float2`. Convenience function, since it converts automatically.
         """
@@ -704,9 +718,14 @@ class TileSet:
         Create a TileSet from a ttf font with the given size. The tile size will be derived from the font size.
         """
     @typing.overload
+    def __init__(self, font: Font, tile_size: Union[Int2, Tuple[int, int]] = ...) -> None:
+        """
+        Create a TileSet from an existing font. The tile size will be derived from the font size.
+        """
+    @typing.overload
     def __init__(self, tile_size: Union[Float2, Tuple[float, float]]) -> None:
         """
-        Create a tileset with the given tile size.
+        Create an empty tileset with the given tile size.
         """
     def get_image_for(self, arg0: str) -> Image:
         """
@@ -738,11 +757,13 @@ def load_png(file_name: str) -> Image:
 def open_display(width: int = -1, height: int = -1, full_screen: bool = False) -> Screen:
     """
     Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.
+    Subsequent calls to this method returns the same screen instance, since you can only have one active display in pix.
     """
 @typing.overload
 def open_display(size: Union[Int2, Tuple[int, int]], full_screen: bool = False) -> Screen:
     """
     Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.
+    Subsequent calls to this method returns the same screen instance, since you can only have one active display in pix.
     """
 def rgba(red: float, green: float, blue: float, alpha: float) -> int:
     """

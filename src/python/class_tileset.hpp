@@ -20,6 +20,12 @@ inline std::shared_ptr<TileSet> make_tileset(std::string const& font_file,
     return std::make_shared<TileSet>(font_file, size);
 }
 
+inline std::shared_ptr<TileSet> make_tileset3(std::shared_ptr<FreetypeFont> const& font, Vec2i tile_size)
+{
+    auto ts = std::pair<int, int>{tile_size.x, tile_size.y};
+    return std::make_shared<TileSet>(font, ts);
+}
+
 inline std::shared_ptr<TileSet> make_tileset2(Vec2f size)
 {
     return std::make_shared<TileSet>(std::pair{size.x, size.y});
@@ -31,8 +37,11 @@ inline void add_tileset_class(py::module_ const& mod)
         .def(py::init<>(&make_tileset), "font_file"_a, "size"_a,
              "Create a TileSet from a ttf font with the given size. The tile "
              "size will be derived from the font size.")
+        .def(py::init<>(&make_tileset3), "font"_a, "tile_size"_a = Vec2i{-1, -1},
+             "Create a TileSet from an existing font. The tile "
+             "size will be derived from the font size.")
         .def(py::init<>(&make_tileset2), "tile_size"_a,
-             "Create a tileset with the given tile size.")
+             "Create an empty tileset with the given tile size.")
         .def("get_image_for", &TileSet::get_texture_for_char,
              "Get the image for a specific tile. Use `copy_to()` on the image "
              "to redefine that tile with new graphics. Will allocate a new "
