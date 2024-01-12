@@ -90,11 +90,11 @@ def main(_):
         #         'import pixpy.event as event',
         #         'import pixpy.key as key',
         #     ])
-        wf.replace_all(r': Float2', ': Union[Float2, Tuple[float, float]]')
+        wf.replace_all(r': Float2', ': Union[Float2, Int2, Tuple[float, float]]')
         wf.replace_all(r': Int2', ': Union[Int2, Tuple[int, int]]')
         wf.replace_all(r': os.PathLike', ': str')
         wf.replace_all(r'Optional\[Float2\]',
-                       'Optional[Union[Float2, Tuple[float, float]]]')
+                       'Optional[Union[Float2, Int2, Tuple[float, float]]]')
         wf.replace_all(r'pixpy\._pixpy\.', '')
 
         ops = ['add', 'sub', 'mul', 'truediv', 'floordiv', 'eq', 'ne']

@@ -11,7 +11,7 @@ from . import key
 __all__ = ['Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'all_events', 'color', 'event', 'get_display', 'get_pointer', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_loop', 'save_png', 'was_pressed']
 class Console:
     @typing.overload
-    def __init__(self, cols: int = 80, rows: int = 50, font_file: str = '', tile_size: Union[Float2, Tuple[float, float]] = ..., font_size: int = 16) -> None:
+    def __init__(self, cols: int = 80, rows: int = 50, font_file: str = '', tile_size: Union[Float2, Int2, Tuple[float, float]] = ..., font_size: int = 16) -> None:
         """
         Create a new Console holding cols*row tiles. Optionally set a backing font. If `tile_size` is not provided it will be derived from the font size.
         """
@@ -50,7 +50,7 @@ class Console:
         """
         Enter line edit mode.
         """
-    def render(self, context: Context, pos: Union[Float2, Tuple[float, float]] = ..., size: Union[Float2, Tuple[float, float]] = ...) -> None:
+    def render(self, context: Context, pos: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
         """
         Render the console to a context.
         """
@@ -111,9 +111,9 @@ class Console:
 class Context:
     clip_size: Union[Int2, Tuple[int, int]]
     clip_top_left: Union[Int2, Tuple[int, int]]
-    def __init__(self, size: Union[Float2, Tuple[float, float]] = ...) -> None:
+    def __init__(self, size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
         ...
-    def circle(self, center: Union[Float2, Tuple[float, float]], radius: float) -> None:
+    def circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw an (outline) circle
         """
@@ -122,18 +122,18 @@ class Context:
         Clear the context using given color.
         """
     @typing.overload
-    def draw(self, image: Image, top_left: Union[Float2, Tuple[float, float]] | None = None, center: Union[Float2, Tuple[float, float]] | None = None, size: Union[Float2, Tuple[float, float]] = ..., rot: float = 0) -> None:
+    def draw(self, image: Image, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, center: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] = ..., rot: float = 0) -> None:
         """
         Render an image. The image can either be aligned to its top left corner, or centered, in which case it can also be rotated.
         """
     @typing.overload
-    def draw(self, drawable: Console, top_left: Union[Float2, Tuple[float, float]] = ..., size: Union[Float2, Tuple[float, float]] = ...) -> None:
+    def draw(self, drawable: Console, top_left: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
         ...
-    def filled_circle(self, center: Union[Float2, Tuple[float, float]], radius: float) -> None:
+    def filled_circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw a filled circle.
         """
-    def filled_rect(self, top_left: Union[Float2, Tuple[float, float]], size: Union[Float2, Tuple[float, float]]) -> None:
+    def filled_rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a filled rectangle.
         """
@@ -142,17 +142,17 @@ class Context:
         Flush pixel operations
         """
     @typing.overload
-    def line(self, start: Union[Float2, Tuple[float, float]], end: Union[Float2, Tuple[float, float]]) -> None:
+    def line(self, start: Union[Float2, Int2, Tuple[float, float]], end: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a line between start and end.
         """
     @typing.overload
-    def line(self, end: Union[Float2, Tuple[float, float]]) -> None:
+    def line(self, end: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a line from the end of the last line to the given position.
         """
     @typing.overload
-    def plot(self, center: Union[Float2, Tuple[float, float]], color: int) -> None:
+    def plot(self, center: Union[Float2, Int2, Tuple[float, float]], color: int) -> None:
         """
         Draw a point.
         """
@@ -165,7 +165,7 @@ class Context:
         """
         Draw a convex polygon.
         """
-    def rect(self, top_left: Union[Float2, Tuple[float, float]], size: Union[Float2, Tuple[float, float]]) -> None:
+    def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a rectangle.
         """
@@ -219,7 +219,7 @@ class Float2:
         From angle
         """
     @typing.overload
-    def __add__(self, arg0: Union[Float2, Tuple[float, float]]) -> Float2:
+    def __add__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         ...
     @typing.overload
     def __add__(self, arg0: Union[Int2, Tuple[int, int]]) -> Float2:
@@ -227,10 +227,10 @@ class Float2:
     @typing.overload
     def __add__(self, arg0: float) -> Float2:
         ...
-    def __eq__(self, arg0: Union[Float2, Tuple[float, float]]) -> bool:
+    def __eq__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> bool:
         ...
     @typing.overload
-    def __floordiv__(self, arg0: Union[Float2, Tuple[float, float]]) -> Float2:
+    def __floordiv__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         ...
     @typing.overload
     def __floordiv__(self, arg0: Union[Int2, Tuple[int, int]]) -> Float2:
@@ -260,7 +260,7 @@ class Float2:
     def __len__(self) -> int:
         ...
     @typing.overload
-    def __mul__(self, arg0: Union[Float2, Tuple[float, float]]) -> Float2:
+    def __mul__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         ...
     @typing.overload
     def __mul__(self, arg0: Union[Int2, Tuple[int, int]]) -> Float2:
@@ -268,12 +268,12 @@ class Float2:
     @typing.overload
     def __mul__(self, arg0: float) -> Float2:
         ...
-    def __ne__(self, arg0: Union[Float2, Tuple[float, float]]) -> bool:
+    def __ne__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> bool:
         ...
     def __repr__(self) -> str:
         ...
     @typing.overload
-    def __sub__(self, arg0: Union[Float2, Tuple[float, float]]) -> Float2:
+    def __sub__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         ...
     @typing.overload
     def __sub__(self, arg0: Union[Int2, Tuple[int, int]]) -> Float2:
@@ -282,7 +282,7 @@ class Float2:
     def __sub__(self, arg0: float) -> Float2:
         ...
     @typing.overload
-    def __truediv__(self, arg0: Union[Float2, Tuple[float, float]]) -> Float2:
+    def __truediv__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         ...
     @typing.overload
     def __truediv__(self, arg0: Union[Int2, Tuple[int, int]]) -> Float2:
@@ -294,11 +294,11 @@ class Float2:
         """
         Get the angle between the vector and (1,0).
         """
-    def clamp(self, low: Union[Float2, Tuple[float, float]], high: Union[Float2, Tuple[float, float]]) -> Float2:
+    def clamp(self, low: Union[Float2, Int2, Tuple[float, float]], high: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         """
         Separately clamp the x and y component between the corresponding components in the given arguments.
         """
-    def clip(self, low: Union[Float2, Tuple[float, float]], high: Union[Float2, Tuple[float, float]]) -> Float2:
+    def clip(self, low: Union[Float2, Int2, Tuple[float, float]], high: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         ...
     def cossin(self) -> Float2:
         ...
@@ -347,7 +347,7 @@ class Image:
         Create an empty image of the given size.
         """
     @typing.overload
-    def __init__(self, size: Union[Float2, Tuple[float, float]]) -> None:
+    def __init__(self, size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Create an empty image of the given size.
         """
@@ -356,7 +356,7 @@ class Image:
         """
         Create an image from an array of 32-bit colors.
         """
-    def circle(self, center: Union[Float2, Tuple[float, float]], radius: float) -> None:
+    def circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw an (outline) circle
         """
@@ -372,23 +372,23 @@ class Image:
         """
         Render one image into another.
         """
-    def crop(self, top_left: Union[Float2, Tuple[float, float]] | None = None, size: Union[Float2, Tuple[float, float]] | None = None) -> Image:
+    def crop(self, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] | None = None) -> Image:
         """
         Crop an image. Returns a view into the old image.
         """
     @typing.overload
-    def draw(self, image: Image, top_left: Union[Float2, Tuple[float, float]] | None = None, center: Union[Float2, Tuple[float, float]] | None = None, size: Union[Float2, Tuple[float, float]] = ..., rot: float = 0) -> None:
+    def draw(self, image: Image, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, center: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] = ..., rot: float = 0) -> None:
         """
         Render an image. The image can either be aligned to its top left corner, or centered, in which case it can also be rotated.
         """
     @typing.overload
-    def draw(self, drawable: Console, top_left: Union[Float2, Tuple[float, float]] = ..., size: Union[Float2, Tuple[float, float]] = ...) -> None:
+    def draw(self, drawable: Console, top_left: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
         ...
-    def filled_circle(self, center: Union[Float2, Tuple[float, float]], radius: float) -> None:
+    def filled_circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw a filled circle.
         """
-    def filled_rect(self, top_left: Union[Float2, Tuple[float, float]], size: Union[Float2, Tuple[float, float]]) -> None:
+    def filled_rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a filled rectangle.
         """
@@ -397,17 +397,17 @@ class Image:
         Flush pixel operations
         """
     @typing.overload
-    def line(self, start: Union[Float2, Tuple[float, float]], end: Union[Float2, Tuple[float, float]]) -> None:
+    def line(self, start: Union[Float2, Int2, Tuple[float, float]], end: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a line between start and end.
         """
     @typing.overload
-    def line(self, end: Union[Float2, Tuple[float, float]]) -> None:
+    def line(self, end: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a line from the end of the last line to the given position.
         """
     @typing.overload
-    def plot(self, center: Union[Float2, Tuple[float, float]], color: int) -> None:
+    def plot(self, center: Union[Float2, Int2, Tuple[float, float]], color: int) -> None:
         """
         Draw a point.
         """
@@ -420,7 +420,7 @@ class Image:
         """
         Draw a convex polygon.
         """
-    def rect(self, top_left: Union[Float2, Tuple[float, float]], size: Union[Float2, Tuple[float, float]]) -> None:
+    def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a rectangle.
         """
@@ -434,7 +434,7 @@ class Image:
         Splits the image into as many _width_ * _height_ images as possible, first going left to right, then top to bottom.
         """
     @typing.overload
-    def split(self, size: Union[Float2, Tuple[float, float]]) -> list[Image]:
+    def split(self, size: Union[Float2, Int2, Tuple[float, float]]) -> list[Image]:
         ...
     @property
     def context(self) -> Context:
@@ -491,7 +491,7 @@ class Int2:
     def __add__(self, arg0: Union[Int2, Tuple[int, int]]) -> Int2:
         ...
     @typing.overload
-    def __add__(self, arg0: Union[Float2, Tuple[float, float]]) -> Float2:
+    def __add__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         ...
     @typing.overload
     def __add__(self, arg0: int) -> Int2:
@@ -505,7 +505,7 @@ class Int2:
     def __floordiv__(self, arg0: Union[Int2, Tuple[int, int]]) -> Int2:
         ...
     @typing.overload
-    def __floordiv__(self, arg0: Union[Float2, Tuple[float, float]]) -> Float2:
+    def __floordiv__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         ...
     @typing.overload
     def __floordiv__(self, arg0: int) -> Int2:
@@ -538,7 +538,7 @@ class Int2:
     def __mul__(self, arg0: Union[Int2, Tuple[int, int]]) -> Int2:
         ...
     @typing.overload
-    def __mul__(self, arg0: Union[Float2, Tuple[float, float]]) -> Float2:
+    def __mul__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         ...
     @typing.overload
     def __mul__(self, arg0: int) -> Int2:
@@ -554,7 +554,7 @@ class Int2:
     def __sub__(self, arg0: Union[Int2, Tuple[int, int]]) -> Int2:
         ...
     @typing.overload
-    def __sub__(self, arg0: Union[Float2, Tuple[float, float]]) -> Float2:
+    def __sub__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         ...
     @typing.overload
     def __sub__(self, arg0: int) -> Int2:
@@ -566,7 +566,7 @@ class Int2:
     def __truediv__(self, arg0: Union[Int2, Tuple[int, int]]) -> Int2:
         ...
     @typing.overload
-    def __truediv__(self, arg0: Union[Float2, Tuple[float, float]]) -> Float2:
+    def __truediv__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         ...
     @typing.overload
     def __truediv__(self, arg0: int) -> Int2:
@@ -593,7 +593,7 @@ class Int2:
 class Screen:
     clip_size: Union[Int2, Tuple[int, int]]
     clip_top_left: Union[Int2, Tuple[int, int]]
-    def circle(self, center: Union[Float2, Tuple[float, float]], radius: float) -> None:
+    def circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw an (outline) circle
         """
@@ -602,18 +602,18 @@ class Screen:
         Clear the context using given color.
         """
     @typing.overload
-    def draw(self, image: Image, top_left: Union[Float2, Tuple[float, float]] | None = None, center: Union[Float2, Tuple[float, float]] | None = None, size: Union[Float2, Tuple[float, float]] = ..., rot: float = 0) -> None:
+    def draw(self, image: Image, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, center: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] = ..., rot: float = 0) -> None:
         """
         Render an image. The image can either be aligned to its top left corner, or centered, in which case it can also be rotated.
         """
     @typing.overload
-    def draw(self, drawable: Console, top_left: Union[Float2, Tuple[float, float]] = ..., size: Union[Float2, Tuple[float, float]] = ...) -> None:
+    def draw(self, drawable: Console, top_left: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
         ...
-    def filled_circle(self, center: Union[Float2, Tuple[float, float]], radius: float) -> None:
+    def filled_circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw a filled circle.
         """
-    def filled_rect(self, top_left: Union[Float2, Tuple[float, float]], size: Union[Float2, Tuple[float, float]]) -> None:
+    def filled_rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a filled rectangle.
         """
@@ -622,17 +622,17 @@ class Screen:
         Flush pixel operations
         """
     @typing.overload
-    def line(self, start: Union[Float2, Tuple[float, float]], end: Union[Float2, Tuple[float, float]]) -> None:
+    def line(self, start: Union[Float2, Int2, Tuple[float, float]], end: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a line between start and end.
         """
     @typing.overload
-    def line(self, end: Union[Float2, Tuple[float, float]]) -> None:
+    def line(self, end: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a line from the end of the last line to the given position.
         """
     @typing.overload
-    def plot(self, center: Union[Float2, Tuple[float, float]], color: int) -> None:
+    def plot(self, center: Union[Float2, Int2, Tuple[float, float]], color: int) -> None:
         """
         Draw a point.
         """
@@ -645,7 +645,7 @@ class Screen:
         """
         Draw a convex polygon.
         """
-    def rect(self, top_left: Union[Float2, Tuple[float, float]], size: Union[Float2, Tuple[float, float]]) -> None:
+    def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a rectangle.
         """
@@ -734,14 +734,30 @@ class TileSet:
         Create a TileSet from an existing font. The tile size will be derived from the font size.
         """
     @typing.overload
-    def __init__(self, tile_size: Union[Float2, Tuple[float, float]]) -> None:
+    def __init__(self, tile_size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Create an empty tileset with the given tile size.
         """
-    def get_image_for(self, arg0: str) -> Image:
+    @typing.overload
+    def get_image_for(self, arg0: int) -> Image:
         """
         Get the image for a specific tile. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.
         """
+    @typing.overload
+    def get_image_for(self, arg0: str) -> Image:
+        """
+        Get the image for a specific character. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.
+        """
+    def get_tileset_image(self) -> Image:
+        """
+        Get tileset image
+        """
+    @typing.overload
+    def render_text(self, arg0: Screen, arg1: str, arg2: Union[Float2, Int2, Tuple[float, float]]) -> None:
+        ...
+    @typing.overload
+    def render_text(self, arg0: Screen, arg1: str, arg2: list[Float2]) -> None:
+        ...
 def all_events() -> list[event.NoEvent | event.Key | event.Move | event.Click | event.Text | event.Resize | event.Quit]:
     """
     Return a list of all pending events.

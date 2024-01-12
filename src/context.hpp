@@ -54,23 +54,23 @@ private:
     template <typename CO>
     void draw_filled(CO const& container, gl::Primitive primitive);
 
-    template <typename CO>
-    void draw_textured(CO const& container, gl::Primitive primitive);
-
     std::vector<float> generate_circle(Vec2f center, float radius,
                                        bool include_center = true) const;
     std::array<float, 4> generate_line(Vec2f from, Vec2f to) const;
     std::vector<float> generate_lines(float const* screen_cords, int count) const;
     std::array<float, 8> generate_quad(Vec2f top_left, Vec2f size) const;
     std::array<float, 8> rotated_quad(Vec2f center, Vec2f sz, float rot) const;
-    std::array<float, 16> generate_quad_with_uvs(Vec2f pos, Vec2f size) const;
-
     std::array<float, 16> rotated_quad_with_uvs(Vec2f center, Vec2f sz,
                                                 float rot) const;
 
     void draw_points();
 
 public:
+    std::array<float, 16> generate_quad_with_uvs(Vec2f pos, Vec2f size) const;
+
+    template <typename CO>
+    void draw_textured(CO const& container, gl::Primitive primitive);
+
     constexpr Vec2<float> to_screen(Vec2f const& v) const
     {
         auto res = (v + offset) * Vec2f{2, -2} / target_size + Vec2f{-1, 1};

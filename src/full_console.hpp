@@ -10,7 +10,7 @@
 
 class FullConsole
 {
-    uint32_t fg = color::light_green;
+    uint32_t fg = color::white;
     uint32_t bg = color::black;
 
     int cols{};

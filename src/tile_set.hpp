@@ -6,7 +6,9 @@
 #include "gl/program.hpp"
 #include "gl/texture.hpp"
 
+#include "vec2.hpp"
 #include "font.hpp"
+#include "context.hpp"
 
 #include <string>
 #include <tuple>
@@ -30,6 +32,9 @@ public:
     std::shared_ptr<gl::Texture> tile_texture;
     int char_width = -1;
     int char_height = -1;
+
+    gl::TexRef get_texture() { return gl::TexRef{tile_texture}; }
+
     TileSet(std::string const& font_file, int size,
                 std::pair<int, int> tile_size = {-1, -1});
     explicit TileSet(std::shared_ptr<FreetypeFont> freetype_font,
@@ -44,4 +49,10 @@ public:
     std::pair<float, float> get_uvscale() const;
     void add_char(char32_t c);
     std::pair<int, int> get_size() const;
+
+    void render_chars(pix::Context* context, std::string const& tiles, Vec2f pos);
+    void render_chars(pix::Context* context, std::string const& tiles, std::vector<Vec2f> const& points);
+
+    void render_tiles(pix::Context* context, int32_t const* tiles, size_t n, Vec2f pos);
+    void render_tiles(pix::Context* context, int32_t const* tiles, std::vector<Vec2f> const& points);
 };

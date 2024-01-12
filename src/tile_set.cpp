@@ -147,3 +147,46 @@ gl::TexRef TileSet::get_texture_for_char(char32_t c)
                        std::array{u, v, u + du, v, u + du, v + dv, u, v + dv}};
     return tr;
 }
+
+void TileSet::render_chars(pix::Context* context, std::string const& text, Vec2f pos)
+{
+    auto us = utf8::utf8_decode(text);
+    render_tiles(context, (int32_t*)us.data(), us.length(), pos);
+}
+void TileSet::render_chars(pix::Context* context, std::string const& text, std::vector<Vec2f> const& points)
+{
+    auto us = utf8::utf8_decode(text);
+    render_tiles(context, (int32_t*)us.data(), points);
+
+}
+void TileSet::render_tiles(pix::Context* context, int32_t const* tiles, size_t count, Vec2f pos)
+{
+    context->set_target();
+
+    tile_texture->bind();
+    auto size = Vec2f(char_width, char_height);
+    for(size_t i = 0; i<count; i++) {
+        auto c = tiles[i];
+        auto img = get_texture_for_char(c);
+        auto vdata = context->generate_quad_with_uvs(pos, size);
+        std::copy(img.uvs().begin(), img.uvs().end(), vdata.begin() + 8);
+        context->draw_textured(vdata, gl::Primitive::TriangleFan);
+        pos.x += size.x;
+    }
+}
+
+void TileSet::render_tiles(pix::Context* context, int32_t const* tiles, std::vector<Vec2f> const& points)
+{
+    context->set_target();
+
+    tile_texture->bind();
+    auto size = Vec2f(char_width, char_height);
+    int n = points.size();
+    for(int i = 0; i<n; i++) {
+        auto c = tiles[i];
+        auto img = get_texture_for_char(c);
+        auto vdata = context->generate_quad_with_uvs(points[i], size);
+        std::copy(img.uvs().begin(), img.uvs().end(), vdata.begin() + 8);
+        context->draw_textured(vdata, gl::Primitive::TriangleFan);
+    }
+}

@@ -164,6 +164,7 @@ PYBIND11_MODULE(_pixpy, mod)
     auto screen = add_screen_class(mod);
     add_draw_functions(screen);
 
+    //pybind11::implicitly_convertible<std::shared_ptr<Screen, pix::Context>();
     // MODULE
     mod.def("open_display", &open_display, "width"_a = -1, "height"_a = -1,
             "full_screen"_a = false,
