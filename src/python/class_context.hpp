@@ -110,8 +110,7 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
             }
         },
         py::arg("points"), py::arg("colors"),
-        "Draw `n` points given by the array like objects. `points` should n*2 "
-        "floats and `colors` should contain `n` unsigned ints.");
+        "Draw `n` points given by the array like objects. `points` should n*2 floats and `colors` should contain `n` unsigned ints.");
     cls.def(
         "rect",
         [](T& self, Vec2f const& xy, Vec2f const& size) {
@@ -142,8 +141,7 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
         },
         "image"_a, "top_left"_a = std::nullopt, "center"_a = std::nullopt,
         "size"_a = Vec2f{0, 0}, "rot"_a = 0,
-        "Render an image. The image can either be aligned to its top left "
-        "corner, or centered, in which case it can also be rotated.");
+        "Render an image. The image can either be aligned to its top left corner, or centered, in which case it can also be rotated.");
     cls.def(
         "draw",
         [](T& self, FullConsole& con, Vec2f const& xy, Vec2f const& size) {

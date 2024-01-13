@@ -168,15 +168,9 @@ PYBIND11_MODULE(_pixpy, mod)
     // MODULE
     mod.def("open_display", &open_display, "width"_a = -1, "height"_a = -1,
             "full_screen"_a = false,
-            "Opens a new window with the given size. This also initializes pix "
-            "and is expected to have been called before any other pix calls.\n"
-            "Subsequent calls to this method returns the same screen instance, "
-            "since you can only have one active display in pix.");
+            "Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.\nSubsequent calls to this method returns the same screen instance, " "since you can only have one active display in pix.");
     mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false,
-            "Opens a new window with the given size. This also initializes pix "
-            "and is expected to have been called before any other pix calls.\n"
-            "Subsequent calls to this method returns the same screen instance, "
-            "since you can only have one active display in pix.");
+            "Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.\nSubsequent calls to this method returns the same screen instance, since you can only have one active display in pix.");
     mod.def("get_display", [] { return m.screen; });
     mod.def(
         "all_events", [] { return m.sys->all_events(); },
@@ -200,14 +194,12 @@ PYBIND11_MODULE(_pixpy, mod)
         "Get the xy coordinate of the mouse pointer (in screen space).");
     mod.def(
         "run_loop", [] { return m.sys->run_loop(); },
-        "Should be called first in your main rendering loop. Clears all "
-        "pending events and all pressed keys. Returns _True_ as long as the "
-        "application is running (the user has not closed the window or quit in "
-        "some other way");
+        "Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way");
     mod.def("load_png", &pix::load_png, "file_name"_a,
             "Create an _Image_ from a png file on disk.");
     mod.def("save_png", &save_png, "image"_a, "file_name"_a,
             "Save an _Image_ to disk");
+    mod.def("blend", &color::blend, "color0"_a, "color1"_a, "t"_a);
     mod.def("rgba", &color::rgba, "red"_a, "green"_a, "blue"_a, "alpha"_a,
             "Combine four color components into a color.");
     mod.def("load_font", &load_font, "name"_a, "size"_a = 0, "Load a TTF font");

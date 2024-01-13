@@ -3,7 +3,7 @@ all :
 	mkdir -p build
 	cmake -S . -B build -GNinja -DPYTHON_MODULE=ON -DCMAKE_BUILD_TYPE=Release
 	ninja -C build _pixpy
-	cp build/_pixpy.cpython-312-darwin.so python/pixpy/
+	cp build/_pixpy*.so python/pixpy/
 
 dist: stubs
 	python3 setup.py sdist
@@ -18,7 +18,7 @@ go:
 
 PYI0 = python/pixpy/__init__.pyi
 
-stubs: all
+stubs:
 	find python -name \*.pyi -exec rm {} \;
 	PYTHONPATH=python pybind11-stubgen pixpy
 	cp -a stubs/pixpy/_pixpy/* python/pixpy/

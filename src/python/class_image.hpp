@@ -33,8 +33,13 @@ inline gl::TexRef image_from_vec2(Vec2f const& v)
     return {static_cast<int>(v.x), static_cast<int>(v.y)};
 }
 inline gl::TexRef image_from_pixels(int width,
-                                    std::vector<uint32_t> const& pixels)
+                                    std::vector<uint32_t> pixels)
 {
+    // RGBA -> becomes ABGR 
+    for(auto& x : pixels) {
+        x = (x & 0x0000FFFF) << 16 | (x & 0xFFFF0000) >> 16;
+        x = (x & 0x00FF00FF) << 8 | (x & 0xFF00FF00) >> 8;  
+    }
     auto tex = std::make_shared<gl::Texture>(
         width, static_cast<int>(pixels.size()) / width, pixels);
     return gl::TexRef{tex};

@@ -3,6 +3,7 @@
 #define COLORS_HPP
 
 #include <cstdint>
+#include <tuple>
 
 namespace color {
 
@@ -14,6 +15,25 @@ static inline constexpr uint32_t tob(double f)
 inline constexpr uint32_t rgba(double r, double g, double b, double a)
 {
     return (tob(r) << 24) | (tob(g) << 16) | (tob(b) << 8) | tob(a);
+}
+
+inline constexpr std::tuple<float, float, float, float> color2tuple(uint32_t color)
+{
+    auto r = (color >> 24) / 255.0;
+    auto g = ((color >> 16) & 0xff) / 255.0;
+    auto b = ((color >> 8) & 0xff) / 255.0;
+    auto a = (color & 0xff) / 255.0;
+
+    return std::make_tuple(r,g,b,a);
+}
+
+
+inline constexpr uint32_t blend(uint32_t a, uint32_t b, float d)
+{
+    auto [ra, ga, ba, aa] = color2tuple(a);
+    auto [rb, gb, bb, ab] = color2tuple(b);
+    return rgba(ra * d + rb * (1-d), ga * d + gb * (1-d),
+                ba * d + bb * (1-d), aa * d + ab * (1-d));
 }
 
 const uint32_t black = rgba(0.0, 0.0, 0.0, 1.0);

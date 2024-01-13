@@ -50,9 +50,7 @@ inline void add_console_class(py::module_ const& mod)
         .def(py::init<>(&make_console), "cols"_a = 80, "rows"_a = 50,
              "font_file"_a = "", "tile_size"_a = Vec2i{-1, -1},
              "font_size"_a = 16,
-             "Create a new Console holding cols*row tiles. Optionally set a "
-             "backing font. If `tile_size` is not provided it will be derived "
-             "from the font size.")
+             "Create a new Console holding cols*row tiles. Optionally set a backing font. If `tile_size` is not provided it will be derived from the font size.")
         .def(py::init<>(&make_console2), "cols"_a = 80, "rows"_a = 50,
              "tile_set"_a,
              "Create a new Console holding cols*row tiles. Use the provided tile_set.")
@@ -89,8 +87,7 @@ inline void add_console_class(py::module_ const& mod)
              "Change the edited line.")
         .def("get_font_image", &FullConsole::get_font_texture)
         .def("get_image_for", &FullConsole::get_texture_for_char, "tile"_a,
-             "Get the image of a specific tile. Use to render the tile "
-             "manually, or to copy another image into the tile.")
+             "Get the image of a specific tile. Use to render the tile manually, or to copy another image into the tile.")
         .def(
             "write",
             [](FullConsole& con, std::vector<char32_t> const& data) {
@@ -101,7 +98,5 @@ inline void add_console_class(py::module_ const& mod)
              static_cast<void (FullConsole::*)(std::string const&)>(
                  &FullConsole::write),
              "text"_a,
-             "Write text to the console at the current cursor position and "
-             "using the current colors. Will advance cursor position, and wrap "
-             "if it passes the right border of the console.");
+             "Write text to the console at the current cursor position and using the current colors. Will advance cursor position, and wrap if it passes the right border of the console.");
 }
