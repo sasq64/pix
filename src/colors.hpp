@@ -28,12 +28,27 @@ inline constexpr std::tuple<float, float, float, float> color2tuple(uint32_t col
 }
 
 
-inline constexpr uint32_t blend(uint32_t a, uint32_t b, float d)
+inline constexpr uint32_t blend_color(uint32_t a, uint32_t b, float d)
 {
     auto [ra, ga, ba, aa] = color2tuple(a);
     auto [rb, gb, bb, ab] = color2tuple(b);
     return rgba(ra * d + rb * (1-d), ga * d + gb * (1-d),
                 ba * d + bb * (1-d), aa * d + ab * (1-d));
+}
+
+inline constexpr uint32_t add_color(uint32_t a, uint32_t b)
+{
+    auto [ra, ga, ba, aa] = color2tuple(a);
+    auto [rb, gb, bb, ab] = color2tuple(b);
+    ra += rb;
+    if (ra > 1.0) { ra = 1.0; }
+    ga += gb;
+    if (ga > 1.0) { ga = 1.0; }
+    ba += bb;
+    if (ba > 1.0) { ba = 1.0; }
+    aa += ab;
+    if (aa > 1.0) { aa = 1.0; }
+    return rgba(ra, ga, ba, aa);
 }
 
 const uint32_t black = rgba(0.0, 0.0, 0.0, 1.0);

@@ -171,7 +171,11 @@ std::vector<uint32_t> PixConsole::get_tiles()
 
 void PixConsole::set_tiles(std::vector<uint32_t> const& data)
 {
-    for(int i=0; i<cols*rows; i++) {
+    size_t size = cols*rows;
+    if (size > data.size() * 3) {
+        size = data.size() * 3;
+    }
+    for(size_t i=0; i<size; i++) {
         auto [w0,w1] = make_col(data[i*3+1], data[i*3+2]);
         uvdata[i] = tile_set->get_offset(data[i*3]) | w0;
         coldata[i] = w1;

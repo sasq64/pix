@@ -8,7 +8,7 @@ import typing
 from . import color
 from . import event
 from . import key
-__all__ = ['Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'all_events', 'blend', 'color', 'event', 'get_display', 'get_pointer', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_loop', 'save_png', 'was_pressed']
+__all__ = ['Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'blend', 'blend_color', 'color', 'event', 'get_display', 'get_pointer', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_loop', 'save_png', 'was_pressed']
 class Console:
     @typing.overload
     def __init__(self, cols: int = 80, rows: int = 50, font_file: str = '', tile_size: Union[Float2, Int2, Tuple[float, float]] = ..., font_size: int = 16) -> None:
@@ -758,11 +758,15 @@ class TileSet:
     @typing.overload
     def render_text(self, arg0: Screen, arg1: str, arg2: list[Float2]) -> None:
         ...
+def add_color(color0: int, color1: int) -> int:
+    ...
 def all_events() -> list[event.NoEvent | event.Key | event.Move | event.Click | event.Text | event.Resize | event.Quit]:
     """
     Return a list of all pending events.
     """
 def blend(color0: int, color1: int, t: float) -> int:
+    ...
+def blend_color(color0: int, color1: int, t: float) -> int:
     ...
 def get_display() -> Screen:
     ...
