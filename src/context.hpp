@@ -42,7 +42,7 @@ public:
     float point_size = 2;
     gl::Color fg;
 
-    std::vector<float> points;
+    std::vector<float> point_cache;
 
 private:
     Vec2f last_point{0,0};
@@ -53,6 +53,9 @@ private:
 
     template <typename CO>
     void draw_filled(CO const& container, gl::Primitive primitive);
+
+    template <typename CO, typename T>
+    void draw_indexed(CO const& container, std::vector<T> indices, gl::Primitive primitive);
 
     std::vector<float> generate_circle(Vec2f center, float radius,
                                        bool include_center = true) const;
@@ -105,6 +108,7 @@ public:
     void filled_circle(Vec2f const& v, float r);
     void line(Vec2f from, Vec2f to);
     void line(Vec2f to);
+    void lines(std::vector<Vec2f> const& points);
     void filled_rect(Vec2f top_left, Vec2f size);
     void rect(Vec2f top_left, Vec2f size);
     void blit(gl::TexRef const& tex, Vec2f pos = {0,0}, Vec2f size = {0,0});
@@ -116,5 +120,9 @@ public:
 
     void clear(gl::Color const& col) const;
     void draw_polygon(const Vec2f* points, size_t count);
+    void draw_inconvex_polygon(const Vec2f* points, size_t count);
 };
+
+bool instersects(Vec2f v11, Vec2f v12, Vec2f v21, Vec2f v22);
+
 } // namespace pix

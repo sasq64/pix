@@ -83,11 +83,22 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
         "Draw a line from the end of the last line to the given position.");
 
     cls.def(
+        "lines", [](T& self, std::vector<Vec2f> const& points) { context_from(self)->lines(points); },
+        "points"_a,
+        "Draw a line strip from all the given points.");
+
+    cls.def(
         "polygon",
-        [](T& self, std::vector<Vec2f> const& points) {
-            context_from(self)->draw_polygon(points.data(), points.size());
+        [](T& self, std::vector<Vec2f> const& points, bool convex) {
+            if (convex) {
+                context_from(self)->draw_polygon(points.data(),
+                                                          points.size());
+            } else {
+                context_from(self)->draw_inconvex_polygon(points.data(),
+                                                          points.size());
+            }
         },
-        "points"_a, "Draw a convex polygon.");
+        "points"_a, "convex"_a = false, "Draw a filled polygon.");
     cls.def(
         "plot",
         [](T& self, Vec2f const& to, uint32_t color) {

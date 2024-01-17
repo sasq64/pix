@@ -123,6 +123,20 @@ void Context::line(Vec2f to)
     last_point = to;
 }
 
+void Context::lines(std::vector<Vec2f> const& points)
+{
+    glLineWidth(line_width);
+
+    std::vector<float> result;
+    result.reserve(points.size() * 2);
+    for(auto&& p : points) {
+        auto&& p2 = to_screen(p);
+        result.push_back(p2.x);
+        result.push_back(p2.y);
+    }
+    draw_filled(result, gl::Primitive::LineStrip);
+}
+
 void Context::circle(Vec2f const& v, float r)
 {
     glLineWidth(line_width);
@@ -202,13 +216,209 @@ void Context::draw_filled(const CO& container, gl::Primitive primitive)
     pos.disable();
 }
 
-void Context::draw_polygon(Vec2f const* points, size_t count)
+template <typename CO, typename T>
+void Context::draw_indexed(const CO& container, std::vector<T> indices, gl::Primitive primitive)
 {
+    set_target();
+
+    filled.use();
+    filled.setUniform("frag_color", fg);
+    auto pos = filled.getAttribute("in_pos");
+    pos.enable();
+    gl::ArrayBuffer<GL_STREAM_DRAW> vbo{container};
+    gl::ElementBuffer<GL_STREAM_DRAW> elements{indices};
+    vbo.bind();
+    elements.bind();
+    gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float,
+                     0 * sizeof(GLfloat), 0);
+    int len = static_cast<int>(container.size()) / 2;
+    //gl::drawArrays(primitive, 0, len);
+    gl::drawElements(primitive, indices.size(), gl::Type::UnsignedShort, 0);
+    pos.disable();
+}
+
+bool instersects(Vec2f v11, Vec2f v12, Vec2f v21, Vec2f v22)
+{
+    double d1, d2;
+    double a1, a2, b1, b2, c1, c2;
+
+    // Convert vector 1 to a line (line 1) of infinite length.
+    // We want the line in linear equation standard form: A*x + B*y + C = 0
+    // See: http://en.wikipedia.org/wiki/Linear_equation
+    a1 = v12.y - v11.y;
+    b1 = v11.x - v12.x;
+    c1 = (v12.x * v11.y) - (v11.x * v12.y);
+
+    // Every point (x,y), that solves the equation above, is on the line,
+    // every point that does not solve it, is not. The equation will have a
+    // positive result if it is on one side of the line and a negative one
+    // if is on the other side of it. We insert (x1,y1) and (x2,y2) of vector
+    // 2 into the equation above.
+    d1 = (a1 * v21.x) + (b1 * v21.y) + c1;
+    d2 = (a1 * v22.x) + (b1 * v22.y) + c1;
+
+    // If d1 and d2 both have the same sign, they are both on the same side
+    // of our line 1 and in that case no intersection is possible. Careful,
+    // 0 is a special case, that's why we don't test ">=" and "<=",
+    // but "<" and ">".
+    if (d1 > 0 && d2 > 0) return false;
+    if (d1 < 0 && d2 < 0) return false;
+
+    // The fact that vector 2 intersected the infinite line 1 above doesn't
+    // mean it also intersects the vector 1. Vector 1 is only a subset of that
+    // infinite line 1, so it may have intersected that line before the vector
+    // started or after it ended. To know for sure, we have to repeat the
+    // the same test the other way round. We start by calculating the
+    // infinite line 2 in linear equation standard form.
+    a2 = v22.y - v21.y;
+    b2 = v21.x - v22.x;
+    c2 = (v22.x * v21.y) - (v21.x * v22.y);
+
+    // Calculate d1 and d2 again, this time using points of vector 1.
+    d1 = (a2 * v11.x) + (b2 * v11.y) + c2;
+    d2 = (a2 * v12.x) + (b2 * v12.y) + c2;
+
+    // Again, if both have the same sign (and neither one is 0),
+    // no intersection is possible.
+    if (d1 > 0 && d2 > 0) return false;
+    if (d1 < 0 && d2 < 0) return false;
+
+    // If we get here, only two possibilities are left. Either the two
+    // vectors intersect in exactly one point or they are collinear, which
+    // means they intersect in any number of points from zero to infinite.
+    //if ((a1 * b2) - (a2 * b1) == 0.0f) return COLLINEAR;
+
+    // If they are not collinear, they must intersect in exactly one point.
+    return true;
+}
+ 
+
+double cross(Vec2f a, Vec2f b)
+{
+    return a.x * b.y - b.x * a.y;
+}
+
+bool same_side(Vec2f const& p1, Vec2f const& p2, Vec2f const& a, Vec2f const& b)
+{
+    Vec2f ab = {b.x - a.x, b.y - a.y};
+    Vec2f ap1 = {p1.x - a.x, p1.y - a.y};
+    Vec2f ap2 = {p2.x - a.x, p2.y - a.y};
+    auto cp1 = cross(ab, ap1);
+    auto cp2 = cross(ab, ap2);
+    return (cp1 * cp2 >= 0);
+}
+
+bool in_triangle(Vec2f const& p, Vec2f const& a, Vec2f const& b, Vec2f const& c)
+{
+    return same_side(p, a, b, c) && same_side(p, b, a, c) && same_side(p, c, a, b);
+}
+
+bool is_convex(Vec2f a, Vec2f b, Vec2f c)
+{
+    // Check if the triangle a-b-c is convex.
+    // Assuming a clockwise order of points, if the cross product
+    // of vectors (b - a) and (c - b) is positive, it is convex.
+    Vec2f ab = {b.x - a.x, b.y - a.y};
+    Vec2f bc = {c.x - b.x, c.y - b.y};
+    return cross(ab, bc) > 0;
+}
+
+bool is_ear(Vec2f a, Vec2f b, Vec2f c, Vec2f const* vertices, size_t count)
+{
+    if (!is_convex(a, b, c)) {
+        return false; // The triangle is not convex
+    }
+
+    for (size_t i=0; i<count; i++) {
+        auto p = vertices[i];
+        if (p != a && p != b && p != c && in_triangle(p, a, b, c)) {
+            return false; // Found a point inside the triangle
+        }
+    }
+
+    return true; // No points inside the triangle and it is convex
+}
+
+void Context::draw_inconvex_polygon(Vec2f const* points, size_t count)
+{
+    std::vector<uint16_t> triangles;
+    std::vector<uint16_t> indexes;
+    indexes.resize(count);
+    for(size_t i=0; i<count; i++) {
+        indexes[i] = i;
+    }
     std::vector<float> data;
+    int removed = 0;
+    double sum = 0;
+
+    for(unsigned i=0; i<count-1; i++)
+    {
+        auto &&q = points[i];
+        auto &&p = points[i+1];
+        sum += (p.x - q.x) * (p.y + q.y);
+    }
+    {
+        auto&& q = points[count - 1];
+        auto&& p = points[0];
+        sum += (p.x - q.x) * (p.y + q.y);
+    }
+
+    if (sum > 0) { return; }
+
     for(unsigned i=0; i<count; i++) {
+
         auto&& p = to_screen(points[i]);
         data.push_back(p.x);
         data.push_back(p.y);
+    }
+    count -= removed;
+    while (indexes.size() > 3) {
+        bool ok = false;
+        for (size_t j = 0; j < indexes.size(); ++j) {
+            auto i0 = indexes[j];
+            auto i1 = indexes[(j + 1) % count];
+            auto i2 = indexes[(j + 2) % count];
+            auto&& a = points[i0];
+            auto&& b = points[i1];
+            auto&& c = points[i2];
+
+            if (is_ear(a, b, c, points, count)) {
+                triangles.push_back(i0);
+                triangles.push_back(i1);
+                triangles.push_back(i2);
+                // Remove the vertex 'b' from the list
+                indexes.erase(indexes.begin() + (j + 1) % count);
+                ok = true;
+                break;
+            }
+        }
+        if (!ok) {
+            triangles.push_back(indexes[0]);
+            triangles.push_back(indexes[1]);
+            triangles.push_back(indexes[2]);
+            indexes.erase(indexes.begin());
+            //fprintf(stderr, "BROKEN POLYGON\n");
+            //for (size_t j = 0; j < indexes.size(); ++j) {
+            //    auto&& p = points[indexes[j]];
+            //    fprintf(stderr, "X: %.3f Y: %.3f\n", p.x, p.y);
+            //}
+            //break;
+        }
+    }
+    triangles.push_back(indexes[0]);
+    triangles.push_back(indexes[1]);
+    triangles.push_back(indexes[2]);
+    draw_indexed(data, triangles, gl::Primitive::Triangles);
+}
+
+void Context::draw_polygon(Vec2f const* points, size_t count)
+{
+    std::vector<float> data;
+    data.resize(count*2);
+    for(unsigned i=0; i<count; i++) {
+        auto&& p = to_screen(points[i]);
+        data[(count-i-1)*2] = p.x;
+        data[(count-i-1)*2+1] = p.y;
     }
 
     glEnable(GL_CULL_FACE);
@@ -267,16 +477,16 @@ void Context::clear(const gl::Color& col) const
 void Context::plot(Vec2f point, gl::Color col)
 {
     auto p = to_screen(point);
-    points.push_back(p.x);
-    points.push_back(p.y);
-    points.push_back(col.red);
-    points.push_back(col.green);
-    points.push_back(col.blue);
-    points.push_back(col.alpha);
+    point_cache.push_back(p.x);
+    point_cache.push_back(p.y);
+    point_cache.push_back(col.red);
+    point_cache.push_back(col.green);
+    point_cache.push_back(col.blue);
+    point_cache.push_back(col.alpha);
 
-    if (points.size() > 32000) {
+    if (point_cache.size() > 32000) {
         draw_points();
-        points.clear();
+        point_cache.clear();
     }
 }
 
@@ -292,22 +502,22 @@ void Context::draw_points()
     auto cola = colored.getAttribute("in_color");
     pos.enable();
     cola.enable();
-    gl::ArrayBuffer<GL_STREAM_DRAW> vbo{points};
+    gl::ArrayBuffer<GL_STREAM_DRAW> vbo{point_cache};
     vbo.bind();
     gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float,
                           6 * sizeof(GLfloat), 0);
     gl::vertexAttrib(cola, gl::Size<4>{}, gl::Type::Float,
                           6 * sizeof(GLfloat), 8);
-    int len = static_cast<int>(points.size()) / 6;
+    int len = static_cast<int>(point_cache.size()) / 6;
     gl::drawArrays(gl::Primitive::Points, 0, len);
     pos.disable();
     cola.disable();
 }
 void Context::flush()
 {
-    if (!points.empty()) {
+    if (!point_cache.empty()) {
         draw_points();
-        points.clear();
+        point_cache.clear();
     }
     flush_pixels();
 }

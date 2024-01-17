@@ -48,6 +48,16 @@ template <typename T> struct Vec2
         return {static_cast<double>(x), static_cast<double>(y)};
     }
 
+
+    Vec2 ceil() const
+    {
+        return { std::ceil(x), std::ceil(y) };
+    }
+    Vec2 round() const
+    {
+        return { std::round(x), std::round(y) };
+    }
+
     // compare to low/hi bounds. Return -1 or 1 depending on if it is inside
     // or outside
     Vec2 clip(Vec2 low, Vec2 hi) const

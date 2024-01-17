@@ -132,6 +132,7 @@ enum class Primitive
     Triangles = GL_TRIANGLES,
     Lines = GL_LINES,
     LineLoop = GL_LINE_LOOP,
+    LineStrip = GL_LINE_STRIP,
     Points = GL_POINTS,
 };
 

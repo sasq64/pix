@@ -37,12 +37,19 @@ static std::vector<uint8_t> read_file(fs::path name)
     return read_all<std::vector<uint8_t>>(jpg_file);
 }
 
+std::vector<Vec2f> star
+{
+    {500.0, 250.0}, {351.13, 323.47}, {327.25, 487.76}, {211.37, 368.88},
+    {47.75, 396.95}, {125.0, 250.0}, {47.75, 103.05}, {211.37, 131.12},
+    {327.25, 12.24}, { 351.13, 176.53 }
+};
+
 int main()
 {
     auto sys = create_glfw_system();
 
-    int cols = 40;
-    int rows = 25;
+    int cols = 60;
+    int rows = 45;
 
     auto screen = sys->init_screen({
         .screen = ScreenType::Window,
@@ -72,12 +79,29 @@ int main()
         }
     }
 
-    while(true) {
-        if(!sys->run_loop()) { break; }
+   // while(true) {
+        //if(!sys->run_loop()) { break; }
         //context-set_target();
-        context->blit(bg,  {0,0}, Vec2f{bg.tex->size()});
-        console->render();
-        screen->swap();
-    }
+        context->clear(0x000000);
+        //context->blit(bg,  {0,0}, Vec2f{bg.tex->size()});
+        //console->render();
+        std::vector<Vec2f> points {
+            {100, 100},
+            {900, 200},
+            {700, 500},
+            {200, 400}
+        };
+        context->set_color(gl::Color(0xff0000ff));
+        context->draw_inconvex_polygon(star.data(), star.size());
 
+        context->set_color(gl::Color(0xffff00ff));
+        for(auto&& p : star) {
+            context->line(p);
+        }
+        context->line(star[0]);
+        //context->filled_rect({10, 10}, {100,100});
+        screen->swap();
+   // }
+
+    while(sys->run_loop()) {}
 }
