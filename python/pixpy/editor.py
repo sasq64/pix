@@ -95,15 +95,12 @@ class TextEdit:
     def handle_key(self, key: int, mods: int):
 
         k = key | CMD if mods & 8 != 0 else key
-        print(k)
         if k in self.moves:
-            print("FOUND")
             (x,y) = self.moves[k]()
             self.xpos = x
             if self.ypos != y :
                 self.goto_line(y)
         elif mods & 2 != 0: 
-            print("CTRL + " + str(key))
             if key == ord('k'):
                 self.line[self.xpos:] = []
             elif key == ord('d'):
@@ -187,7 +184,6 @@ class TextEdit:
     def update(self, events: List[pix.event.AnyEvent]):
         for e in events:
             if isinstance(e, pix.event.Text):
-                print(e.text)
                 self.line.insert(self.xpos, e.text)
                 self.xpos += len(e.text)
             if isinstance(e, pix.event.Key):
@@ -222,7 +218,7 @@ class TextEdit:
 
 def main():
     screen = pix.open_display(width=60 * 16, height=50 * 16)
-    edit = TextEdit(rows = 50, cols = 120)
+    edit = TextEdit(rows = 50//2, cols = 120//2)
     while pix.run_loop():
         edit.update(pix.all_events())
         edit.render(screen.context)
