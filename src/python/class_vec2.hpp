@@ -110,8 +110,9 @@ inline void add_vec2_class(py::module_& mod)
                  "Get the angle between the vector and (1,0).")
             .def("cossin", &Vec2f::cossin)
             .def_readonly_static("ONE", &vec2_one, "Constant (1,1)")
-            .def_readonly_static("ZERO", &vec2_zero, "Constant (0,0)");
-
+            .def_readonly_static("ZERO", &vec2_zero, "Constant (0,0)")
+            .def("inside_polygon", &Vec2f::inside_polygon, py::arg("points"),
+                     "Check if the `point` is inside the polygon formed by `points`.");
     vd.doc() = "Represents an floating pont coordinate or size";
 
     vi.def("__len__", &Vec2i::len)

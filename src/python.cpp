@@ -210,7 +210,8 @@ PYBIND11_MODULE(_pixpy, mod)
             "Create an _Image_ from a png file on disk.");
     mod.def("save_png", &save_png, "image"_a, "file_name"_a,
             "Save an _Image_ to disk");
-    mod.def("blend", &color::blend, "color0"_a, "color1"_a, "t"_a);
+    mod.def("blend_color", &color::blend_color, "color0"_a, "color1"_a, "t"_a);
+    mod.def("add_color", &color::add_color, "color0"_a, "color1"_a);
     mod.def("rgba", &color::rgba, "red"_a, "green"_a, "blue"_a, "alpha"_a,
             "Combine four color components into a color.");
     mod.def("load_font", &load_font, "name"_a, "size"_a = 0, "Load a TTF font.");

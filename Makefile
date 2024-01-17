@@ -18,11 +18,12 @@ go:
 
 PYI0 = python/pixpy/__init__.pyi
 
-stubs:
+stubs: all 
 	find python -name \*.pyi -exec rm {} \;
 	PYTHONPATH=python pybind11-stubgen pixpy
 	cp -a stubs/pixpy/_pixpy/* python/pixpy/
 	python3.12 ./stubfix.py
+	rm -rf stubs
 
 	# echo 'from typing import Union, Tuple' | cat - $(PYI0) > temp && mv temp $(PYI0)
 	# gsed -i 's/os.PathLike/str/g' $(PYI0)

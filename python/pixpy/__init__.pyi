@@ -8,7 +8,7 @@ import typing
 from . import color
 from . import event
 from . import key
-__all__ = ['Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'blend', 'blend_color', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_loop', 'save_png', 'was_pressed', 'was_released']
+__all__ = ['Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'blend_color', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_loop', 'save_png', 'was_pressed', 'was_released']
 class Console:
     @typing.overload
     def __init__(self, cols: int = 80, rows: int = 50, font_file: str = '', tile_size: Union[Float2, Int2, Tuple[float, float]] = ..., font_size: int = 16) -> None:
@@ -318,6 +318,10 @@ class Float2:
         ...
     def floor(self) -> Float2:
         ...
+    def inside_polygon(self, points: list[Float2]) -> bool:
+        """
+        Check if the `point` is inside the polygon formed by `points`.
+        """
     def mag(self) -> float:
         """
         Get magnitude (length) of vector
@@ -798,8 +802,6 @@ def all_events() -> list[event.NoEvent | event.Key | event.Move | event.Click | 
     """
     Return a list of all pending events.
     """
-def blend(color0: int, color1: int, t: float) -> int:
-    ...
 def blend_color(color0: int, color1: int, t: float) -> int:
     ...
 def get_display() -> Screen:
