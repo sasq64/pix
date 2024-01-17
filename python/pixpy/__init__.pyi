@@ -8,7 +8,8 @@ import typing
 from . import color
 from . import event
 from . import key
-__all__ = ['Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'blend', 'blend_color', 'color', 'event', 'get_display', 'get_pointer', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_loop', 'save_png', 'was_pressed']
+__all__ = ['Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'blend_color', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_loop', 'save_png', 'was_pressed', 'was_released']
+
 class Console:
     @typing.overload
     def __init__(self, cols: int = 80, rows: int = 50, font_file: str = '', tile_size: Union[Float2, Int2, Tuple[float, float]] = ..., font_size: int = 16) -> None:
@@ -151,6 +152,10 @@ class Context:
         """
         Draw a line from the end of the last line to the given position.
         """
+    def lines(self, points: list[Float2]) -> None:
+        """
+        Draw a line strip from all the given points.
+        """
     @typing.overload
     def plot(self, center: Union[Float2, Int2, Tuple[float, float]], color: int) -> None:
         """
@@ -161,9 +166,9 @@ class Context:
         """
         Draw `n` points given by the array like objects. `points` should n*2 floats and `colors` should contain `n` unsigned ints.
         """
-    def polygon(self, points: list[Float2]) -> None:
+    def polygon(self, points: list[Float2], convex: bool = False) -> None:
         """
-        Draw a convex polygon.
+        Draw a filled polygon.
         """
     def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
@@ -238,7 +243,11 @@ class Float2:
     @typing.overload
     def __floordiv__(self, arg0: float) -> Float2:
         ...
+    def __ge__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> bool:
+        ...
     def __getitem__(self, arg0: int) -> float:
+        ...
+    def __gt__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> bool:
         ...
     @typing.overload
     def __init__(self, x: int = 0, y: int = 0) -> None:
@@ -257,7 +266,11 @@ class Float2:
         ...
     def __iter__(self) -> typing.Iterator[float]:
         ...
+    def __le__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> bool:
+        ...
     def __len__(self) -> int:
+        ...
+    def __lt__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> bool:
         ...
     @typing.overload
     def __mul__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
@@ -294,6 +307,8 @@ class Float2:
         """
         Get the angle between the vector and (1,0).
         """
+    def ceil(self) -> Float2:
+        ...
     def clamp(self, low: Union[Float2, Int2, Tuple[float, float]], high: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
         """
         Separately clamp the x and y component between the corresponding components in the given arguments.
@@ -302,6 +317,12 @@ class Float2:
         ...
     def cossin(self) -> Float2:
         ...
+    def floor(self) -> Float2:
+        ...
+    def inside_polygon(self, points: list[Float2]) -> bool:
+        """
+        Check if the `point` is inside the polygon formed by `points`.
+        """
     def mag(self) -> float:
         """
         Get magnitude (length) of vector
@@ -315,6 +336,8 @@ class Float2:
         Get the normalized vector.
         """
     def random(self) -> Float2:
+        ...
+    def round(self) -> Float2:
         ...
     def sign(self) -> Float2:
         ...
@@ -406,6 +429,10 @@ class Image:
         """
         Draw a line from the end of the last line to the given position.
         """
+    def lines(self, points: list[Float2]) -> None:
+        """
+        Draw a line strip from all the given points.
+        """
     @typing.overload
     def plot(self, center: Union[Float2, Int2, Tuple[float, float]], color: int) -> None:
         """
@@ -416,9 +443,9 @@ class Image:
         """
         Draw `n` points given by the array like objects. `points` should n*2 floats and `colors` should contain `n` unsigned ints.
         """
-    def polygon(self, points: list[Float2]) -> None:
+    def polygon(self, points: list[Float2], convex: bool = False) -> None:
         """
-        Draw a convex polygon.
+        Draw a filled polygon.
         """
     def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
@@ -513,7 +540,11 @@ class Int2:
     @typing.overload
     def __floordiv__(self, arg0: float) -> Float2:
         ...
+    def __ge__(self, arg0: Union[Int2, Tuple[int, int]]) -> bool:
+        ...
     def __getitem__(self, arg0: int) -> int:
+        ...
+    def __gt__(self, arg0: Union[Int2, Tuple[int, int]]) -> bool:
         ...
     @typing.overload
     def __init__(self, x: int = 0, y: int = 0) -> None:
@@ -532,7 +563,11 @@ class Int2:
         ...
     def __iter__(self) -> typing.Iterator[int]:
         ...
+    def __le__(self, arg0: Union[Int2, Tuple[int, int]]) -> bool:
+        ...
     def __len__(self) -> int:
+        ...
+    def __lt__(self, arg0: Union[Int2, Tuple[int, int]]) -> bool:
         ...
     @typing.overload
     def __mul__(self, arg0: Union[Int2, Tuple[int, int]]) -> Int2:
@@ -631,6 +666,10 @@ class Screen:
         """
         Draw a line from the end of the last line to the given position.
         """
+    def lines(self, points: list[Float2]) -> None:
+        """
+        Draw a line strip from all the given points.
+        """
     @typing.overload
     def plot(self, center: Union[Float2, Int2, Tuple[float, float]], color: int) -> None:
         """
@@ -641,9 +680,9 @@ class Screen:
         """
         Draw `n` points given by the array like objects. `points` should n*2 floats and `colors` should contain `n` unsigned ints.
         """
-    def polygon(self, points: list[Float2]) -> None:
+    def polygon(self, points: list[Float2], convex: bool = False) -> None:
         """
-        Draw a convex polygon.
+        Draw a filled polygon.
         """
     def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
@@ -764,7 +803,7 @@ def all_events() -> list[event.NoEvent | event.Key | event.Move | event.Click | 
     """
     Return a list of all pending events.
     """
-def blend(color0: int, color1: int, t: float) -> int:
+def blend_color(color0: int, color1: int, t: float) -> int:
     ...
 def blend_color(color0: int, color1: int, t: float) -> int:
     ...
@@ -774,13 +813,17 @@ def get_pointer() -> Float2:
     """
     Get the xy coordinate of the mouse pointer (in screen space).
     """
+def inside_polygon(points: list[Float2], point: Union[Float2, Int2, Tuple[float, float]]) -> bool:
+    """
+    Check if the `point` is inside the polygon formed by `points`.
+    """
 def is_pressed(key: int | str) -> bool:
     """
     Returns _True_ if the keyboard or mouse key is held down.
     """
 def load_font(name: str, size: int = 0) -> Font:
     """
-    Load a TTF font
+    Load a TTF font.
     """
 def load_png(file_name: str) -> Image:
     """
@@ -811,6 +854,10 @@ def save_png(image: Image, file_name: str) -> None:
     Save an _Image_ to disk
     """
 def was_pressed(key: int | str) -> bool:
+    """
+    Returns _True_ if the keyboard or mouse key was pressed this loop. `run_loop()` refreshes these states.
+    """
+def was_released(key: int | str) -> bool:
     """
     Returns _True_ if the keyboard or mouse key was pressed this loop. `run_loop()` refreshes these states.
     """

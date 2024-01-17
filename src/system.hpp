@@ -232,6 +232,10 @@ public:
     {
         return false;
     }
+    virtual bool was_released(uint32_t /*code*/, int /*device*/ = -1)
+    {
+        return false;
+    }
 
     virtual std::pair<float, float> get_pointer() { return {-1, -1}; }
 };

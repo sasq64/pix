@@ -56,6 +56,10 @@ inline void add_vec2_class(py::module_& mod)
                  [](const Vec2f& a, Vec2f const& b) { return a == b; })
             .def("__ne__",
                  [](const Vec2f& a, Vec2f const& b) { return a != b; })
+            .def("__lt__", [](const Vec2f& a, Vec2f const& b) { return a.x < b.x && a.y < b.y; })
+            .def("__le__", [](const Vec2f& a, Vec2f const& b) { return a.x <= b.x && a.y <= b.y; })
+            .def("__gt__", [](const Vec2f& a, Vec2f const& b) { return a.x > b.x && a.y > b.y; })
+            .def("__ge__", [](const Vec2f& a, Vec2f const& b) { return a.x >= b.x && a.y >= b.y; })
             .def("__getitem__",
                  [](Vec2f const& v, size_t i) {
                      if (i > 1) { throw pybind11::index_error(); }
@@ -96,6 +100,9 @@ inline void add_vec2_class(py::module_& mod)
             .def("__sub__", &Vec2f::subs)
             .def_static("from_angle", &Vec2f::from_angle, "From angle")
             .def("clip", &Vec2f::clip, py::arg("low"), py::arg("high"))
+            .def("floor", &Vec2f::floor)
+            .def("ceil", &Vec2f::ceil)
+            .def("round", &Vec2f::round)
             .def("mag", &Vec2f::mag, "Get magnitude (length) of vector")
             .def("mag2", &Vec2f::mag2, "Get the squared magnitude")
             .def("norm", &Vec2f::norm, "Get the normalized vector.")
@@ -103,8 +110,9 @@ inline void add_vec2_class(py::module_& mod)
                  "Get the angle between the vector and (1,0).")
             .def("cossin", &Vec2f::cossin)
             .def_readonly_static("ONE", &vec2_one, "Constant (1,1)")
-            .def_readonly_static("ZERO", &vec2_zero, "Constant (0,0)");
-
+            .def_readonly_static("ZERO", &vec2_zero, "Constant (0,0)")
+            .def("inside_polygon", &Vec2f::inside_polygon, py::arg("points"),
+                     "Check if the `point` is inside the polygon formed by `points`.");
     vd.doc() = "Represents an floating pont coordinate or size";
 
     vi.def("__len__", &Vec2i::len)
@@ -125,6 +133,10 @@ inline void add_vec2_class(py::module_& mod)
              })
         .def("__eq__", [](const Vec2i& a, Vec2i const& b) { return a == b; })
         .def("__ne__", [](const Vec2i& a, Vec2i const& b) { return a != b; })
+        .def("__lt__", [](const Vec2i& a, Vec2i const& b) { return a.x < b.x && a.y < b.y; })
+        .def("__le__", [](const Vec2i& a, Vec2i const& b) { return a.x <= b.x && a.y <= b.y; })
+        .def("__gt__", [](const Vec2i& a, Vec2i const& b) { return a.x > b.x && a.y > b.y; })
+        .def("__ge__", [](const Vec2i& a, Vec2i const& b) { return a.x >= b.x && a.y >= b.y; })
         .def("__getitem__",
              [](Vec2i const& v, size_t i) {
                  if (i > 1) { throw pybind11::index_error(); }

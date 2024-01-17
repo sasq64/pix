@@ -48,6 +48,16 @@ template <typename T> struct Vec2
         return {static_cast<double>(x), static_cast<double>(y)};
     }
 
+
+    Vec2 ceil() const
+    {
+        return { std::ceil(x), std::ceil(y) };
+    }
+    Vec2 round() const
+    {
+        return { std::round(x), std::round(y) };
+    }
+
     // compare to low/hi bounds. Return -1 or 1 depending on if it is inside
     // or outside
     Vec2 clip(Vec2 low, Vec2 hi) const
@@ -208,6 +218,80 @@ template <typename T> struct Vec2
     constexpr static inline Vec2 from_angle(double a)
     {
         return {cos(a), sin(a)};
+    }
+
+    static inline bool instersects(Vec2 v11, Vec2 v12, Vec2 v21, Vec2 v22)
+    {
+        double d1, d2;
+        double a1, a2, b1, b2, c1, c2;
+
+        // Convert vector 1 to a line (line 1) of infinite length.
+        // We want the line in linear equation standard form: A*x + B*y + C = 0
+        // See: http://en.wikipedia.org/wiki/Linear_equation
+        a1 = v12.y - v11.y;
+        b1 = v11.x - v12.x;
+        c1 = (v12.x * v11.y) - (v11.x * v12.y);
+
+        // Every point (x,y), that solves the equation above, is on the line,
+        // every point that does not solve it, is not. The equation will have a
+        // positive result if it is on one side of the line and a negative one
+        // if is on the other side of it. We insert (x1,y1) and (x2,y2) of vector
+        // 2 into the equation above.
+        d1 = (a1 * v21.x) + (b1 * v21.y) + c1;
+        d2 = (a1 * v22.x) + (b1 * v22.y) + c1;
+
+        // If d1 and d2 both have the same sign, they are both on the same side
+        // of our line 1 and in that case no intersection is possible. Careful,
+        // 0 is a special case, that's why we don't test ">=" and "<=",
+        // but "<" and ">".
+        if (d1 > 0 && d2 > 0) return false;
+        if (d1 < 0 && d2 < 0) return false;
+
+        // The fact that vector 2 intersected the infinite line 1 above doesn't
+        // mean it also intersects the vector 1. Vector 1 is only a subset of that
+        // infinite line 1, so it may have intersected that line before the vector
+        // started or after it ended. To know for sure, we have to repeat the
+        // the same test the other way round. We start by calculating the
+        // infinite line 2 in linear equation standard form.
+        a2 = v22.y - v21.y;
+        b2 = v21.x - v22.x;
+        c2 = (v22.x * v21.y) - (v21.x * v22.y);
+
+        // Calculate d1 and d2 again, this time using points of vector 1.
+        d1 = (a2 * v11.x) + (b2 * v11.y) + c2;
+        d2 = (a2 * v12.x) + (b2 * v12.y) + c2;
+
+        // Again, if both have the same sign (and neither one is 0),
+        // no intersection is possible.
+        if (d1 > 0 && d2 > 0) return false;
+        if (d1 < 0 && d2 < 0) return false;
+
+        // If we get here, only two possibilities are left. Either the two
+        // vectors intersect in exactly one point or they are collinear, which
+        // means they intersect in any number of points from zero to infinite.
+        //if ((a1 * b2) - (a2 * b1) == 0.0f) return COLLINEAR;
+
+        // If they are not collinear, they must intersect in exactly one point.
+        return true;
+    }
+
+    inline bool inside_polygon(std::vector<Vec2> const& points) {
+        Vec2 s = *this + Vec2{10000, 0};
+        int count = 0;
+        for(size_t i=0; i<points.size()-1; i++) {
+
+            auto&& a = points[i];
+            auto&& b = points[i+1];
+            if (instersects(*this, s, a, b)) {
+                count++;
+            }
+        }
+        auto&& a = points[points.size()-1];
+        auto&& b = points[0];
+        if (instersects(*this, s, a, b)) {
+            count++;
+        }
+        return (count & 1) == 1;
     }
 
     std::string repr()

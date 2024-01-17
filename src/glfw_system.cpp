@@ -161,6 +161,7 @@ class GLFWSystem : public System
     static inline GLFWSystem* system = nullptr;
 
     std::unordered_set<uint32_t> pressed;
+    std::unordered_set<uint32_t> released;
     GLFWwindow* window = nullptr;
 
 public:
@@ -274,6 +275,8 @@ public:
             event_queue.emplace_back(ClickEvent{static_cast<float>(x),
                                                 static_cast<float>(y), button,
                                                 static_cast<uint32_t>(mods)});
+        }  else {
+            released.insert(static_cast<uint32_t>(Key::LEFT_MOUSE) + button);
         }
     }
     std::pair<float, float> get_pointer() override
@@ -304,6 +307,8 @@ public:
                 event_queue.emplace_back(
                     KeyEvent{c, static_cast<uint32_t>(mods), 0});
                 pressed.insert(c);
+            } else {
+                released.insert(c);
             }
         } else {
             auto it = glfw_map.find(key);
@@ -313,6 +318,8 @@ public:
                     pressed.insert(k32);
                     event_queue.emplace_back(
                         KeyEvent{k32, static_cast<uint32_t>(mods), 0});
+                } else {
+                    released.insert(k32);
                 }
             }
         }
@@ -353,6 +360,15 @@ public:
         return pressed.contains(code);
     }
 
+    bool was_released(uint32_t code, int device = -1) override
+    {
+        if (!loop_called) {
+            throw system_exception(
+                "run_loop() must be called before reading events");
+        }
+        return released.contains(code);
+    }
+
     std::deque<AnyEvent> internal_all_events() override
     {
         if (!swapped) {
@@ -362,6 +378,7 @@ public:
         loop_called = true;
         //event_queue.clear();
         pressed.clear();
+        released.clear();
         glfwPollEvents();
         if (new_size) {
             auto w = new_size->first;

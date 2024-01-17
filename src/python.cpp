@@ -122,10 +122,13 @@ bool is_pressed(int key)
 {
     return m.sys->is_pressed(key);
 }
-
 bool was_pressed(int key)
 {
     return m.sys->was_pressed(key);
+}
+bool was_released(int key)
+{
+    return m.sys->was_released(key);
 }
 
 PYBIND11_MODULE(_pixpy, mod)
@@ -191,6 +194,14 @@ PYBIND11_MODULE(_pixpy, mod)
         "Returns _True_ if the keyboard or mouse key was pressed this loop. "
         "`run_loop()` refreshes these states.");
     mod.def(
+        "was_released",
+        [](std::variant<int, char32_t> key) {
+          return std::visit(&was_released, key);
+        },
+        "key"_a,
+        "Returns _True_ if the keyboard or mouse key was pressed this loop. "
+        "`run_loop()` refreshes these states.");
+    mod.def(
         "get_pointer", [] { return Vec2f{m.sys->get_pointer()}; },
         "Get the xy coordinate of the mouse pointer (in screen space).");
     mod.def(
@@ -200,10 +211,30 @@ PYBIND11_MODULE(_pixpy, mod)
             "Create an _Image_ from a png file on disk.");
     mod.def("save_png", &save_png, "image"_a, "file_name"_a,
             "Save an _Image_ to disk");
-    mod.def("blend", &color::blend_color, "color0"_a, "color1"_a, "t"_a);
     mod.def("blend_color", &color::blend_color, "color0"_a, "color1"_a, "t"_a);
     mod.def("add_color", &color::add_color, "color0"_a, "color1"_a);
     mod.def("rgba", &color::rgba, "red"_a, "green"_a, "blue"_a, "alpha"_a,
             "Combine four color components into a color.");
-    mod.def("load_font", &load_font, "name"_a, "size"_a = 0, "Load a TTF font");
+    mod.def("load_font", &load_font, "name"_a, "size"_a = 0, "Load a TTF font.");
+    mod.def(
+        "inside_polygon",
+        [](std::vector<Vec2f> const& points, Vec2f point) {
+            Vec2f s = point + Vec2f{10000, 0};
+            int count = 0;
+            for(size_t i=0; i<points.size()-1; i++) {
+
+                auto&& a = points[i];
+                auto&& b = points[i+1];
+                if (pix::instersects(point, s, a, b)) {
+                    count++;
+                }
+            }
+            auto&& a = points[points.size()-1];
+            auto&& b = points[0];
+            if (pix::instersects(point, s, a, b)) {
+                count++;
+            }
+            return (count & 1) == 1;
+        },
+        "points"_a, "point"_a, "Check if the `point` is inside the polygon formed by `points`.");
 }
