@@ -17,7 +17,7 @@ public:
     explicit pix_exception(std::string m = "pix exception") : msg(std::move(m))
     {
     }
-    const char* what() const noexcept override { return msg.c_str(); }
+    [[nodiscard]] const char* what() const noexcept override { return msg.c_str(); }
 
 private:
     std::string msg;

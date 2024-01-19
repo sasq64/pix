@@ -20,8 +20,34 @@ static std::string to_upper(std::string const& s)
     return target;
 }
 
+struct Color
+{
+    float r;
+    float g;
+    float b;
+    float a;
+    Color(float rr, float gg, float bb, float aa)
+    :r{rr}, g{gg}, b{bb}, a{aa} { }
+
+    Color(uint32_t rgba)
+    {
+        r = (rgba >> 24) / 255.0f;
+        g = ((rgba >> 16) & 0xff) / 255.0f;
+        b = ((rgba >> 8) & 0xff) / 255.0f;
+        a = (rgba & 0xff) / 255.0f;
+    }
+};
+
+
 inline void add_color_module(py::module_ const& mod)
 {
+    using namespace pybind11::literals;
+
+    py::class_<Color>(mod, "Color")
+        .def(py::init<float, float, float, float>(), "r"_a, "g"_a, "b"_a, "a"_a = 1.0)
+        .def(py::init<uint32_t>(), "rgba"_a);
+
+
 #define COL(x) mod.attr(to_upper(#x).c_str()) = static_cast<uint32_t>(color::x)
     COL(black);
     COL(white);

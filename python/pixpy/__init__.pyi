@@ -8,8 +8,7 @@ import typing
 from . import color
 from . import event
 from . import key
-__all__ = ['Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'blend_color', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_loop', 'save_png', 'was_pressed', 'was_released']
-
+__all__ = ['Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_loop', 'save_png', 'was_pressed', 'was_released']
 class Console:
     @typing.overload
     def __init__(self, cols: int = 80, rows: int = 50, font_file: str = '', tile_size: Union[Float2, Int2, Tuple[float, float]] = ..., font_size: int = 16) -> None:
@@ -314,9 +313,13 @@ class Float2:
         Separately clamp the x and y component between the corresponding components in the given arguments.
         """
     def clip(self, low: Union[Float2, Int2, Tuple[float, float]], high: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
-        ...
+        """
+        Compare the point against the bounding box defined by low/high. Returns (0,0) if point is inside the box, or a negative or positive distance to the edge if outside.
+        """
     def cossin(self) -> Float2:
-        ...
+        """
+        Returns (cos(x), sin(y)).
+        """
     def floor(self) -> Float2:
         ...
     def inside_polygon(self, points: list[Float2]) -> bool:
@@ -336,7 +339,9 @@ class Float2:
         Get the normalized vector.
         """
     def random(self) -> Float2:
-        ...
+        """
+        Returns Float2(rnd(x), rnd(y)) where rnd(n) returns a random number between 0 and n.
+        """
     def round(self) -> Float2:
         ...
     def sign(self) -> Float2:
@@ -346,10 +351,19 @@ class Float2:
         Convert a `Float2` to an `Int2`
         """
     @property
+    def with_x0(self) -> Float2:
+        ...
+    @property
+    def with_y0(self) -> Float2:
+        ...
+    @property
     def x(self) -> float:
         ...
     @property
     def y(self) -> float:
+        ...
+    @property
+    def yx(self) -> Float2:
         ...
 class Font:
     UNSCII_FONT: typing.ClassVar[Font]  # value = <Font object>
@@ -610,20 +624,33 @@ class Int2:
     def __truediv__(self, arg0: float) -> Float2:
         ...
     def clamp(self, low: Union[Int2, Tuple[int, int]], high: Union[Int2, Tuple[int, int]]) -> Int2:
-        ...
+        """
+        Separately clamp the x and y component between the corresponding components in the given arguments.
+        """
     def random(self) -> Int2:
-        ...
+        """
+        Returns Int2(rnd(x), rnd(y)) where rnd(n) returns a random number between 0 and n.
+        """
     def sign(self) -> Int2:
         ...
     def tof(self) -> Float2:
         """
-        Convert a `Int2` to an `Float2`. Convenience function, since it converts automatically.
+        Convert an `Int2` to a `Float2`
         """
+    @property
+    def with_x0(self) -> Int2:
+        ...
+    @property
+    def with_y0(self) -> Int2:
+        ...
     @property
     def x(self) -> int:
         ...
     @property
     def y(self) -> int:
+        ...
+    @property
+    def yx(self) -> Int2:
         ...
 class Screen:
     clip_size: Union[Int2, Tuple[int, int]]
@@ -805,7 +832,7 @@ def all_events() -> list[event.NoEvent | event.Key | event.Move | event.Click | 
     """
 def blend_color(color0: int, color1: int, t: float) -> int:
     ...
-def blend_color(color0: int, color1: int, t: float) -> int:
+def blend_colors(colors: list[int], t: float) -> int:
     ...
 def get_display() -> Screen:
     ...

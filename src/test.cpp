@@ -8,6 +8,7 @@
 #include "machine.hpp"
 #include "system.hpp"
 #include "vec2.hpp"
+#include "colors.hpp"
 
 #include <array>
 #include <filesystem>
@@ -46,6 +47,14 @@ std::vector<Vec2f> star
 
 int main()
 {
+    std::vector<uint32_t> colors { color::blue, color::red, color::yellow};
+
+    for (int i=0; i<20; i++) {
+        auto d = (float)i / 20;
+        auto col = color::blend_colors(colors, d);
+        printf("%.2f -> %08x\n", d, col);
+    }
+
     auto sys = create_glfw_system();
 
     int cols = 60;

@@ -2,7 +2,6 @@
 
 #include <lodepng.h>
 
-#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <istream>
