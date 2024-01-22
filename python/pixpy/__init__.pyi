@@ -10,15 +10,22 @@ from . import event
 from . import key
 __all__ = ['Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_loop', 'save_png', 'was_pressed', 'was_released']
 class Console:
+    """
+    A console is a 2D grid of tiles that can be rendered.
+    """
     @typing.overload
     def __init__(self, cols: int = 80, rows: int = 50, font_file: str = '', tile_size: Union[Float2, Int2, Tuple[float, float]] = ..., font_size: int = 16) -> None:
         """
-        Create a new Console holding cols*row tiles. Optionally set a backing font. If `tile_size` is not provided it will be derived from the font size.
+        Create a new Console holding `cols`*`rows` tiles.
+
+        `font_file` is the file name of a TTF font to use as backing. If no font is given, the built in _Unscii_ font will be used.
+
+        `tile_size` sets the size in pixels of each tile. If not given, it will be derived from the size of a character in the font with the provided `font_size`
         """
     @typing.overload
     def __init__(self, cols: int = 80, rows: int = 50, tile_set: TileSet) -> None:
         """
-        Create a new Console holding cols*row tiles. Use the provided tile_set.
+        Create a new Console holding `cols`*`row` tiles. Use the provided `tile_set`.
         """
     def cancel_line(self) -> None:
         """
@@ -36,23 +43,31 @@ class Console:
         ...
     def get_image_for(self, tile: int) -> Image:
         """
-        Get the image of a specific tile. Use to render the tile manually, or to copy another image into the tile.
+        Get the image of a specific tile. Use to render the tile manually, or to copy another image into the tile;
+
+        `console.get_image_for(1024).copy_from(some_tile_image)`
         """
     def get_tiles(self) -> list[int]:
         """
-        Get all the tiles and colors as an array of ints. Format is: [tile0, fg0, bg0, tile1, fg1, bg1 ...] etc.
+        Get all the tiles and colors as an array of ints. Format is: `[tile0, fg0, bg0, tile1, fg1, bg1 ...]` etc.
         """
     def put(self, pos: Union[Int2, Tuple[int, int]], tile: int, fg: int | None = None, bg: int | None = None) -> None:
         """
-        Put tile at position, optionally setting a specific foreground and/or background color
+        Put `tile` at given position, optionally setting a specific foreground and/or background color
         """
     def read_line(self) -> None:
         """
-        Enter line edit mode.
+        Puts the console in line edit mode.
+
+        A cursor will be shown and all text events will be captured by the console until `Enter` is pressed. At this point the entire line will be pushed as a `TextEvent`.
         """
     def render(self, context: Context, pos: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
         """
-        Render the console to a context.
+        Render the console using the context. `pos` and `size` are in pixels. If `size` is not given, it defaults to `tile_size*grid_size`.
+
+        To render a full screen console (scaling as needed):
+
+        `console.render(screen.context, size=screen.size)`
         """
     def set_color(self, fg: int, bg: int) -> None:
         """
@@ -75,6 +90,14 @@ class Console:
         Write text to the console at the current cursor position and using the current colors. Will advance cursor position, and wrap if it passes the right border of the console.
         """
     @property
+    def bg_color(self) -> int:
+        """
+        Background color.
+        """
+    @bg_color.setter
+    def bg_color(self, arg0: int) -> None:
+        ...
+    @property
     def cursor_on(self) -> bool:
         """
         Determine if the cursor should be visible.
@@ -91,9 +114,22 @@ class Console:
     def cursor_pos(self, arg1: Union[Int2, Tuple[int, int]]) -> None:
         ...
     @property
+    def fg_color(self) -> int:
+        """
+        Foreground color.
+        """
+    @fg_color.setter
+    def fg_color(self, arg0: int) -> None:
+        ...
+    @property
     def grid_size(self) -> Int2:
         """
         Get number cols and rows
+        """
+    @property
+    def size(self) -> Int2:
+        """
+        Get size of consoles in pixels (tile_size * grid_size)
         """
     @property
     def tile_size(self) -> Int2:

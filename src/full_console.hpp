@@ -10,9 +10,6 @@
 
 class FullConsole
 {
-    uint32_t fg = color::white;
-    uint32_t bg = color::black;
-
     int cols{};
     int rows{};
 
@@ -97,6 +94,9 @@ public:
     }
 
     void render(pix::Context* context, Vec2f xy, Vec2f sz);
+
+    uint32_t fg = color::white;
+    uint32_t bg = color::black;
 
     bool cursor_on = false;
 };
