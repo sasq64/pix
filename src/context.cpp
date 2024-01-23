@@ -173,6 +173,21 @@ void Context::draw(gl::TexRef const& tex, Vec2f center, Vec2f size, float rot)
     draw_textured(vdata, gl::Primitive::TriangleFan);
 }
 
+Context::Context(Context const& other) :
+    fg{other.fg},
+    colored{
+        ProgramCache::get_instance()
+            .get_program<ProgramCache::Colored, ProgramCache::NoTransform>()},
+    textured{ProgramCache::get_instance()
+                 .get_program<ProgramCache::Textured>()}, // NOLINT
+    filled{ProgramCache::get_instance().get_program<>()} // NOLINT
+{
+   target = other.target;
+   offset = other.offset;
+   view_size = other.view_size;
+   target_size = other.target_size;
+}
+
 Context::Context(Vec2f _offset, Vec2f _view_size, Vec2f _target_size, GLuint fb)
     : target{fb}, offset{_offset}, view_size{_view_size}, target_size{_target_size}, fg{color::white},
       colored{
@@ -468,8 +483,7 @@ void Context::draw_textured(const CO& container, gl::Primitive primitive)
 
 void Context::clear(const gl::Color& col) const
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, target);
-    gl::setViewport({target_size.x * vpscale, target_size.y * vpscale});
+    set_target();
     glClearColor(col.red, col.green, col.blue, col.alpha);
     glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -575,4 +589,6 @@ void Context::flush_pixels()
         pixels = nullptr;
     }
 }
+
+
 } // namespace pix

@@ -45,6 +45,10 @@ inline void add_color_module(py::module_ const& mod)
 
     py::class_<Color>(mod, "Color")
         .def(py::init<float, float, float, float>(), "r"_a, "g"_a, "b"_a, "a"_a = 1.0)
+        .def_readonly("r", &Color::r)
+        .def_readonly("g", &Color::g)
+        .def_readonly("b", &Color::b)
+        .def_readonly("a", &Color::a)
         .def(py::init<uint32_t>(), "rgba"_a);
 
 

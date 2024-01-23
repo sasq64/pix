@@ -8,6 +8,18 @@ class Color:
     @typing.overload
     def __init__(self, rgba: int) -> None:
         ...
+    @property
+    def a(self) -> float:
+        ...
+    @property
+    def b(self) -> float:
+        ...
+    @property
+    def g(self) -> float:
+        ...
+    @property
+    def r(self) -> float:
+        ...
 BLACK: int = 255
 BLUE: int = 43775
 BROWN: int = 1715732735

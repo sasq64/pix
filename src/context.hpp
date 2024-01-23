@@ -85,8 +85,11 @@ public:
         return to_screen(Vec2f{x, y});
     }
 
+    Context(Context const& other);
     Context(float w, float h, GLuint fb = 0);
     Context(Vec2f _offset, Vec2f _view_size, Vec2f _target_size, GLuint fb = 0);
+    
+    std::shared_ptr<Context> copy() { return std::make_shared<Context>(*this); };
 
     Vec2f screen_size() const { return target_size; }
 

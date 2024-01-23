@@ -203,5 +203,6 @@ inline auto add_context_class(py::module_ const& mod)
 
     return py::class_<pix::Context, std::shared_ptr<pix::Context>>(mod,
                                                                    "Context")
-        .def(py::init<>(&make_context), "size"_a = Vec2f{0, 0});
+        .def(py::init<>(&make_context), "size"_a = Vec2f{0, 0})
+        .def("copy", &pix::Context::copy);
 }

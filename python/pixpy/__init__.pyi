@@ -157,6 +157,8 @@ class Context:
         """
         Clear the context using given color.
         """
+    def copy(self) -> Context:
+        ...
     @typing.overload
     def draw(self, image: Image, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, center: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] = ..., rot: float = 0) -> None:
         """
