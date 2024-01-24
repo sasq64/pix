@@ -114,6 +114,7 @@ std::pair<int, int> PixConsole::text(std::pair<int, int> pos,
 std::pair<int, int> PixConsole::text(int x, int y, std::u32string const& text32,
                                      uint32_t fg, uint32_t bg)
 {
+    if (x < 0 || x >= cols || y < 0 || y >= rows) { return {x, y}; }
     auto [w0, w1] = make_col(fg, bg);
     for (auto c : text32) {
         if (c == 10) {
@@ -129,6 +130,7 @@ std::pair<int, int> PixConsole::text(int x, int y, std::u32string const& text32,
             x = 0;
             y++;
         }
+        if(y >= rows) { break; }
     }
     uv_dirty = col_dirty = true;
     return {x, y};
@@ -136,6 +138,7 @@ std::pair<int, int> PixConsole::text(int x, int y, std::u32string const& text32,
 
 void PixConsole::put_char(int x, int y, char32_t c)
 {
+    if (x < 0 || x >= cols || y < 0 || y >= rows) { return; }
     uv_dirty = col_dirty = true;
     auto& u = uvdata[x + cols * y];
     u = (u & 0xffff0000) | tile_set->get_offset(c);
@@ -143,6 +146,7 @@ void PixConsole::put_char(int x, int y, char32_t c)
 
 void PixConsole::put(int x, int y, uint32_t fg, uint32_t bg, char32_t c)
 {
+    if (x < 0 || x >= cols || y < 0 || y >= rows) { return; }
     uv_dirty = col_dirty = true;
     auto [w0, w1] = make_col(fg, bg);
     uvdata[x + cols * y] = tile_set->get_offset(c) | w0;
@@ -151,6 +155,7 @@ void PixConsole::put(int x, int y, uint32_t fg, uint32_t bg, char32_t c)
 
 uint32_t PixConsole::get_char(int x, int y)
 {
+    if (x < 0 || x >= cols || y < 0 || y >= rows) { return 0; }
     uint32_t uv = uvdata[x + cols * y] & 0xffff;
     return tile_set->get_char_from_uv(uv);
 }
@@ -186,6 +191,7 @@ void PixConsole::set_tiles(std::vector<uint32_t> const& data)
 
 void PixConsole::put_color(int x, int y, uint32_t fg, uint32_t bg)
 {
+    if (x < 0 || x >= cols || y < 0 || y >= rows) { return; }
     uv_dirty = col_dirty = true;
     auto [w0, w1] = make_col(fg, bg);
     uvdata[x + cols * y] = (uvdata[x + cols * y] & 0xffff) | w0;

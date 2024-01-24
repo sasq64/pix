@@ -148,10 +148,10 @@ gl::TexRef TileSet::get_texture_for_char(char32_t c)
     return tr;
 }
 
-void TileSet::render_chars(pix::Context* context, std::string const& text, Vec2f pos)
+void TileSet::render_chars(pix::Context* context, std::string const& text, Vec2f pos, Vec2f size)
 {
     auto us = utf8::utf8_decode(text);
-    render_tiles(context, (int32_t*)us.data(), us.length(), pos);
+    render_tiles(context, (int32_t*)us.data(), us.length(), pos, size);
 }
 void TileSet::render_chars(pix::Context* context, std::string const& text, std::vector<Vec2f> const& points)
 {
@@ -159,12 +159,11 @@ void TileSet::render_chars(pix::Context* context, std::string const& text, std::
     render_tiles(context, (int32_t*)us.data(), points);
 
 }
-void TileSet::render_tiles(pix::Context* context, int32_t const* tiles, size_t count, Vec2f pos)
+void TileSet::render_tiles(pix::Context* context, int32_t const* tiles, size_t count, Vec2f pos, Vec2f size)
 {
     context->set_target();
 
     tile_texture->bind();
-    auto size = Vec2f(char_width, char_height);
     for(size_t i = 0; i<count; i++) {
         auto c = tiles[i];
         auto img = get_texture_for_char(c);

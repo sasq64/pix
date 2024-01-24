@@ -37,9 +37,9 @@ inline gl::TexRef get_image_for(std::shared_ptr<TileSet> self, int32_t tile)
     return self->get_texture_for_char(tile);
 }
 
-inline void render_chars(std::shared_ptr<TileSet> self, std::shared_ptr<Screen> screen, std::string const& text, Vec2f pos)
+inline void render_chars(std::shared_ptr<TileSet> self, std::shared_ptr<Screen> screen, std::string const& text, Vec2f pos, Vec2f size)
 {
-    self->render_chars(context_from(*screen), text, pos);
+    self->render_chars(context_from(*screen), text, pos, size);
 };
 
 inline void render_chars2(std::shared_ptr<TileSet> self, std::shared_ptr<Screen> screen, std::string const& text, std::vector<Vec2f> points)
@@ -75,7 +75,7 @@ inline void add_tileset_class(py::module_ const& mod)
         .def("get_image_for", &get_image_for,
             "Get the image for a specific tile. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room "
             "for the new tile in the tile texture.")
-        .def("render_text", &render_chars)
+        .def("render_text", &render_chars, "screen"_a, "text"_a, "pos"_a, "size"_a, "Render characters from the TileSet at given `pos` and given `size` (defaults to tile_size)")
         .def("render_text", &render_chars2)
         .def("get_image_for", &TileSet::get_texture_for_char,
              "Get the image for a specific character. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.");
