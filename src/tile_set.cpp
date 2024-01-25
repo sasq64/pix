@@ -162,6 +162,9 @@ void TileSet::render_chars(pix::Context* context, std::string const& text, std::
 void TileSet::render_tiles(pix::Context* context, int32_t const* tiles, size_t count, Vec2f pos, Vec2f size)
 {
     context->set_target();
+    if (size == Vec2f{0,0}) {
+        size = Vec2f(char_width, char_height);
+    }
 
     tile_texture->bind();
     for(size_t i = 0; i<count; i++) {

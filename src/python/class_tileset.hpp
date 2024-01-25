@@ -75,8 +75,8 @@ inline void add_tileset_class(py::module_ const& mod)
         .def("get_image_for", &get_image_for,
             "Get the image for a specific tile. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room "
             "for the new tile in the tile texture.")
-        .def("render_text", &render_chars, "screen"_a, "text"_a, "pos"_a, "size"_a, "Render characters from the TileSet at given `pos` and given `size` (defaults to tile_size)")
-        .def("render_text", &render_chars2)
+        .def("render_text", &render_chars, "screen"_a, "text"_a, "pos"_a, "size"_a = Vec2f{0,0}, "Render characters from the TileSet at given `pos` and given `size` (defaults to tile_size)")
+        .def("render_text", &render_chars2, "screen"_a, "text"_a, "points"_a)
         .def("get_image_for", &TileSet::get_texture_for_char,
              "Get the image for a specific character. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.");
     ts.doc() = "A tileset is a texture split up into tiles for rendering.";

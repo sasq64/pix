@@ -857,12 +857,12 @@ class TileSet:
         Get tileset image
         """
     @typing.overload
-    def render_text(self, screen: Screen, text: str, pos: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
+    def render_text(self, screen: Screen, text: str, pos: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
         """
         Render characters from the TileSet at given `pos` and given `size` (defaults to tile_size)
         """
     @typing.overload
-    def render_text(self, arg0: Screen, arg1: str, arg2: list[Float2]) -> None:
+    def render_text(self, screen: Screen, text: str, points: list[Float2]) -> None:
         ...
 def add_color(color0: int, color1: int) -> int:
     ...
