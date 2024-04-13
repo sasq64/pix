@@ -156,7 +156,7 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
     cls.def(
         "draw",
         [](T& self, FullConsole& con, Vec2f const& xy, Vec2f const& size) {
-            con.render(context_from(self), xy, size);
+            con.render2(context_from(self), xy, size);
         },
         "drawable"_a, "top_left"_a = Vec2f{0, 0}, "size"_a = Vec2f{0, 0});
     cls.def(

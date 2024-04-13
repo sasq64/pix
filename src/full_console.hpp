@@ -93,10 +93,10 @@ public:
         return console->get_texture_for_char(c);
     }
 
-    void render(pix::Context* context, Vec2f xy, Vec2f sz);
+    void render2(pix::Context* context, Vec2f xy, Vec2f sz);
     void render(std::shared_ptr<pix::Context> context, Vec2f xy, Vec2f sz)
     {
-        render(context.get(), xy, sz);
+        render2(context.get(), xy, sz);
     }
 
     uint32_t fg = color::white;

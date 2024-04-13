@@ -128,7 +128,7 @@ void FullConsole::set_color(uint32_t fg_, uint32_t bg_)
     fg = fg_;
     bg = bg_;
 }
-void FullConsole::render(pix::Context* context, Vec2f xy, Vec2f sz)
+void FullConsole::render2(pix::Context* context, Vec2f xy, Vec2f sz)
 {
     if (reading_line) { refresh(); }
 

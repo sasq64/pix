@@ -507,6 +507,10 @@ class Image:
         """
         Write a pixel into the image.
         """
+    def set_texture_filter(self, min: bool, max: bool) -> None:
+        """
+        Set whether the texture should apply linear filtering.
+        """
     @typing.overload
     def split(self, cols: int = -1, rows: int = -1, width: int = 8, height: int = 8) -> list[Image]:
         """
