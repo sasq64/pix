@@ -32,6 +32,13 @@ struct Texture
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 
+    void set_filter(bool min, bool max)
+    {
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, min ? GL_LINEAR : GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, max ? GL_LINEAR : GL_NEAREST);
+    }
+
     template <typename T, size_t N>
     Texture(GLint w, GLint h, std::array<T, N> const& data,
             GLint target_format = GL_RGBA, GLint source_format = -1,
@@ -242,6 +249,11 @@ public:
     TexRef(std::shared_ptr<Texture> const& t, std::array<float, 8> const& u)
         : tex(t), _uvs(u)
     {
+    }
+
+    void set_texture_filter(bool min, bool max)
+    {
+        tex->set_filter(min, max);
     }
 
     const auto& uvs() const { return _uvs; }

@@ -94,6 +94,10 @@ public:
     }
 
     void render(pix::Context* context, Vec2f xy, Vec2f sz);
+    void render(std::shared_ptr<pix::Context> context, Vec2f xy, Vec2f sz)
+    {
+        render(context.get(), xy, sz);
+    }
 
     uint32_t fg = color::white;
     uint32_t bg = color::black;

@@ -6,6 +6,67 @@
 #include <tuple>
 #include <type_traits>
 
+template <typename T> struct V2Iterator
+{
+    T start;
+    T current;
+    T limit;
+
+    using value_type = T;
+
+    V2Iterator(T const& c, T const& l)
+    {
+        start = current = c;
+        limit = l;
+
+    }
+
+    auto operator++()
+    {
+        current.x++;
+        if (current.x == limit.x) {
+            current.y++;
+            if (current.y < limit.y) { current.x = start.x; }
+        }
+        return *this;
+    }
+
+    bool operator==(V2Iterator<T> const& other) const
+    {
+        return other.current == current;
+    }
+
+    bool operator!=(V2Iterator<T> const& other) const
+    {
+        return other.current != current;
+    }
+
+    T operator*() const
+    {
+        return current;
+    }
+
+};
+
+template <typename T> struct Vec2Range
+{
+    T a;
+    T b;
+    Vec2Range(T a_, T b_) : a{a_}, b{b_} {}
+
+    [[nodiscard]] V2Iterator<T> begin() const
+    {
+        return {a, b};
+
+    }
+
+    [[nodiscard]] V2Iterator<T> end() const
+    {
+        return {b, b};
+    }
+
+};
+
 template <typename T> struct Vec2
 {
     T x = 0;
@@ -20,6 +81,22 @@ template <typename T> struct Vec2
     constexpr T& operator[](size_t i) { return i == 0 ? x : y; }
     constexpr T const& operator[](size_t i) const { return i == 0 ? x : y; }
 
+    Vec2Range<Vec2<T>> grid_coordinates() {
+        return Vec2Range<Vec2<T>>(Vec2<T>(0,0), *this);
+    }
+
+
+    [[nodiscard]] V2Iterator<Vec2<T>> begin() const
+    {
+        return {{0,0}, *this};
+
+    }
+
+    [[nodiscard]] V2Iterator<Vec2<T>> end() const
+    {
+        return {*this, *this};
+    }
+
     bool operator==(const Vec2& other) const
     {
         return other.x == x && other.y == y;
@@ -29,7 +106,7 @@ template <typename T> struct Vec2
         return other.x != x || other.y != y;
     };
 
-    constexpr Vec2 clamp(Vec2 low, Vec2 hi) const
+    [[nodiscard]] constexpr Vec2 clamp(Vec2 low, Vec2 hi) const
     {
         return {std::clamp(x, low.x, hi.x), std::clamp(y, low.y, hi.y)};
     }
@@ -49,47 +126,47 @@ template <typename T> struct Vec2
     }
 
 
-    Vec2 ceil() const
+    [[nodiscard]] Vec2 ceil() const
     {
         return { std::ceil(x), std::ceil(y) };
     }
-    Vec2 round() const
+    [[nodiscard]] Vec2 round() const
     {
         return { std::round(x), std::round(y) };
     }
 
     // compare to low/hi bounds. Return -1 or 1 depending on if it is inside
     // or outside
-    Vec2 clip(Vec2 low, Vec2 hi) const
+    [[nodiscard]] Vec2 clip(Vec2 low, Vec2 hi) const
     {
         return {x < low.x ? x - low.x : (x >= hi.x ? x - hi.x : 0.0F),
                 y < low.y ? y - low.y : (y >= hi.y ? y - hi.y : 0.0F)};
     }
 
-    Vec2 cossin() const { return {cos(x), sin(y)}; }
+    [[nodiscard]] Vec2 cossin() const { return {cos(x), sin(y)}; }
 
-    Vec2 sign()
+    [[nodiscard]] Vec2 sign() const
     {
         return {x < 0 ? T(-1) : (x > 0 ? T(1) : T(0)),
                 y < 0 ? T(-1) : (y > 0 ? T(1) : T(0))};
     }
-    T mag() const { return std::sqrt(x * x + y * y); }
-    T mag2() const { return (x * x + y * y); }
+    [[nodiscard]] T mag() const { return std::sqrt(x * x + y * y); }
+    [[nodiscard]] T mag2() const { return (x * x + y * y); }
 
-    Vec2 norm() const
+    [[nodiscard]] Vec2 norm() const
     {
         auto m = mag();
         return {x / m, y / m};
     }
 
-    Vec2 floor() const
+    [[nodiscard]] Vec2 floor() const
     {
         return Vec2{std::floor(x), std::floor(y)};
     }
 
-    float angle() const { return norm().angle_n(); }
+    [[nodiscard]] float angle() const { return norm().angle_n(); }
 
-    float angle_n() const
+    [[nodiscard]] float angle_n() const
     {
         if (x == 0)
             return (y > 0) ? M_PI / 2 : (y == 0) ? 0 : M_PI * 3 / 2;
@@ -107,8 +184,8 @@ template <typename T> struct Vec2
     }
 
     // add
-    constexpr Vec2 add(Vec2 v) const { return {v.x + x, v.y + y}; }
-    constexpr Vec2 operator+(Vec2 v) const { return add(v); }
+    [[nodiscard]] constexpr Vec2 add(Vec2 v) const { return {v.x + x, v.y + y}; }
+    [[nodiscard]] constexpr Vec2 operator+(Vec2 v) const { return add(v); }
 
     constexpr Vec2& iadd(Vec2 v)
     {

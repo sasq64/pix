@@ -7,9 +7,6 @@ endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-include(ExternalProject)
-include(FetchContent)
-
 if (EXISTS /opt/vc)
     set(RASPBERRY_PI 1)
 endif ()
@@ -25,8 +22,6 @@ set(FT_DISABLE_BZIP2 ON CACHE BOOL "")
 set(FT_DISABLE_PNG ON CACHE BOOL "")
 set(FT_DISABLE_HARFBUZZ ON CACHE BOOL "")
 set(FT_DISABLE_BROTLI ON CACHE BOOL "")
-FetchContent_Declare(freetype
-    URL https://download.savannah.gnu.org/releases/freetype/freetype-2.12.1.tar.gz)
 set(FT_DISABLE_ZLIB ON CACHE BOOL "")
 set(FT_DISABLE_BZIP2 ON CACHE BOOL "")
 set(FT_DISABLE_PNG ON CACHE BOOL "")
@@ -35,15 +30,10 @@ set(FT_DISABLE_BROTLI ON CACHE BOOL "")
 
 if (NOT RASPBERRY_PI)
   set(GLFW_BUILD_DOCS OFF CACHE BOOL "")
-  FetchContent_Declare(glfw
-      GIT_REPOSITORY https://github.com/glfw/glfw)
-
-   FetchContent_Populate(glfw)
-   add_subdirectory(${glfw_SOURCE_DIR} ${glfw_BINARY_DIR} EXCLUDE_FROM_ALL)
+   add_subdirectory(external/glfw EXCLUDE_FROM_ALL)
 endif()
 
-FetchContent_Populate(freetype)
-add_subdirectory(${freetype_SOURCE_DIR} ${freetype_BINARY_DIR} EXCLUDE_FROM_ALL)
+add_subdirectory(external/freetype EXCLUDE_FROM_ALL)
 
 #FetchContent_MakeAvailable(glfw freetype)
 add_library(Freetype::Freetype ALIAS freetype)

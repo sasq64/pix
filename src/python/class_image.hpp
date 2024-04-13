@@ -71,6 +71,8 @@ inline auto add_image_class(py::module_ const& mod)
              "Splits the image into as many _width_ * _height_ images as "
              "possible, first going left to right, then top to bottom.")
         .def("split", &split_size, "size"_a)
+        .def("set_texture_filter", &gl::TexRef::set_texture_filter, "min"_a, "max"_a,
+             "Set whether the texture should apply linear filtering.")
         //.def("bind", &gl::TexRef::bind, "unit"_a = 0)
         .def("crop", &crop, "top_left"_a = std::nullopt,
              "size"_a = std::nullopt,
