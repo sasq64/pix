@@ -1,5 +1,7 @@
 ## PIXPY
 
+<img width=256px style="float: right;" src="doc/cube.png"> PIXPY
+
 A graphics library with a python interface.
 Designed for learning and 2D game development.
 
@@ -7,7 +9,7 @@ Designed for learning and 2D game development.
 * Efficient Console/TileSet rendering for tile or text based games
 * Composable Images using only GL textures
 
-### Install
+## Install
 
 ```sh
 pip install pixpy
@@ -19,7 +21,7 @@ For Linux, we need to build from source so dependencies must be installed first;
 sudo apt install libxinerama-dev libxi-dev libxrandr-dev libxcursor-dev
 ```
 
-### The Basics
+## The Basics
 
 The following is a full program that opens a window and draws a circle;
 
@@ -96,7 +98,7 @@ while pix.run_loop():
 ```
 
 
-### _Float2_ and _Int2_
+## _Float2_ and _Int2_
 
 The _Float2_ and _Int2_ classes acts like tuples of 2 elements, except allows
 for basic math operations. They are used to represents points and sizes throughout pixpy.
@@ -105,7 +107,7 @@ The act similar to pythons normal _float_ and _int_, so for instance a true divi
 between two Int2 will always be promoted to a Float2.
 
 
-### Images
+## Images
 
 All images are actually just references into Open GL Textures.This means that it's easy to cheaply manipulate images without doing a lot of copying.
 
@@ -122,7 +124,7 @@ cropped = image.crop(top_left=(10,10), size=image.size-(20,20))
 (*NOTE:* In practice, an image is _"a reference to a GL texture, and 4 pairs of UV coordinates"_.)
 
 
-### The Console
+## The Console
 
 A major part of pix is the _Console_
 
@@ -132,7 +134,7 @@ You can also (re)define the tiles in the console and use it for graphics, such a
 
 The console needs to be drawn to be visible, just like everything else.
 
-#### Text output
+### Text output
 The console starts out with a backing font that lets you write text;
 
 ```python
@@ -144,7 +146,7 @@ con.write('Hello\n')
 screen.draw(con)
 ```
 
-#### Text input
+### Text input
 `console.read_line()` can be used to read lines of text. The result will be posted as a _Text_ event.
 
 ```python
@@ -164,7 +166,7 @@ while pix.run_loop():
     screen.swap()
 ```
 
-#### Graphic tiles
+### Graphic tiles
 
 Tiles can be both text and graphics. We can easily add more tiles to the
 console by copying images into it.
