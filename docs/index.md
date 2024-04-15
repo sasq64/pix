@@ -1,7 +1,5 @@
 ## PIXPY
 
-<img width=256px style="float: right;" src="doc/cube.png"> PIXPY
-
 A graphics library with a python interface.
 Designed for learning and 2D game development.
 
