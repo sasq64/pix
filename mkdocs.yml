@@ -1,4 +1,5 @@
-site_name: My Docs
+site_name: Pixpy
+repo_url: https://github.com/sasq64/pix
 nav:
   - Home: index.md
   - Reference: reference.md
