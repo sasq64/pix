@@ -71,7 +71,7 @@ inline void add_tileset_class(py::module_ const& mod)
              "size will be derived from the font size.")
         .def(py::init<>(&make_tileset2), "tile_size"_a,
              "Create an empty tileset with the given tile size.")
-        .def("get_tileset_image", &TileSet::get_texture, "Get tileset image")
+        .def("get_tileset_image", &TileSet::get_texture, "Get the entire tileset image. Typically used with `save_png()` to check generated tileset.")
         .def("get_image_for", &get_image_for,
             "Get the image for a specific tile. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room "
             "for the new tile in the tile texture.")

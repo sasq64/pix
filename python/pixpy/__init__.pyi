@@ -858,7 +858,7 @@ class TileSet:
         """
     def get_tileset_image(self) -> Image:
         """
-        Get tileset image
+        Get the entire tileset image. Typically used with `save_png()` to check generated tileset.
         """
     @typing.overload
     def render_text(self, screen: Screen, text: str, pos: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
@@ -875,9 +875,13 @@ def all_events() -> list[event.NoEvent | event.Key | event.Move | event.Click | 
     Return a list of all pending events.
     """
 def blend_color(color0: int, color1: int, t: float) -> int:
-    ...
+    """
+    Blend two colors together. `t` should be between 0 and 1.
+    """
 def blend_colors(colors: list[int], t: float) -> int:
-    ...
+    """
+    Get a color from a color range. Works similar to bilinear filtering of an 1D texture.
+    """
 def get_display() -> Screen:
     ...
 def get_pointer() -> Float2:
