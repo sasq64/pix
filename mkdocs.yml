@@ -3,7 +3,6 @@ repo_url: https://github.com/sasq64/pix
 nav:
   - Home: index.md
   - Reference: reference.md
-  - Preview: preview.md
 
 theme:
   name: mkdocs
