@@ -158,7 +158,10 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
         [](T& self, FullConsole& con, Vec2f const& xy, Vec2f const& size) {
             con.render2(context_from(self), xy, size);
         },
-        "drawable"_a, "top_left"_a = Vec2f{0, 0}, "size"_a = Vec2f{0, 0});
+        "drawable"_a, "top_left"_a = Vec2f{0, 0}, "size"_a = Vec2f{0, 0},
+        "Render a console. `top_left` and `size` are in pixels. If `size` is "
+        "not given, it defaults to `tile_size*grid_size`.\n\nTo render a full screen console "
+        "(scaling as needed):\n\n`console.render(screen.context, size=screen.size)`");
     cls.def(
         "clear",
         [](T& self, uint32_t color) { context_from(self)->clear(color); },
@@ -167,6 +170,10 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
         "draw_color", [](T& self) { return context_from(self)->fg.to_rgba(); },
         [](T& self, uint32_t color) { context_from(self)->set_color(color); },
         "Set the draw color.");
+    cls.def_property(
+        "blend_mode", [](T& self) { return context_from(self)->fg.to_rgba(); },
+        [](T& self, uint32_t mode) { context_from(self)->set_blend_mode(mode); },
+        "Set the blend mode.");
     cls.def_property(
         "point_size", [](T& self) { return context_from(self)->point_size; },
         [](T& self, float lw) { context_from(self)->point_size = lw; },

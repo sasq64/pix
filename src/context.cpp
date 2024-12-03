@@ -9,6 +9,12 @@ void Context::set_color(gl::Color const& col)
     fg = col;
 }
 
+void Context::set_blend_mode(uint32_t mode)
+{
+    blend_source = (mode >> 16);
+    blend_dest = mode & 0xffff;
+}
+
 void add_to(std::vector<float>& target, Vec2<float> const& v)
 {
     target.push_back(v.x);
@@ -204,9 +210,9 @@ Context::Context(Vec2f _offset, Vec2f _view_size, Vec2f _target_size, GLuint fb)
 Context::Context(float w, float h, GLuint fb)
     : Context(Vec2f{0, 0}, Vec2f{w, h}, Vec2f{w,h}, fb)
 {
-    static const std::array<float, 16> mat{1, 0, 0, 0, 0, 1, 0, 0,
+    static constexpr std::array<float, 16> mat{1, 0, 0, 0, 0, 1, 0, 0,
                                            0, 0, 1, 0, 0, 0, 0, 1};
-    gl::Color color = 0xffffffff;
+    const gl::Color color = 0xffffffff;
     filled.setUniform("frag_color", color);
     filled.setUniform("in_transform", mat);
     textured.setUniform("frag_color", color);
@@ -252,25 +258,22 @@ void Context::draw_indexed(const CO& container, std::vector<T> indices, gl::Prim
     pos.disable();
 }
 
-bool instersects(Vec2f v11, Vec2f v12, Vec2f v21, Vec2f v22)
+bool intersects(Vec2f v11, Vec2f v12, Vec2f v21, Vec2f v22)
 {
-    double d1, d2;
-    double a1, a2, b1, b2, c1, c2;
-
     // Convert vector 1 to a line (line 1) of infinite length.
     // We want the line in linear equation standard form: A*x + B*y + C = 0
     // See: http://en.wikipedia.org/wiki/Linear_equation
-    a1 = v12.y - v11.y;
-    b1 = v11.x - v12.x;
-    c1 = (v12.x * v11.y) - (v11.x * v12.y);
+    double const a1 = v12.y - v11.y;
+    double const b1 = v11.x - v12.x;
+    double const c1 = (v12.x * v11.y) - (v11.x * v12.y);
 
     // Every point (x,y), that solves the equation above, is on the line,
     // every point that does not solve it, is not. The equation will have a
     // positive result if it is on one side of the line and a negative one
     // if is on the other side of it. We insert (x1,y1) and (x2,y2) of vector
     // 2 into the equation above.
-    d1 = (a1 * v21.x) + (b1 * v21.y) + c1;
-    d2 = (a1 * v22.x) + (b1 * v22.y) + c1;
+    double d1 = (a1 * v21.x) + (b1 * v21.y) + c1;
+    double d2 = (a1 * v22.x) + (b1 * v22.y) + c1;
 
     // If d1 and d2 both have the same sign, they are both on the same side
     // of our line 1 and in that case no intersection is possible. Careful,
@@ -285,9 +288,9 @@ bool instersects(Vec2f v11, Vec2f v12, Vec2f v21, Vec2f v22)
     // started or after it ended. To know for sure, we have to repeat the
     // the same test the other way round. We start by calculating the
     // infinite line 2 in linear equation standard form.
-    a2 = v22.y - v21.y;
-    b2 = v21.x - v22.x;
-    c2 = (v22.x * v21.y) - (v21.x * v22.y);
+    double const a2 = v22.y - v21.y;
+    double const b2 = v21.x - v22.x;
+    double const c2 = (v22.x * v21.y) - (v21.x * v22.y);
 
     // Calculate d1 and d2 again, this time using points of vector 1.
     d1 = (a2 * v11.x) + (b2 * v11.y) + c2;
@@ -455,6 +458,7 @@ void Context::set_target() const
     } else {
         glDisable(GL_SCISSOR_TEST);
     }
+    glBlendFunc(blend_source, blend_dest);
 }
 
 template <typename CO>

@@ -42,16 +42,16 @@ inline gl::TexRef text_to_image(FreetypeFont& font, std::string const& text,
     return gl::TexRef{tex};
 }
 
-inline std::shared_ptr<FreetypeFont> make_font(std::string const& font_name, int font_size)
+inline std::shared_ptr<FreetypeFont> make_font(std::string const& font_name)
 {
-    return std::make_shared<FreetypeFont>(font_name.c_str(), font_size);
+    return std::make_shared<FreetypeFont>(font_name.c_str(), 16);
 }
 
 inline auto add_font_class(py::module_ const& mod)
 {
     using namespace pybind11::literals;
     py::class_<FreetypeFont, std::shared_ptr<FreetypeFont>>(mod, "Font")
-        .def(py::init<>(&make_font), "font_file"_a = "", "font_size"_a = 16,
+        .def(py::init<>(&make_font), "font_file"_a = "",
              "Create a font from a TTF file.")
         .def("make_image", &text_to_image, py::arg("text"), "size"_a,
              "color"_a = 0xffffffff,

@@ -4,6 +4,9 @@ import typing
 import pixpy
 __all__ = ['AnyEvent', 'Click', 'Key', 'Move', 'NoEvent', 'Quit', 'Resize', 'Text']
 class Click:
+    """
+    Event sent when screen was clicked.
+    """
     __match_args__: typing.ClassVar[tuple] = ('pos', 'buttons')
     def __repr__(self) -> str:
         ...
@@ -23,6 +26,9 @@ class Click:
     def y(self) -> float:
         ...
 class Key:
+    """
+    Event sent when key was pressed.
+    """
     __match_args__: typing.ClassVar[tuple] = ('key')
     def __repr__(self) -> str:
         ...
@@ -69,7 +75,7 @@ class Resize:
         ...
 class Text:
     """
-    Event send when text was input into the window.
+    Event sent when text was input into the window.
     """
     __match_args__: typing.ClassVar[tuple] = ('text')
     def __repr__(self) -> str:

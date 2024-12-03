@@ -27,7 +27,7 @@ struct Program
         return *this;
     }
 
-    operator bool() const {
+    explicit operator bool() const {
         return program != 0;
     }
 

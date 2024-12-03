@@ -26,6 +26,9 @@
 #include <filesystem>
 #include <thread>
 
+#include <pybind11/stl.h>
+#include <pybind11/functional.h>
+
 namespace fs = std::filesystem;
 namespace py = pybind11;
 
@@ -35,13 +38,11 @@ namespace {
     Machine m;
 }
 
-Machine& Machine::get_instance()
-{
+Machine &Machine::get_instance() {
     return m;
 }
 
-void init()
-{
+void init() {
     if (m.sys == nullptr) {
 #ifdef RASPBERRY_PI
         m.sys = create_pi_system();
@@ -62,16 +63,18 @@ void init()
     }));
 }
 
-std::shared_ptr<Screen> open_display(int width, int height, bool full_screen)
-{
+std::shared_ptr<Screen> open_display(int width, int height, bool full_screen) {
     if (m.screen != nullptr) {
         return m.screen;
     }
     init();
-    Screen::Settings settings{.screen = full_screen ? ScreenType::Full
-                                                    : ScreenType::Window,
-                              .display_width = width,
-                              .display_height = height};
+    Screen::Settings const settings{
+        .screen = full_screen
+                      ? ScreenType::Full
+                      : ScreenType::Window,
+        .display_width = width,
+        .display_height = height
+    };
 
     m.screen = m.sys->init_screen(settings);
 
@@ -80,15 +83,14 @@ std::shared_ptr<Screen> open_display(int width, int height, bool full_screen)
     m.context = std::make_shared<pix::Context>(realw, realh, 0);
     m.context->vpscale = m.screen->get_scale();
 
-    m.sys->add_listener([](AnyEvent const& e) {
+    m.sys->add_listener([](AnyEvent const &e) {
         if (std::holds_alternative<ResizeEvent>(e)) {
             auto [w, h] = m.screen->get_size();
-            m.context->resize(Vec2f(w,h), m.screen->get_scale());
+            m.context->resize(Vec2f(w, h), m.screen->get_scale());
         }
         if (std::holds_alternative<KeyEvent>(e)) {
             auto ke = std::get<KeyEvent>(e);
-            if (ke.key == 'c' && (ke.mods & 2) != 0)
-            {
+            if (ke.key == 'c' && (ke.mods & 2) != 0) {
                 m.sys->post_event(QuitEvent{});
                 return System::Propagate::Stop;
             }
@@ -99,44 +101,50 @@ std::shared_ptr<Screen> open_display(int width, int height, bool full_screen)
     return m.screen;
 }
 
-std::shared_ptr<Screen> open_display2(Vec2i size, bool full_screen)
-{
+std::shared_ptr<Screen> open_display2(Vec2i size, bool full_screen) {
     return open_display(size.x, size.y, full_screen);
 }
 
-void save_png(gl::TexRef const& tex, fs::path const& file_name)
-{
+void save_png(gl::TexRef const &tex, fs::path const &file_name) {
     auto pixels = tex.read_pixels();
-    pix::Image img{static_cast<int>(tex.width()),
-                   static_cast<int>(tex.height()), pixels.data()};
+    pix::Image img{
+        static_cast<int>(tex.width()),
+        static_cast<int>(tex.height()), pixels.data()
+    };
     img.flip();
     pix::save_png(img, file_name.string());
 }
 
-std::shared_ptr<FreetypeFont> load_font(fs::path const& name, int size)
-{
+std::shared_ptr<FreetypeFont> load_font(fs::path const &name, int size) {
     return std::make_shared<FreetypeFont>(name.string().c_str(), size);
 }
 
-bool is_pressed(int key)
-{
+bool is_pressed(int key) {
     return m.sys->is_pressed(key);
 }
-bool was_pressed(int key)
-{
+
+bool was_pressed(int key) {
     return m.sys->was_pressed(key);
 }
-bool was_released(int key)
-{
+
+bool was_released(int key) {
     return m.sys->was_released(key);
 }
 
-PYBIND11_MODULE(_pixpy, mod)
-{
+void every_frame(std::function<bool()> const &fn) {
+    m.sys->callbacks.push_back(fn);
+}
+
+
+PYBIND11_MODULE(_pixpy, mod) {
     mod.doc() = "pixpy native module";
 
     add_key_module(mod.def_submodule("key"));
     add_color_module(mod.def_submodule("color"));
+
+    mod.attr("BLEND_NORMAL") = (GL_SRC_ALPHA << 16) | GL_ONE_MINUS_SRC_ALPHA;
+    mod.attr("BLEND_ADD") = (GL_SRC_ALPHA << 16) | GL_ONE;
+    mod.attr("BLEND_MULTIPLY") = (GL_DST_COLOR << 16) | GL_ZERO;
 
     add_vec2_class(mod);
 
@@ -158,7 +166,7 @@ PYBIND11_MODULE(_pixpy, mod)
 
     add_draw_functions(tc);
     tc.def_property_readonly(
-        "size", [](gl::TexRef& self) { return Vec2f{self.width(), self.height()}; });
+        "size", [](gl::TexRef const &self) { return Vec2f{self.width(), self.height()}; });
 
 
     add_draw_functions(ctx);
@@ -167,14 +175,15 @@ PYBIND11_MODULE(_pixpy, mod)
 
     auto screen = add_screen_class(mod);
     add_draw_functions(screen);
+    const char* doc;
 
     //pybind11::implicitly_convertible<std::shared_ptr<Screen, pix::Context>();
     // MODULE
     mod.def("open_display", &open_display, "width"_a = -1, "height"_a = -1,
             "full_screen"_a = false,
-            "Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.\nSubsequent calls to this method returns the same screen instance, " "since you can only have one active display in pix.");
-    mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false,
-            "Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.\nSubsequent calls to this method returns the same screen instance, since you can only have one active display in pix.");
+            doc = "Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.\nSubsequent calls to this method returns the same screen instance, "
+            "since you can only have one active display in pix.");
+    mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false, doc);
     mod.def("get_display", [] { return m.screen; });
     mod.def(
         "all_events", [] { return m.sys->all_events(); },
@@ -196,7 +205,7 @@ PYBIND11_MODULE(_pixpy, mod)
     mod.def(
         "was_released",
         [](std::variant<int, char32_t> key) {
-          return std::visit(&was_released, key);
+            return std::visit(&was_released, key);
         },
         "key"_a,
         "Returns _True_ if the keyboard or mouse key was pressed this loop. "
@@ -204,6 +213,8 @@ PYBIND11_MODULE(_pixpy, mod)
     mod.def(
         "get_pointer", [] { return Vec2f{m.sys->get_pointer()}; },
         "Get the xy coordinate of the mouse pointer (in screen space).");
+    mod.def("run_every_frame", &every_frame,
+            "Add a function that should be run every frame. If the function returns false it will stop being called.");
     mod.def(
         "run_loop", [] { return m.sys->run_loop(); },
         "Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way");
@@ -211,28 +222,29 @@ PYBIND11_MODULE(_pixpy, mod)
             "Create an _Image_ from a png file on disk.");
     mod.def("save_png", &save_png, "image"_a, "file_name"_a,
             "Save an _Image_ to disk");
-    mod.def("blend_color", &color::blend_color, "color0"_a, "color1"_a, "t"_a, "Blend two colors together. `t` should be between 0 and 1.");
-    mod.def("blend_colors", &color::blend_colors, "colors"_a, "t"_a, "Get a color from a color range. Works similar to bilinear filtering of an 1D texture.");
+    mod.def("blend_color", &color::blend_color, "color0"_a, "color1"_a, "t"_a,
+            "Blend two colors together. `t` should be between 0 and 1.");
+    mod.def("blend_colors", &color::blend_colors, "colors"_a, "t"_a,
+            "Get a color from a color range. Works similar to bilinear filtering of an 1D texture.");
     mod.def("add_color", &color::add_color, "color0"_a, "color1"_a);
     mod.def("rgba", &color::rgba, "red"_a, "green"_a, "blue"_a, "alpha"_a,
             "Combine four color components into a color.");
     mod.def("load_font", &load_font, "name"_a, "size"_a = 0, "Load a TTF font.");
     mod.def(
         "inside_polygon",
-        [](std::vector<Vec2f> const& points, Vec2f point) {
-            Vec2f s = point + Vec2f{10000, 0};
+        [](std::vector<Vec2f> const &points, Vec2f point) {
+            Vec2f const s = point + Vec2f{10000, 0};
             int count = 0;
-            for(size_t i=0; i<points.size()-1; i++) {
-
-                auto&& a = points[i];
-                auto&& b = points[i+1];
-                if (pix::instersects(point, s, a, b)) {
+            for (size_t i = 0; i < points.size() - 1; i++) {
+                auto &&a = points[i];
+                auto &&b = points[i + 1];
+                if (pix::intersects(point, s, a, b)) {
                     count++;
                 }
             }
-            auto&& a = points[points.size()-1];
-            auto&& b = points[0];
-            if (pix::instersects(point, s, a, b)) {
+            auto &&a = points[points.size() - 1];
+            auto &&b = points[0];
+            if (pix::intersects(point, s, a, b)) {
                 count++;
             }
             return (count & 1) == 1;

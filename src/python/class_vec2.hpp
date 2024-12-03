@@ -25,6 +25,9 @@ py::class_<Vec2> add_common(py::module_& mod, const char* name)
             .def(py::init<double, int>(), py::arg("x") = 0, py::arg("y") = 0)
             .def(py::init<double, double>(), py::arg("x") = 0, py::arg("y") = 0)
             .def("__len__", &Vec2::len)
+            .def("__hash__", [](Vec2 const& v) {
+                return (int)v.x + (int)(v.y * 65535);
+            })
             .def("clamp", &Vec2::clamp, py::arg("low"), py::arg("high"),
                  "Separately clamp the x and y component between the "
                  "corresponding components in the given arguments.")
@@ -138,7 +141,7 @@ inline void add_vec2_class(py::module_& mod)
         .def_readonly_static("ZERO", &vec2_zero, "Constant (0,0)")
         .def("inside_polygon", &Vec2f::inside_polygon, py::arg("points"),
              "Check if the `point` is inside the polygon formed by `points`.");
-    vd.doc() = "Represents an floating pont coordinate or size";
+    vd.doc() = "Represents an floating point coordinate or size. Mostly behaves like a normal float when used in arithmetic operations.";
 
     vi.def(py::init<std::pair<int, int>>())
         .def(
@@ -193,5 +196,5 @@ inline void add_vec2_class(py::module_& mod)
              [](Vec2i self, double other) { return Vec2f{self} - other; })
         .def_readonly_static("ONE", &vec2i_one, "Constant (1,1)")
         .def_readonly_static("ZERO", &vec2i_zero, "Constant (0,0)");
-    vi.doc() = "Represents an integer coordinate or size";
+    vi.doc() = "Represents an integer coordinate or size. Mostly behaves like a normal int when used in arithmetic operations.";
 }

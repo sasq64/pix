@@ -26,6 +26,9 @@ inline auto add_screen_class(py::module_ const& mod)
     screen.def_property_readonly(
         "delta", [](Screen const& screen) { return screen.get_time().delta; },
         "Time in seconds for last frame.");
+    screen.def_property_readonly(
+        "refresh_rate", [](Screen const& screen) { return screen.get_time().refresh_rate; },
+        "Actual refresh rate of current monitor.");
     screen.def_property(
         "fps", [](Screen const& screen) { return screen.get_time().fps; },
         [](Screen& screen, int fps) { screen.set_fps(fps); },

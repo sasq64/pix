@@ -29,12 +29,12 @@ struct Color
     Color(float rr, float gg, float bb, float aa)
     :r{rr}, g{gg}, b{bb}, a{aa} { }
 
-    Color(uint32_t rgba)
+    Color(uint32_t rgba) // NOLINT
     {
-        r = (rgba >> 24) / 255.0f;
-        g = ((rgba >> 16) & 0xff) / 255.0f;
-        b = ((rgba >> 8) & 0xff) / 255.0f;
-        a = (rgba & 0xff) / 255.0f;
+        r = static_cast<float>(rgba >> 24) / 255.0f;
+        g = static_cast<float>(rgba >> 16 & 0xff) / 255.0f;
+        b = static_cast<float>(rgba >> 8 & 0xff) / 255.0f;
+        a = static_cast<float>(rgba & 0xff) / 255.0f;
     }
 };
 
@@ -42,14 +42,13 @@ struct Color
 inline void add_color_module(py::module_ const& mod)
 {
     using namespace pybind11::literals;
-
-    py::class_<Color>(mod, "Color")
-        .def(py::init<float, float, float, float>(), "r"_a, "g"_a, "b"_a, "a"_a = 1.0)
-        .def_readonly("r", &Color::r)
-        .def_readonly("g", &Color::g)
-        .def_readonly("b", &Color::b)
-        .def_readonly("a", &Color::a)
-        .def(py::init<uint32_t>(), "rgba"_a);
+    // py::class_<Color>(mod, "Color")
+    //     .def(py::init<float, float, float, float>(), "r"_a, "g"_a, "b"_a, "a"_a = 1.0)
+    //     .def_readonly("r", &Color::r)
+    //     .def_readonly("g", &Color::g)
+    //     .def_readonly("b", &Color::b)
+    //     .def_readonly("a", &Color::a)
+    //     .def(py::init<uint32_t>(), "rgba"_a);
 
 
 #define COL(x) mod.attr(to_upper(#x).c_str()) = static_cast<uint32_t>(color::x)

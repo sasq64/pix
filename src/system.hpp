@@ -105,18 +105,19 @@ public:
     struct Time
     {
         double seconds{};
-        int frame_counter{};
         double delta{};
+        int frame_counter{};
         int fps{};
+        int refresh_rate{};
     };
 
     virtual ~Screen() = default;
     virtual void swap() {}
     virtual void set_fps(int fps) {}
-    virtual Time get_time() const { return {}; }
+    [[nodiscard]] virtual Time get_time() const { return {}; }
     virtual void set_target(){};
     virtual float get_scale() { return 1.0F; }
-    virtual std::pair<int, int> get_size() const { return {-1, -1}; }
+    [[nodiscard]] virtual std::pair<int, int> get_size() const { return {-1, -1}; }
 };
 
 class Input
@@ -132,6 +133,7 @@ public:
         Pass
     };
 
+    std::vector<std::function<bool()>> callbacks;
 private:
     using Listener = std::function<Propagate(AnyEvent)>;
     int counter = 0;
@@ -220,6 +222,11 @@ public:
                 quit = true;
                 break;
             }
+        }
+        auto it = callbacks.begin();
+        while (it != callbacks.end()) {
+            const auto keep_running = (*it)();
+            it = keep_running ? it+1 : callbacks.erase(it);
         }
         return !quit;
     }

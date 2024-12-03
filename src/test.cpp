@@ -88,8 +88,10 @@ int main()
         }
     }
 
-   // while(true) {
-        //if(!sys->run_loop()) { break; }
+    screen->set_fps(0);
+    while(true) {
+    auto pos = Vec2(0,0);
+        if(!sys->run_loop()) { break; }
         //context-set_target();
         context->clear(0x000000);
         //context->blit(bg,  {0,0}, Vec2f{bg.tex->size()});
@@ -104,13 +106,17 @@ int main()
         context->draw_inconvex_polygon(star.data(), star.size());
 
         context->set_color(gl::Color(0xffff00ff));
-        for(auto&& p : star) {
-            context->line(p);
+        for (int i=0; i<400; i ++) {
+            for(auto p : star) {
+                p += pos;
+                context->line(p);
+            }
+            pos += {4,0};
         }
         context->line(star[0]);
         //context->filled_rect({10, 10}, {100,100});
         screen->swap();
-   // }
+    }
 
     while(sys->run_loop()) {}
 }

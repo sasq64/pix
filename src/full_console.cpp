@@ -1,5 +1,7 @@
 #include "full_console.hpp"
 
+#include "utf8.h"
+
 template <typename T, typename S=int>
 static constexpr S len(T&& t) { return static_cast<S>(t.size()); }
 
@@ -137,8 +139,8 @@ void FullConsole::render2(pix::Context* context, Vec2f xy, Vec2f sz)
     }
 
     context->set_target();
-    auto xy0 = context->to_screen(xy);
-    auto xy1 = context->to_screen(xy + sz);
+    auto const xy0 = context->to_screen(xy);
+    auto const xy1 = context->to_screen(xy + sz);
     console->render(xy0, xy1);
     if (cursor_on) {
         auto cw = sz.x / cols;
@@ -147,8 +149,8 @@ void FullConsole::render2(pix::Context* context, Vec2f xy, Vec2f sz)
         xy = Vec2f{(cursor.x + xpos) * cw, cursor.y * ch} + xy;
         context->set_color(color::orange);
         context->filled_rect(xy, {cw, ch});
-        auto c = console->get_char(cursor.x + xpos, cursor.y);
-        auto tex = console->get_texture_for_char(c);
+        auto const c = console->get_char(cursor.x + xpos, cursor.y);
+        auto const tex = console->get_texture_for_char(c);
         gl::ProgramCache::get_instance()
             .get_program<gl::ProgramCache::Textured>()
             .use();
@@ -156,6 +158,7 @@ void FullConsole::render2(pix::Context* context, Vec2f xy, Vec2f sz)
         context->blit(tex, xy, {cw, ch});
     }
 }
+
 void FullConsole::set_line(const std::string& text)
 {
     line = utf8::utf8_decode(text);

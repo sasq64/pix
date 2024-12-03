@@ -1,25 +1,5 @@
 from __future__ import annotations
-import typing
-__all__ = ['BLACK', 'BLUE', 'BROWN', 'CYAN', 'Color', 'DARK_GREY', 'GREEN', 'GREY', 'LIGHT_BLUE', 'LIGHT_GREEN', 'LIGHT_GREY', 'LIGHT_RED', 'ORANGE', 'PURPLE', 'RED', 'TRANSP', 'WHITE', 'YELLOW']
-class Color:
-    @typing.overload
-    def __init__(self, r: float, g: float, b: float, a: float = 1.0) -> None:
-        ...
-    @typing.overload
-    def __init__(self, rgba: int) -> None:
-        ...
-    @property
-    def a(self) -> float:
-        ...
-    @property
-    def b(self) -> float:
-        ...
-    @property
-    def g(self) -> float:
-        ...
-    @property
-    def r(self) -> float:
-        ...
+__all__ = ['BLACK', 'BLUE', 'BROWN', 'CYAN', 'DARK_GREY', 'GREEN', 'GREY', 'LIGHT_BLUE', 'LIGHT_GREEN', 'LIGHT_GREY', 'LIGHT_RED', 'ORANGE', 'PURPLE', 'RED', 'TRANSP', 'WHITE', 'YELLOW']
 BLACK: int = 255
 BLUE: int = 43775
 BROWN: int = 1715732735

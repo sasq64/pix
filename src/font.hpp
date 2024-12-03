@@ -1,14 +1,11 @@
 #pragma once
 
-#include "utf8.h"
-
 #include <freetype/fttypes.h>
 #include <ft2build.h>
 
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <type_traits>
 
 #include FT_FREETYPE_H
 #include FT_SIZES_H

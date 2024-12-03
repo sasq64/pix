@@ -1,680 +1,603 @@
-# Pixpy Reference
+# PIXPY
 
-## pix module
-
-### Functions
-
-#### open_display
+### all_events
 ```python
-open_display(width: int, height: int, full_screen: bool = False) -> Screen
+all_events() -> list[Union[event.NoEvent, event.Key, event.Move, event.Click, event.Text, event.Resize, event.Quit]]
 ```
+Return a list of all pending events.
 
+### blend_color
 ```python
-open_display(size: Int2, full_screen: bool = False) -> Screen
+blend_color(color0: int, color1: int, t: float) -> int
 ```
+Blend two colors together. `t` should be between 0 and 1.
 
-Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.
-
-#### run_loop
+### blend_colors
 ```python
-run_loop() -> bool
+blend_colors(colors: list[int], t: float) -> int
 ```
+Get a color from a color range. Works similar to bilinear filtering of an 1D texture.
 
-Should be called first in your main rendering loop.
-
-Clears all pending events and all pressed keys.
-
-Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way).
-
-#### all_events
-```python
-all_events() -> List[AnyEvent]
-```
-
-Get all pending events.
-
-#### is_pressed
-```python
-is_pressed(key: int) -> bool
-```
-
-Returns _True_ if the keyboard or mouse key is held down.
-
-#### was_pressed
-```python
-was_pressed(key: int) -> bool
-
-```
-Returns _True_ if the keyboard or mouse key was pressed this loop. `run_loop()` refreshes these states.
-
-#### get_pointer
+### get_pointer
 ```python
 get_pointer() -> Float2
 ```
-
 Get the xy coordinate of the mouse pointer (in screen space).
 
-#### load_png
+### inside_polygon
 ```python
-load_png(file_name: str) -> Image
+inside_polygon(points: list[Float2], point: Float2) -> bool
 ```
+Check if the `point` is inside the polygon formed by `points`.
 
+### is_pressed
+```python
+is_pressed(key: Union[int, str]) -> bool
+```
+Returns _True_ if the keyboard or mouse key is held down.
+
+### load_font
+```python
+load_font(name: os.PathLike, size: int = 0) -> Font
+```
+Load a TTF font.
+
+### load_png
+```python
+load_png(file_name: os.PathLike) -> Image
+```
 Create an _Image_ from a png file on disk.
 
-#### save_png
+### open_display
 ```python
-save_png(file_name: str, image: Image)
+open_display(width: int = -1, height: int = -1, full_screen: bool = False) -> Screen
 ```
-
-Save _Image_ to disk.
-
-#### load_font
 ```python
-load_font(file_name: str, size: int) -> Font
+open_display(size: Int2, full_screen: bool = False) -> Screen
 ```
+Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.
+Subsequent calls to this method returns the same screen instance, since you can only have one active display in pix.
 
-Load TTF Font
-
-#### rgba
+### rgba
 ```python
-rgba(r: float, g:float, b:float, a: float) -> int
+rgba(red: float, green: float, blue: float, alpha: float) -> int
 ```
+Combine four color components into a color.
 
-Create a color from 4 color components
-
-## pix.Screen
-
-Represents the display on which rendering takes place. Normally you have only one Screen, that which is returned by `open_display()`.
-
-A Screen is also associated with a _Context_ (see below) and can be rendered to.
-
-### Methods
-
-#### swap
+### run_every_frame
 ```python
-swap()
+run_every_frame(arg0: Callable[[], bool]) -> None
 ```
+Add a function that should be run every frame. If the function returns false it will stop being called.
 
-Synchronize with the frame rate of the display and swap buffers. This is
-normally the last thing you do in your render loop.
-
-### Attributes
-
-#### size
+### run_loop
 ```python
-size : Float2
+run_loop() -> bool
 ```
+Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way
 
-The size of the window/screen
-
-#### seconds
+### save_png
 ```python
-seconds : float
+save_png(image: Image, file_name: os.PathLike) -> None
 ```
+Save an _Image_ to disk
 
-Number of seconds since screen opened.
-
-#### delta
+### was_pressed
 ```python
-delta : float
+was_pressed(key: Union[int, str]) -> bool
 ```
+Returns _True_ if the keyboard or mouse key was pressed this loop. `run_loop()` refreshes these states.
 
-Number of seconds since last frame.
-
-#### fps
+### was_released
 ```python
-fps : int
+was_released(key: Union[int, str]) -> bool
 ```
+Returns _True_ if the keyboard or mouse key was pressed this loop. `run_loop()` refreshes these states.
 
-Current target fps. Set this to `0` to not lock to a specific frame rate. In
-that case you need to make sure all your movements are time based.
+## Console
 
-## pix.Image
-
-An Image is a reference to an array of pixels. More specifically, it is a set of UV coordinates and a reference to an Open GL/GLES Texture.
-
-An Image can be associated with a `Context` (see below), so you can render to it.
-
-### Constructors
+### cancel_line
 ```python
-Image(width: int, height:int) -> Image
+cancel_line(self: Console) -> None
 ```
+Stop line edit mode.
 
+### clear
 ```python
-Image(size: Int2) -> Image
+clear(self: Console) -> None
 ```
+Clear the console.
 
-Creates an empty Image of the given size. See `load_png()` for loading an Image from disk.
-
-### Methods
-
-#### split
+### get
 ```python
-split(cols: int, rows: int) -> List[Image]
+get(self: Console, arg0: Int2) -> int
 ```
+Get tile at position
 
-Split the image into _cols_ * _rows_ smaller images
-
+### get_image_for
 ```python
-split(width: int, height: int) -> List[Image]
+get_image_for(self: Console, tile: int) -> Image
 ```
+Get the image of a specific tile. Use to render the tile manually, or to copy another image into the tile;
 
-Splits the image into as many _width_ * _height_ images as possible, first going left to right, then top to bottom.
+`console.get_image_for(1024).copy_from(some_tile_image)`
 
-#### crop
+### get_tiles
 ```python
-crop(top_left: Int2, size: Int2) -> Image
+get_tiles(self: Console) -> list[int]
 ```
+Get all the tiles and colors as an array of ints. Format is: `[tile0, fg0, bg0, tile1, fg1, bg1 ...]` etc.
 
-Crop the image. Returns a new view into the image.
-
-#### copy_from
+### put
 ```python
-copy_from(image: Image)
+put(self: Console, pos: Int2, tile: int, fg: Optional[int] = None, bg: Optional[int] = None) -> None
 ```
+Put `tile` at given position, optionally setting a specific foreground and/or background color
 
-Replace the pixels of this image with the pixels of another image.
-
-Images can be of different sizes. In practice, the source image is used as
-a texture and rendered onto the destination image.
-
-#### copy_to
+### read_line
 ```python
-copy_to(image: Image)
+read_line(self: Console) -> None
 ```
+Puts the console in line edit mode.
 
-The inverse of `copy_from()`, copy this image onto another image.
+A cursor will be shown and all text events will be captured by the console until `Enter` is pressed. At this point the entire line will be pushed as a `TextEvent`.
 
-### Attributes
-
-#### size
+### set_color
 ```python
-size : Float2
+set_color(self: Console, fg: int, bg: int) -> None
 ```
+Set the default colors used when putting/writing to the console.
 
-Size of image in pixels. Derived from the UV coordinates associated with
-this image.
-
-#### pos
+### set_line
 ```python
-pos: Float2
+set_line(self: Console, text: str) -> None
 ```
+Change the edited line.
 
-Location of this image within its backing texture. Derived from the UV coordinates associated with this image.
-
-After _splitting_ an image into parts, _pos_ can be used to still render the image parts relative to the other parts.
-
-#### clip_size
+### set_tiles
 ```python
-clip_size: Float2
+set_tiles(self: Console, tiles: list[int]) -> None
 ```
+Set tiles from an array of ints.
 
-#### clip_top_left
+### write
 ```python
-clip_top_left: Float2
+write(self: Console, tiles: list[str]) -> None
 ```
-
-## pix.Font
-
-### Constructors
-
 ```python
-Font(font_file: str, font_size: int)
+write(self: Console, text: str) -> None
 ```
+Write text to the console at the current cursor position and using the current colors. Will advance cursor position, and wrap if it passes the right border of the console.
 
-### Methods
+## Context
 
-#### make_image
+### circle
 ```python
-make_image(text: str, size:int, color: int = pix.color.WHITE) -> Image
+circle(self: Context, center: Float2, radius: float) -> None
 ```
+Draw an (outline) circle
 
-Create an image from the given text.
-
-### Static attributes
-
-#### UNSCII_FONT
-
+### clear
 ```python
-Font.UNSCII_FONT: Font
+clear(self: Context, color: int = 255) -> None
 ```
+Clear the context using given color.
 
-Static reference to the _unscii_ font, used as default font for the console.
-
-
-## pix.Context
-
-A `Context` is a rendering context that keeps track of rendering state. You normally need a Context to perform any rendering.
-
-The `Screen` object, as well as all `Image` objects can be treated as Contexts implicitly. This means that they behave as though they've _inherited_ or _mixed in_ a context.
-
-### Constructors
+### draw
 ```python
-Context(image: Image) -> Context
+draw(self: Context, image: Image, top_left: Optional[Float2] = None, center: Optional[Float2] = None, size: Float2 = Float2(0.000000, 0.000000), rot: float = 0) -> None
 ```
-
-Create a rendering context from an image
-
+Render an image. The image can either be aligned to its top left corner, or centered, in which case it can also be rotated.
 ```python
-Context(screen: Screen) -> Context
+draw(self: Context, drawable: Console, top_left: Float2 = Float2(0.000000, 0.000000), size: Float2 = Float2(0.000000, 0.000000)) -> None
 ```
-
-Create a rendering context from a (the) screen
-
-### Methods
-
-#### clear
-```python
-clear(color: int = pix.color.BLACK)
-```
-
-Clear the render target with the color
-
-
-#### filled_circle
-```python
-filled_circle(center: Float2, radius: float)
-```
-
-Draw a filled circle.
-
-
-#### circle
-```python
-circle(center: Float2, radius: float)
-```
-
-Draw a circle.
-
-
-#### filled_rect
-```python
-filled_rect(top_left: Float2, size: Float2)
-```
-
-Draw a filled rectangle.
-
-
-#### line
-```python
-line(start: Float2, end: Float2)
-```
-
-```python
-line(end: Float2)
-```
-
-Draw a line.
-
-
-#### rect
-```python
-rect(top_left: Float2, size: Float2)
-```
-
-Draw a rectangle from lines.
-
-
-#### polygon
-```python
-polygon(points: List[Float2], convex: bool = False)
-```
-
-Draw a polygon using the list of points. Use `convex` = true
-to avoid the concave ear cutting algorithm if you know the polygon
-is convex.
-
-
-#### plot
-```python
-plot(point: Float2, color: int)
-```
-
-```python
-plot(points: List[float], colors: List[int])
-```
-
-Draw a point or list of points with the given color. Uses hardware points
-which may or may not be round, and may or may not be affected by `context.point_size`.
-
-
-#### draw
-```python
-draw(image: Image, top_left: Float2 = None, size: Float2 = (0,0))
-```
-
-```python
-draw(image: Image, center: Float2 = None, size: Float2 = (0,0), rot = 0)
-```
-
-Draw an `image` on to a context at the location given by `top_left`
-
-If `size` is given, scale the image to that size (in screen coordinates). Size can be negative to flip the image.
-
-If `rot` is given, rotate image around `center`
-
-
-#### set_pixel
-```python
-set_pixel(point: Int2, color: int)
-```
-
-Write a pixel directly into a CPU side copy of the texture. Use `flush()` to
-flush changes back into the the actual texture.
-
-####  flush()
-```python
-flush()
-```
-
-Flush pixel operations by uploading the CPU side pixel array to the texture,
-and then removing the array.
-
-
-### Attributes
-
-#### draw_color
-```python
-draw_color : int
-```
-
-The color to use for drawing operations
-
-#### line_width
-```python
-line_width : float
-```
-
-The width of lines and rects
-
-
-#### point_size
-```python
-point_size : float
-```
-
-The radius of points. May not be supported on all platforms.
-
-#### clip_top_left
-```python
-clip_top_left : Int2
-```
-
-#### clip_size
-```python
-clip_size : Int2
-```
-
-## pix.TileSet
-
-### Constructors
-
-```python
-TileSet(font_file: str, size: int)
-```
-
-```python
-TileSet(font: pix.Font, tile_size: Float2)
-```
-
-### Methods
-
-#### get_image_for
-```python
-get_image_for(tile: int) -> Image
-```
-
-#### get_tileset_image
-```python
-get_tileset_image() -> Image
-```
-
-#### render_text
-```python
-render_text(screen: Screen, text: str, pos: Float2, size: Float2)
-```
-
-```python
-render_text(screen: Screen, text: str, points: List[Float2])
-```
-
-## pix.Console
-
-### Constructors
-
-```python
-Console(cols: int, rows: int, font_file: str = "", tile_size: Int2 = (0,0), font_size: int = 0)
-```
-
-Create a Console that can display `cols`*`rows` characters or tiles.
-
-`font_file` is the file name of a TTF font to use a backing. If no font is given, the built-in _Unscii_ font will be used.
-
-`tile_size` sets the size in pixels of each tile. If not given, it will be derived from the size of a character in the font with the provided `font_size`.
-
-
-```python
-Console(cols: int, rows: int, tile_set: TileSet)
-```
-
-Create a Console that can display `cols`*`rows` characters or tiles, and use the given `TileSet`.
-
-### Methods
-
-#### render
-```python
-render(context: Context, pos: Float2 = (0,0), size: Float2 = (0,0))
-```
-
-Render the console using the context. `pos` and `size` are in pixels. If `size`
-is not given, it defaults to `tile_size*grid_size`.
+Render a console. `top_left` and `size` are in pixels. If `size` is not given, it defaults to `tile_size*grid_size`.
 
 To render a full screen console (scaling as needed):
 
 `console.render(screen.context, size=screen.size)`
 
-#### put
+### filled_circle
 ```python
-put(pos: Int2, tile: int, fg: int = color.WHITE, bg: int = color.BLACK)
+filled_circle(self: Context, center: Float2, radius: float) -> None
+```
+Draw a filled circle.
+
+### filled_rect
+```python
+filled_rect(self: Context, top_left: Float2, size: Float2) -> None
+```
+Draw a filled rectangle.
+
+### flush
+```python
+flush(self: Context) -> None
+```
+Flush pixel operations
+
+### line
+```python
+line(self: Context, start: Float2, end: Float2) -> None
+```
+Draw a line between start and end.
+```python
+line(self: Context, end: Float2) -> None
+```
+Draw a line from the end of the last line to the given position.
+
+### lines
+```python
+lines(self: Context, points: list[Float2]) -> None
+```
+Draw a line strip from all the given points.
+
+### plot
+```python
+plot(self: Context, center: Float2, color: int) -> None
+```
+Draw a point.
+```python
+plot(self: Context, points: object, colors: object) -> None
+```
+Draw `n` points given by the array like objects. `points` should n*2 floats and `colors` should contain `n` unsigned ints.
+
+### polygon
+```python
+polygon(self: Context, points: list[Float2], convex: bool = False) -> None
+```
+Draw a filled polygon.
+
+### rect
+```python
+rect(self: Context, top_left: Float2, size: Float2) -> None
+```
+Draw a rectangle.
+
+### set_pixel
+```python
+set_pixel(self: Context, pos: Int2, color: int) -> None
+```
+Write a pixel into the image.
+
+## Float2
+
+### angle
+```python
+angle(self: Float2) -> float
+```
+Get the angle between the vector and (1,0).
+
+### clamp
+```python
+clamp(self: Float2, low: Float2, high: Float2) -> Float2
+```
+Separately clamp the x and y component between the corresponding components in the given arguments.
+
+### clip
+```python
+clip(self: Float2, low: Float2, high: Float2) -> Float2
+```
+Compare the point against the bounding box defined by low/high. Returns (0,0) if point is inside the box, or a negative or positive distance to the edge if outside.
+
+### cossin
+```python
+cossin(self: Float2) -> Float2
+```
+Returns (cos(x), sin(y)).
+
+### from_angle
+```python
+from_angle(arg0: float) -> Float2
+```
+From angle
+
+### inside_polygon
+```python
+inside_polygon(self: Float2, points: list[Float2]) -> bool
+```
+Check if the `point` is inside the polygon formed by `points`.
+
+### mag
+```python
+mag(self: Float2) -> float
+```
+Get magnitude (length) of vector
+
+### mag2
+```python
+mag2(self: Float2) -> float
+```
+Get the squared magnitude
+
+### norm
+```python
+norm(self: Float2) -> Float2
+```
+Get the normalized vector.
+
+### random
+```python
+random(self: Float2) -> Float2
+```
+Returns Float2(rnd(x), rnd(y)) where rnd(n) returns a random number between 0 and n.
+
+### toi
+```python
+toi(self: Float2) -> Int2
+```
+Convert a `Float2` to an `Int2`
+
+## Font
+
+### make_image
+```python
+make_image(self: Font, text: str, size: int, color: int = 4294967295) -> Image
+```
+Create an image containing the given text.
+
+## Image
+
+### circle
+```python
+circle(self: Image, center: Float2, radius: float) -> None
+```
+Draw an (outline) circle
+
+### clear
+```python
+clear(self: Image, color: int = 255) -> None
+```
+Clear the context using given color.
+
+### copy_from
+```python
+copy_from(self: Image, image: Image) -> None
+```
+Render one image into another.
+
+### copy_to
+```python
+copy_to(self: Image, image: Image) -> None
+```
+Render one image into another.
+
+### crop
+```python
+crop(self: Image, top_left: Optional[Float2] = None, size: Optional[Float2] = None) -> Image
+```
+Crop an image. Returns a view into the old image.
+
+### draw
+```python
+draw(self: Image, image: Image, top_left: Optional[Float2] = None, center: Optional[Float2] = None, size: Float2 = Float2(0.000000, 0.000000), rot: float = 0) -> None
+```
+Render an image. The image can either be aligned to its top left corner, or centered, in which case it can also be rotated.
+```python
+draw(self: Image, drawable: Console, top_left: Float2 = Float2(0.000000, 0.000000), size: Float2 = Float2(0.000000, 0.000000)) -> None
+```
+Render a console. `top_left` and `size` are in pixels. If `size` is not given, it defaults to `tile_size*grid_size`.
+
+To render a full screen console (scaling as needed):
+
+`console.render(screen.context, size=screen.size)`
+
+### filled_circle
+```python
+filled_circle(self: Image, center: Float2, radius: float) -> None
+```
+Draw a filled circle.
+
+### filled_rect
+```python
+filled_rect(self: Image, top_left: Float2, size: Float2) -> None
+```
+Draw a filled rectangle.
+
+### flush
+```python
+flush(self: Image) -> None
+```
+Flush pixel operations
+
+### line
+```python
+line(self: Image, start: Float2, end: Float2) -> None
+```
+Draw a line between start and end.
+```python
+line(self: Image, end: Float2) -> None
+```
+Draw a line from the end of the last line to the given position.
+
+### lines
+```python
+lines(self: Image, points: list[Float2]) -> None
+```
+Draw a line strip from all the given points.
+
+### plot
+```python
+plot(self: Image, center: Float2, color: int) -> None
+```
+Draw a point.
+```python
+plot(self: Image, points: object, colors: object) -> None
+```
+Draw `n` points given by the array like objects. `points` should n*2 floats and `colors` should contain `n` unsigned ints.
+
+### polygon
+```python
+polygon(self: Image, points: list[Float2], convex: bool = False) -> None
+```
+Draw a filled polygon.
+
+### rect
+```python
+rect(self: Image, top_left: Float2, size: Float2) -> None
+```
+Draw a rectangle.
+
+### set_pixel
+```python
+set_pixel(self: Image, pos: Int2, color: int) -> None
+```
+Write a pixel into the image.
+
+### set_texture_filter
+```python
+set_texture_filter(self: Image, min: bool, max: bool) -> None
+```
+Set whether the texture should apply linear filtering.
+
+### split
+```python
+split(self: Image, cols: int = -1, rows: int = -1, width: int = 8, height: int = 8) -> list[Image]
+```
+Splits the image into as many _width_ * _height_ images as possible, first going left to right, then top to bottom.
+```python
+split(self: Image, size: Float2) -> list[Image]
 ```
 
-Put a tile or text on the console
+## Int2
 
-#### get
+### clamp
 ```python
-get(pos: Int2) -> int
+clamp(self: Int2, low: Int2, high: Int2) -> Int2
+```
+Separately clamp the x and y component between the corresponding components in the given arguments.
+
+### random
+```python
+random(self: Int2) -> Int2
+```
+Returns Int2(rnd(x), rnd(y)) where rnd(n) returns a random number between 0 and n.
+
+### tof
+```python
+tof(self: Int2) -> Float2
+```
+Convert an `Int2` to a `Float2`
+
+## Screen
+
+### circle
+```python
+circle(self: Screen, center: Float2, radius: float) -> None
+```
+Draw an (outline) circle
+
+### clear
+```python
+clear(self: Screen, color: int = 255) -> None
+```
+Clear the context using given color.
+
+### draw
+```python
+draw(self: Screen, image: Image, top_left: Optional[Float2] = None, center: Optional[Float2] = None, size: Float2 = Float2(0.000000, 0.000000), rot: float = 0) -> None
+```
+Render an image. The image can either be aligned to its top left corner, or centered, in which case it can also be rotated.
+```python
+draw(self: Screen, drawable: Console, top_left: Float2 = Float2(0.000000, 0.000000), size: Float2 = Float2(0.000000, 0.000000)) -> None
+```
+Render a console. `top_left` and `size` are in pixels. If `size` is not given, it defaults to `tile_size*grid_size`.
+
+To render a full screen console (scaling as needed):
+
+`console.render(screen.context, size=screen.size)`
+
+### filled_circle
+```python
+filled_circle(self: Screen, center: Float2, radius: float) -> None
+```
+Draw a filled circle.
+
+### filled_rect
+```python
+filled_rect(self: Screen, top_left: Float2, size: Float2) -> None
+```
+Draw a filled rectangle.
+
+### flush
+```python
+flush(self: Screen) -> None
+```
+Flush pixel operations
+
+### line
+```python
+line(self: Screen, start: Float2, end: Float2) -> None
+```
+Draw a line between start and end.
+```python
+line(self: Screen, end: Float2) -> None
+```
+Draw a line from the end of the last line to the given position.
+
+### lines
+```python
+lines(self: Screen, points: list[Float2]) -> None
+```
+Draw a line strip from all the given points.
+
+### plot
+```python
+plot(self: Screen, center: Float2, color: int) -> None
+```
+Draw a point.
+```python
+plot(self: Screen, points: object, colors: object) -> None
+```
+Draw `n` points given by the array like objects. `points` should n*2 floats and `colors` should contain `n` unsigned ints.
+
+### polygon
+```python
+polygon(self: Screen, points: list[Float2], convex: bool = False) -> None
+```
+Draw a filled polygon.
+
+### rect
+```python
+rect(self: Screen, top_left: Float2, size: Float2) -> None
+```
+Draw a rectangle.
+
+### set_pixel
+```python
+set_pixel(self: Screen, pos: Int2, color: int) -> None
+```
+Write a pixel into the image.
+
+### swap
+```python
+swap(self: Screen) -> None
+```
+Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This is normally the last thing you do in your render loop.
+
+## TileSet
+
+### get_image_for
+```python
+get_image_for(self: TileSet, arg0: int) -> Image
+```
+Get the image for a specific tile. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.
+```python
+get_image_for(self: TileSet, arg0: str) -> Image
+```
+Get the image for a specific character. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.
+
+### get_tileset_image
+```python
+get_tileset_image(self: TileSet) -> Image
+```
+Get the entire tileset image. Typically used with `save_png()` to check generated tileset.
+
+### render_text
+```python
+render_text(self: TileSet, screen: Screen, text: str, pos: Float2, size: Float2 = Float2(0.000000, 0.000000)) -> None
+```
+Render characters from the TileSet at given `pos` and given `size` (defaults to tile_size)
+```python
+render_text(self: TileSet, screen: Screen, text: str, points: list[Float2]) -> None
 ```
 
-#### get_image_for
-```python
-get_image_for(tile: int) -> Image
-```
-
-Get an image referencing a specific tile in the tile set for
-the console. Normally used to define your own tiles;
-`console.get_image_for(1024).copy_from(some_tile_image)`
-
-#### read_line
-```python
-read_line()
-```
-
-Puts the console in _line edit mode_.
-
-A cursor will be shown and all text events will be captured by the console
-until _Enter_ is pressed. At this point the entire line will be pushed as a
-TextEvent.
-
-#### cancel_line
-```python
-cancel_line()
-```
-
-Cancels line editing.
-
-#### set_line
-```python
-set_line(text: str)
-```
-
-Updates the contents of the edited line
-
-
-#### get_tiles
-```python
-get_tiles() -> List[int]
-```
-
-Get all the tiles and colors as an array of ints.
-
-Format is: `[tile0, fg0, bg0, tile1, fg1, bg1 ...]` etc.
-
-#### set_tiles
-```python
-set_tiles(List[int])
-```
-
-Set all the tiles and colors from an array of ints.
-
-
-### Attributes
-
-#### tile_size
-```python
-tile_size: Int2
-```
-
-Size of a single tile or character in pixels.
-
-#### grid_size
-```python
-grid_size: Int2
-```
-
-Size of the grid; Number of columns and rows.
-
-## pix.events
-
-### Key
-Event sent when a key was pressed
-
-```python
-key: int
-mods: int
-```
-
-### Click
-Event sent when use clicks on the screen
-
-```python
-x: int
-y: int
-pos: Float2
-buttons: int
-```
-
-### Move
-Event sent when user moves mouse
-
-```python
-x: int
-y: int
-pos: Float2
-buttons: int
-```
-
-### Text
-Event sent when text was input in the window. This event is used by `Console.read_line()` to post its result.
-
-```python
-text: str
-```
-
-### Resize
-Screen was resized
-
-```python
-size: Float2
-```
-
-## pix.key
-
-Constants for keys on keyboards and other devices
-
-```python
-# Cursor keys and gamepad
-pix.key.LEFT
-pix.key.RIGHT
-pix.key.UP
-pix.key.DOWN
-
-# Mouse buttons
-pix.key.LEFT_MOUSE
-pix.key.RIGHT_MOUSE
-pix.key.MIDDLE_MOUSE
-pix.key.MOUSE4
-pix.key.MOUSE5
-
-# Gamepad
-pix.key.FIRE
-pix.key.A1
-pix.key.X1
-pix.key.Y1
-pix.key.B1
-pix.key.R1
-pix.key.L1
-pix.key.R2
-pix.key.L2
-pix.key.SELECT
-pix.key.START
-
-# Keyboard
-
-pix.key.ENTER
-pix.key.BACKSPACE
-pix.key.TAB
-pix.key.END
-pix.key.HOME
-pix.key.DELETE
-pix.key.PAGEDOWN
-pix.key.PAGEUP
-pix.key.INSERT
-pix.key.ESCAPE
-pix.key.SPACE
-
-pix.key.F1
-pix.key.F2
-pix.key.F3
-pix.key.F4
-pix.key.F5
-pix.key.F6
-pix.key.F7
-pix.key.F8
-pix.key.F9
-pix.key.F10
-pix.key.F11
-pix.key.F12
-```
-
-## pix.color
-
-Constants for colors
-
-```python
-pix.color.BLACK
-pix.color.WHITE
-pix.color.RED
-pix.color.CYAN
-pix.color.PURPLE
-pix.color.GREEN
-pix.color.BLUE
-pix.color.YELLOW
-pix.color.ORANGE
-pix.color.BROWN
-pix.color.LIGHT_RED
-pix.color.DARK_GREY
-pix.color.GREY
-pix.color.LIGHT_GREEN
-pix.color.LIGHT_BLUE
-pix.color.LIGHT_GREY
-```

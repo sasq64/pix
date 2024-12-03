@@ -1,9 +1,9 @@
 #include "pixel_console.hpp"
 
+#include "utf8.h"
+
 #include "gl/buffer.hpp"
 #include "gl/program_cache.hpp"
-
-#include <algorithm>
 
 std::string PixConsole::vertex_shader{R"gl(
     #ifdef GL_ES

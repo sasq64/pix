@@ -57,13 +57,13 @@ inline gl::TexRef crop(gl::TexRef img, std::optional<Vec2f> xy_,
 inline auto add_image_class(py::module_ const& mod)
 {
     using namespace pybind11::literals;
+    const char* doc;
 
     // Image
     return py::class_<gl::TexRef>(mod, "Image")
         .def(py::init<int32_t, int32_t>(), "width"_a, "height"_a,
-             "Create an empty image of the given size.")
-        .def(py::init<>(&image_from_vec2), "size"_a,
-             "Create an empty image of the given size.")
+             doc = "Create an empty image of the given size.")
+        .def(py::init<>(&image_from_vec2), "size"_a, doc)
         .def(py::init<>(&image_from_pixels), "width"_a, "pixels"_a,
              "Create an image from an array of 32-bit colors.")
         .def("split", &split_wh, "cols"_a = -1, "rows"_a = -1, "width"_a = 8,

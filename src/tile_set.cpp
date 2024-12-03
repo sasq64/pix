@@ -1,5 +1,7 @@
 #include "tile_set.hpp"
 
+#include "utf8.h"
+
 static constexpr int align(int val, int a)
 {
     return (val + (a - 1)) & (~(a - 1));

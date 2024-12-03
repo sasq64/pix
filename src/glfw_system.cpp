@@ -75,10 +75,18 @@ public:
         return scale;
     }
 
+    double sync_time = 0.1;
+
     void swap() override
     {
+        //glFinish();
+        clk::time_point t0 = clk::now();
         glfwSwapBuffers(window);
         clk::time_point t = clk::now();
+        auto const secs = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(t - t0).count()) / 1000000.0;
+        sync_time = sync_time * 0.8 + secs * 0.2;
+        //printf("SECS %.4f %.4f\n", secs, free_time);
+
         auto d = t - real_t;
         swapped = true;
         if (frame_time != 0us) {
@@ -120,7 +128,9 @@ public:
     {
         auto secs = to_sec(real_t - first);
         auto f = to_sec(delta);
-        return {secs, frame_counter, f, fps};
+        auto* monitor = glfwGetWindowMonitor(window);
+        auto const* mode = glfwGetVideoMode(monitor);
+        return {secs, f, frame_counter,  fps, mode->refreshRate};
     }
 
     void set_target() override
@@ -187,11 +197,10 @@ public:
 
         int width = settings.display_width;
         int height = settings.display_height;
-        GLFWmonitor* monitor = nullptr;
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        auto const* mode = glfwGetVideoMode(monitor);
         if (settings.screen == ScreenType::Full) {
-            monitor = glfwGetPrimaryMonitor();
             if (width <= 0) {
-                auto const* mode = glfwGetVideoMode(monitor);
                 glfwWindowHint(GLFW_RED_BITS, mode->redBits);
                 glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
                 glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
@@ -199,6 +208,8 @@ public:
                 width = mode->width;
                 height = mode->height;
             }
+        } else {
+            monitor = nullptr;
         }
         if (width <= 0 || height <= 0) {
             throw system_exception("Illegal window size");

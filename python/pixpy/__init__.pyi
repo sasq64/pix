@@ -8,13 +8,13 @@ import typing
 from . import color
 from . import event
 from . import key
-__all__ = ['Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_loop', 'save_png', 'was_pressed', 'was_released']
+__all__ = ['BLEND_ADD', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'was_pressed', 'was_released']
 class Console:
     """
     A console is a 2D grid of tiles that can be rendered.
     """
     @typing.overload
-    def __init__(self, cols: int = 80, rows: int = 50, font_file: str = '', tile_size: Union[Float2, Int2, Tuple[float, float]] = ..., font_size: int = 16) -> None:
+    def __init__(self, cols: int, rows: int, font_file: str = '', tile_size: Union[Float2, Int2, Tuple[float, float]] = ..., font_size: int = 16) -> None:
         """
         Create a new Console holding `cols`*`rows` tiles.
 
@@ -23,7 +23,7 @@ class Console:
         `tile_size` sets the size in pixels of each tile. If not given, it will be derived from the size of a character in the font with the provided `font_size`
         """
     @typing.overload
-    def __init__(self, cols: int = 80, rows: int = 50, tile_set: TileSet) -> None:
+    def __init__(self, cols: int, rows: int, tile_set: TileSet) -> None:
         """
         Create a new Console holding `cols`*`row` tiles. Use the provided `tile_set`.
         """
@@ -60,14 +60,6 @@ class Console:
         Puts the console in line edit mode.
 
         A cursor will be shown and all text events will be captured by the console until `Enter` is pressed. At this point the entire line will be pushed as a `TextEvent`.
-        """
-    def render(self, context: Context, pos: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
-        """
-        Render the console using the context. `pos` and `size` are in pixels. If `size` is not given, it defaults to `tile_size*grid_size`.
-
-        To render a full screen console (scaling as needed):
-
-        `console.render(screen.context, size=screen.size)`
         """
     def set_color(self, fg: int, bg: int) -> None:
         """
@@ -166,7 +158,13 @@ class Context:
         """
     @typing.overload
     def draw(self, drawable: Console, top_left: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
-        ...
+        """
+        Render a console. `top_left` and `size` are in pixels. If `size` is not given, it defaults to `tile_size*grid_size`.
+
+        To render a full screen console (scaling as needed):
+
+        `console.render(screen.context, size=screen.size)`
+        """
     def filled_circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw a filled circle.
@@ -216,6 +214,14 @@ class Context:
         Write a pixel into the image.
         """
     @property
+    def blend_mode(self) -> int:
+        """
+        Set the blend mode.
+        """
+    @blend_mode.setter
+    def blend_mode(self, arg1: int) -> None:
+        ...
+    @property
     def context(self) -> Context:
         ...
     @property
@@ -254,7 +260,6 @@ class Float2:
     """
     ONE: typing.ClassVar[Float2]  # value = Float2(1.000000, 1.000000)
     ZERO: typing.ClassVar[Float2]  # value = Float2(0.000000, 0.000000)
-    __hash__: typing.ClassVar[None] = None
     @staticmethod
     def from_angle(arg0: float) -> Float2:
         """
@@ -285,6 +290,8 @@ class Float2:
     def __getitem__(self, arg0: int) -> float:
         ...
     def __gt__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> bool:
+        ...
+    def __hash__(self) -> int:
         ...
     @typing.overload
     def __init__(self, x: int = 0, y: int = 0) -> None:
@@ -405,7 +412,7 @@ class Float2:
         ...
 class Font:
     UNSCII_FONT: typing.ClassVar[Font]  # value = <Font object>
-    def __init__(self, font_file: str = '', font_size: int = 16) -> None:
+    def __init__(self, font_file: str = '') -> None:
         """
         Create a font from a TTF file.
         """
@@ -458,7 +465,13 @@ class Image:
         """
     @typing.overload
     def draw(self, drawable: Console, top_left: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
-        ...
+        """
+        Render a console. `top_left` and `size` are in pixels. If `size` is not given, it defaults to `tile_size*grid_size`.
+
+        To render a full screen console (scaling as needed):
+
+        `console.render(screen.context, size=screen.size)`
+        """
     def filled_circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw a filled circle.
@@ -520,6 +533,14 @@ class Image:
     def split(self, size: Union[Float2, Int2, Tuple[float, float]]) -> list[Image]:
         ...
     @property
+    def blend_mode(self) -> int:
+        """
+        Set the blend mode.
+        """
+    @blend_mode.setter
+    def blend_mode(self, arg1: int) -> None:
+        ...
+    @property
     def context(self) -> Context:
         ...
     @property
@@ -569,7 +590,6 @@ class Int2:
     """
     ONE: typing.ClassVar[Int2]  # value = Int2(1, 1)
     ZERO: typing.ClassVar[Int2]  # value = Int2(0, 0)
-    __hash__: typing.ClassVar[None] = None
     @typing.overload
     def __add__(self, arg0: Union[Int2, Tuple[int, int]]) -> Int2:
         ...
@@ -601,6 +621,8 @@ class Int2:
     def __getitem__(self, arg0: int) -> int:
         ...
     def __gt__(self, arg0: Union[Int2, Tuple[int, int]]) -> bool:
+        ...
+    def __hash__(self) -> int:
         ...
     @typing.overload
     def __init__(self, x: int = 0, y: int = 0) -> None:
@@ -712,7 +734,13 @@ class Screen:
         """
     @typing.overload
     def draw(self, drawable: Console, top_left: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
-        ...
+        """
+        Render a console. `top_left` and `size` are in pixels. If `size` is not given, it defaults to `tile_size*grid_size`.
+
+        To render a full screen console (scaling as needed):
+
+        `console.render(screen.context, size=screen.size)`
+        """
     def filled_circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw a filled circle.
@@ -768,6 +796,14 @@ class Screen:
         Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This is normally the last thing you do in your render loop.
         """
     @property
+    def blend_mode(self) -> int:
+        """
+        Set the blend mode.
+        """
+    @blend_mode.setter
+    def blend_mode(self, arg1: int) -> None:
+        ...
+    @property
     def context(self) -> Context:
         ...
     @property
@@ -813,6 +849,11 @@ class Screen:
     @point_size.setter
     def point_size(self, arg1: float) -> None:
         ...
+    @property
+    def refresh_rate(self) -> int:
+        """
+        Actual refresh rate of current monitor.
+        """
     @property
     def seconds(self) -> float:
         """
@@ -920,6 +961,10 @@ def rgba(red: float, green: float, blue: float, alpha: float) -> int:
     """
     Combine four color components into a color.
     """
+def run_every_frame(arg0: typing.Callable[[], bool]) -> None:
+    """
+    Add a function that should be run every frame. If the function returns false it will stop being called.
+    """
 def run_loop() -> bool:
     """
     Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way
@@ -936,3 +981,6 @@ def was_released(key: int | str) -> bool:
     """
     Returns _True_ if the keyboard or mouse key was pressed this loop. `run_loop()` refreshes these states.
     """
+BLEND_ADD: int = 50462721
+BLEND_MULTIPLY: int = 50724864
+BLEND_NORMAL: int = 50463491

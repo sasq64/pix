@@ -2,6 +2,10 @@
 #include "system.hpp"
 #include "context.hpp"
 
+#include <functional>
+#include <memory>
+#include <vector>
+
 struct Machine
 {
     std::shared_ptr<System> sys{};

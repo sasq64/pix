@@ -41,6 +41,8 @@ public:
     float line_width = 1;
     float point_size = 2;
     gl::Color fg;
+    unsigned blend_source = GL_SRC_ALPHA;
+    unsigned blend_dest = GL_ONE_MINUS_SRC_ALPHA;
 
     std::vector<float> point_cache;
 
@@ -106,6 +108,7 @@ public:
 
 
     void set_color(gl::Color const& col);
+    void set_blend_mode(uint32_t mode);
 
     void circle(Vec2f const& v, float r);
     void filled_circle(Vec2f const& v, float r);
@@ -126,6 +129,6 @@ public:
     void draw_inconvex_polygon(const Vec2f* points, size_t count);
 };
 
-bool instersects(Vec2f v11, Vec2f v12, Vec2f v21, Vec2f v22);
+bool intersects(Vec2f v11, Vec2f v12, Vec2f v21, Vec2f v22);
 
 } // namespace pix
