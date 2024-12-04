@@ -137,6 +137,9 @@ class Console:
     def wrapping(self, arg0: bool) -> None:
         ...
 class Context:
+    """
+    A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.
+    """
     clip_size: Union[Int2, Tuple[int, int]]
     clip_top_left: Union[Int2, Tuple[int, int]]
     def __init__(self, size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
@@ -216,7 +219,7 @@ class Context:
     @property
     def blend_mode(self) -> int:
         """
-        Set the blend mode.
+        Set the blend mode. Normally one of the constants `pix.BLEND_ADD`, `pix.BLEND_MULTIPLY` or `pix.BLEND_NORMAL`.
         """
     @blend_mode.setter
     def blend_mode(self, arg1: int) -> None:
@@ -256,7 +259,7 @@ class Context:
         ...
 class Float2:
     """
-    Represents an floating pont coordinate or size
+    Represents an floating point coordinate or size. Mostly behaves like a normal float when used in arithmetic operations.
     """
     ONE: typing.ClassVar[Float2]  # value = Float2(1.000000, 1.000000)
     ZERO: typing.ClassVar[Float2]  # value = Float2(0.000000, 0.000000)
@@ -411,6 +414,9 @@ class Float2:
     def yx(self) -> Float2:
         ...
 class Font:
+    """
+    Represents a TTF (Freetype) font that can be used to create text images.
+    """
     UNSCII_FONT: typing.ClassVar[Font]  # value = <Font object>
     def __init__(self, font_file: str = '') -> None:
         """
@@ -421,6 +427,9 @@ class Font:
         Create an image containing the given text.
         """
 class Image:
+    """
+    A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.
+    """
     clip_size: Union[Int2, Tuple[int, int]]
     clip_top_left: Union[Int2, Tuple[int, int]]
     @typing.overload
@@ -535,7 +544,7 @@ class Image:
     @property
     def blend_mode(self) -> int:
         """
-        Set the blend mode.
+        Set the blend mode. Normally one of the constants `pix.BLEND_ADD`, `pix.BLEND_MULTIPLY` or `pix.BLEND_NORMAL`.
         """
     @blend_mode.setter
     def blend_mode(self, arg1: int) -> None:
@@ -586,7 +595,7 @@ class Image:
         ...
 class Int2:
     """
-    Represents an integer coordinate or size
+    Represents an integer coordinate or size. Mostly behaves like a normal int when used in arithmetic operations.
     """
     ONE: typing.ClassVar[Int2]  # value = Int2(1, 1)
     ZERO: typing.ClassVar[Int2]  # value = Int2(0, 0)
@@ -717,6 +726,9 @@ class Int2:
     def yx(self) -> Int2:
         ...
 class Screen:
+    """
+    A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.
+    """
     clip_size: Union[Int2, Tuple[int, int]]
     clip_top_left: Union[Int2, Tuple[int, int]]
     def circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
@@ -798,7 +810,7 @@ class Screen:
     @property
     def blend_mode(self) -> int:
         """
-        Set the blend mode.
+        Set the blend mode. Normally one of the constants `pix.BLEND_ADD`, `pix.BLEND_MULTIPLY` or `pix.BLEND_NORMAL`.
         """
     @blend_mode.setter
     def blend_mode(self, arg1: int) -> None:
@@ -870,7 +882,7 @@ class Screen:
         ...
 class TileSet:
     """
-    A tileset is a texture split up into tiles for rendering.
+    A tileset is a texture split up into tiles for rendering. It is used by the `Console` class but can also be used directly.
     """
     @typing.overload
     def __init__(self, font_file: str, size: int) -> None:
@@ -908,7 +920,9 @@ class TileSet:
         """
     @typing.overload
     def render_text(self, screen: Screen, text: str, points: list[Float2]) -> None:
-        ...
+        """
+        Render characters from the TileSet, each character using the next position from `points`, using the default tile size.
+        """
 def add_color(color0: int, color1: int) -> int:
     ...
 def all_events() -> list[event.NoEvent | event.Key | event.Move | event.Click | event.Text | event.Resize | event.Quit]:

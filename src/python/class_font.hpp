@@ -57,5 +57,9 @@ inline auto add_font_class(py::module_ const& mod)
              "color"_a = 0xffffffff,
              "Create an image containing the given text.")
         .def_readonly_static("UNSCII_FONT", &FreetypeFont::unscii,
-                             "Get a reference to the built in unscii font.");
+                             "Get a reference to the built in unscii font.")
+        .doc() = "Represents a TTF (Freetype) font that can be used to create text images.";
+
+
+
 }

@@ -54,6 +54,7 @@ inline auto add_screen_class(py::module_ const& mod)
         },
         "Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This "
         "is normally the last thing you do in your render loop.");
+    screen.doc() = "The main window. Currently there can be only one instance of this class.";
 
     return screen;
 }

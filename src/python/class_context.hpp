@@ -173,7 +173,7 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
     cls.def_property(
         "blend_mode", [](T& self) { return context_from(self)->fg.to_rgba(); },
         [](T& self, uint32_t mode) { context_from(self)->set_blend_mode(mode); },
-        "Set the blend mode.");
+        "Set the blend mode. Normally one of the constants `pix.BLEND_ADD`, `pix.BLEND_MULTIPLY` or `pix.BLEND_NORMAL`.");
     cls.def_property(
         "point_size", [](T& self) { return context_from(self)->point_size; },
         [](T& self, float lw) { context_from(self)->point_size = lw; },
@@ -203,6 +203,8 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
     cls.def(
         "flush", [](T& self) { context_from(self)->flush(); },
         "Flush pixel operations");
+
+    cls.doc() = "A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.";
 }
 inline auto add_context_class(py::module_ const& mod)
 {

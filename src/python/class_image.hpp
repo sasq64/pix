@@ -60,7 +60,7 @@ inline auto add_image_class(py::module_ const& mod)
     const char* doc;
 
     // Image
-    return py::class_<gl::TexRef>(mod, "Image")
+    auto c = py::class_<gl::TexRef>(mod, "Image")
         .def(py::init<int32_t, int32_t>(), "width"_a, "height"_a,
              doc = "Create an empty image of the given size.")
         .def(py::init<>(&image_from_vec2), "size"_a, doc)
@@ -92,4 +92,6 @@ inline auto add_image_class(py::module_ const& mod)
             "Size of the image in (fractional) pixels.")
         .def_property_readonly("width", &gl::TexRef::width)
         .def_property_readonly("height", &gl::TexRef::height);
+        c.doc() = "A (GPU Side) _image_, represented by a texture reference and 4 UV coordinates. Images works like arrays in the sense that it is cheap to create new views to images (using crop(), split() etc).";
+        return c;
 }
