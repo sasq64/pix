@@ -60,14 +60,18 @@ int main()
     int cols = 60;
     int rows = 45;
 
-    auto screen = sys->init_screen({
-        .screen = ScreenType::Window,
+    auto display = sys->init_screen({
+        .screen = DisplayType::Window,
         .display_width = cols * 8 * 2,
         .display_height = rows * 8 * 2});
 
+
+    auto screen = std::make_shared<pix::Screen>(display);
+
+
     auto [realw, realh] = screen->get_size();
-    auto context = std::make_shared<pix::Context>(realw, realh, 0);
-    context->vpscale = screen->get_scale();
+    //auto context = std::make_shared<pix::Context>(realw, realh, 0);
+    screen->vpscale = screen->get_scale();
 
     std::vector<uint32_t> pixels(realw*realh);
     for (auto y = 0; y<realh ; y++) {
@@ -93,7 +97,7 @@ int main()
     auto pos = Vec2(0,0);
         if(!sys->run_loop()) { break; }
         //context-set_target();
-        context->clear(0x000000);
+        screen->clear(0x000000);
         //context->blit(bg,  {0,0}, Vec2f{bg.tex->size()});
         //console->render();
         std::vector<Vec2f> points {
@@ -102,18 +106,18 @@ int main()
             {700, 500},
             {200, 400}
         };
-        context->set_color(gl::Color(0xff0000ff));
-        context->draw_inconvex_polygon(star.data(), star.size());
+        screen->set_color(gl::Color(0xff0000ff));
+        screen->draw_inconvex_polygon(star.data(), star.size());
 
-        context->set_color(gl::Color(0xffff00ff));
+        screen->set_color(gl::Color(0xffff00ff));
         for (int i=0; i<400; i ++) {
             for(auto p : star) {
                 p += pos;
-                context->line(p);
+                screen->line(p);
             }
             pos += {4,0};
         }
-        context->line(star[0]);
+        screen->line(star[0]);
         //context->filled_rect({10, 10}, {100,100});
         screen->swap();
     }

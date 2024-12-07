@@ -142,8 +142,6 @@ class Context:
     """
     clip_size: Union[Int2, Tuple[int, int]]
     clip_top_left: Union[Int2, Tuple[int, int]]
-    def __init__(self, size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
-        ...
     def circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw an (outline) circle
@@ -914,12 +912,12 @@ class TileSet:
         Get the entire tileset image. Typically used with `save_png()` to check generated tileset.
         """
     @typing.overload
-    def render_text(self, screen: Screen, text: str, pos: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
+    def render_text(self, screen: ..., text: str, pos: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
         """
         Render characters from the TileSet at given `pos` and given `size` (defaults to tile_size)
         """
     @typing.overload
-    def render_text(self, screen: Screen, text: str, points: list[Float2]) -> None:
+    def render_text(self, screen: ..., text: str, points: list[Float2]) -> None:
         """
         Render characters from the TileSet, each character using the next position from `points`, using the default tile size.
         """

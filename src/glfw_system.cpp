@@ -23,7 +23,7 @@ using namespace std::chrono_literals;
 
 static bool swapped = false;
 
-class GLFWWindow : public Screen
+class GLFWWindow : public Display
 {
     using clk = std::chrono::steady_clock;
 
@@ -185,8 +185,8 @@ public:
         }
     };
 
-    std::shared_ptr<Screen>
-    init_screen(Screen::Settings const& settings) override
+    std::shared_ptr<Display>
+    init_screen(Display::Settings const& settings) override
     {
         glfwWindowHint(GLFW_SAMPLES, 4);
         glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
@@ -199,7 +199,7 @@ public:
         int height = settings.display_height;
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         auto const* mode = glfwGetVideoMode(monitor);
-        if (settings.screen == ScreenType::Full) {
+        if (settings.screen == DisplayType::Full) {
             if (width <= 0) {
                 glfwWindowHint(GLFW_RED_BITS, mode->redBits);
                 glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);

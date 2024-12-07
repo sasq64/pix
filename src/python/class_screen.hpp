@@ -14,42 +14,42 @@ namespace py = pybind11;
 
 inline auto add_screen_class(py::module_ const& mod)
 {
-    auto screen = py::class_<Screen, std::shared_ptr<Screen>>(mod, "Screen");
-    screen.def("set_as_target", &Screen::set_target);
-    screen.def_property_readonly("frame_counter", [](Screen const&) {
+    auto screen = py::class_<pix::Screen, std::shared_ptr<pix::Screen>>(mod, "Screen");
+    screen.def("set_as_target", &pix::Screen::set_target);
+    screen.def_property_readonly("frame_counter", [](pix::Screen const&) {
         return Machine::get_instance().frame_counter;
     });
     screen.def_property_readonly(
         "seconds",
-        [](Screen const& screen) { return screen.get_time().seconds; },
+        [](pix::Screen const& screen) { return screen.get_time().seconds; },
         "Total seconds elapsed since starting pix.");
     screen.def_property_readonly(
-        "delta", [](Screen const& screen) { return screen.get_time().delta; },
+        "delta", [](pix::Screen const& screen) { return screen.get_time().delta; },
         "Time in seconds for last frame.");
     screen.def_property_readonly(
-        "refresh_rate", [](Screen const& screen) { return screen.get_time().refresh_rate; },
+        "refresh_rate", [](pix::Screen const& screen) { return screen.get_time().refresh_rate; },
         "Actual refresh rate of current monitor.");
     screen.def_property(
-        "fps", [](Screen const& screen) { return screen.get_time().fps; },
-        [](Screen& screen, int fps) { screen.set_fps(fps); },
+        "fps", [](pix::Screen const& screen) { return screen.get_time().fps; },
+        [](pix::Screen& screen, int fps) { screen.set_fps(fps); },
         "Current FPS. Set to 0 to disable fixed FPS. Then use `seconds` or "
         "`delta` to sync your movement.");
     screen.def_property_readonly(
         "context",
-        [](Screen const&) { return Machine::get_instance().context; },
+        [](pix::Screen& screen) { return &screen; },
         "Get the screen context.");
     screen.def_property_readonly(
-        "size", [](Screen const& screen) { return Vec2i{screen.get_size()}; }, "Size (in pixels) of screen.");
+        "size", [](pix::Screen const& screen) { return Vec2i{screen.get_size()}; }, "Size (in pixels) of screen.");
     screen.def_property_readonly(
-        "width", [](Screen const& s) { return s.get_size().first; });
+        "width", [](pix::Screen const& s) { return s.get_size().first; });
     screen.def_property_readonly(
-        "height", [](Screen const& s) { return s.get_size().second; });
+        "height", [](pix::Screen const& s) { return s.get_size().second; });
     screen.def(
         "swap",
-        [](std::shared_ptr<Screen> const& screen) {
+        [](std::shared_ptr<pix::Screen> const& screen) {
             auto& m = Machine::get_instance();
             m.frame_counter++;
-            m.context->flush();
+            screen->flush();
             screen->swap();
         },
         "Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This "

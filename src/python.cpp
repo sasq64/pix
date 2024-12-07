@@ -11,6 +11,7 @@
 
 #include "gl/texture.hpp"
 
+#include "screen.hpp"
 #include "context.hpp"
 #include "font.hpp"
 #include "image.hpp"
@@ -63,30 +64,32 @@ void init() {
     }));
 }
 
-std::shared_ptr<Screen> open_display(int width, int height, bool full_screen) {
+std::shared_ptr<pix::Screen> open_display(int width, int height, bool full_screen) {
     if (m.screen != nullptr) {
         return m.screen;
     }
     init();
-    Screen::Settings const settings{
+    Display::Settings const settings{
         .screen = full_screen
-                      ? ScreenType::Full
-                      : ScreenType::Window,
+                      ? DisplayType::Full
+                      : DisplayType::Window,
         .display_width = width,
         .display_height = height
     };
 
-    m.screen = m.sys->init_screen(settings);
+    auto display = m.sys->init_screen(settings);
+    m.screen = std::make_shared<pix::Screen>(display);
 
     auto [realw, realh] = m.screen->get_size();
 
-    m.context = std::make_shared<pix::Context>(realw, realh, 0);
-    m.context->vpscale = m.screen->get_scale();
+    //m.context = std::make_shared<pix::Context>(realw, realh, 0);
+    //m.context->vpscale = m.screen->get_scale();
+    m.screen->vpscale = m.screen->get_scale();
 
     m.sys->add_listener([](AnyEvent const &e) {
         if (std::holds_alternative<ResizeEvent>(e)) {
             auto [w, h] = m.screen->get_size();
-            m.context->resize(Vec2f(w, h), m.screen->get_scale());
+            m.screen->resize(Vec2f(w, h), m.screen->get_scale());
         }
         if (std::holds_alternative<KeyEvent>(e)) {
             auto ke = std::get<KeyEvent>(e);
@@ -101,7 +104,7 @@ std::shared_ptr<Screen> open_display(int width, int height, bool full_screen) {
     return m.screen;
 }
 
-std::shared_ptr<Screen> open_display2(Vec2i size, bool full_screen) {
+std::shared_ptr<pix::Screen> open_display2(Vec2i size, bool full_screen) {
     return open_display(size.x, size.y, full_screen);
 }
 

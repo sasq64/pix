@@ -23,7 +23,7 @@ void inline log(const char* text)
     //puts(text);
 }
 
-enum class ScreenType
+enum class DisplayType
 {
     Full,
     Window,
@@ -91,12 +91,12 @@ struct TextEvent
 using AnyEvent = std::variant<NoEvent, KeyEvent, MoveEvent, ClickEvent,
                               TextEvent, ResizeEvent, QuitEvent>;
 
-class Screen
+class Display
 {
 public:
     struct Settings
     {
-        ScreenType screen = ScreenType::Window;
+        DisplayType screen = DisplayType::Window;
         std::string title = "pix";
         int display_width = 1600;
         int display_height = 1200;
@@ -111,7 +111,7 @@ public:
         int refresh_rate{};
     };
 
-    virtual ~Screen() = default;
+    virtual ~Display() = default;
     virtual void swap() {}
     virtual void set_fps(int fps) {}
     [[nodiscard]] virtual Time get_time() const { return {}; }
@@ -144,7 +144,7 @@ protected:
 
 public:
     virtual ~System() = default;
-    virtual std::shared_ptr<Screen> init_screen(Screen::Settings const&)
+    virtual std::shared_ptr<Display> init_screen(Display::Settings const&)
     {
         return nullptr;
     }
