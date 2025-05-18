@@ -6,6 +6,7 @@
 #include "system.hpp"
 #include "utf8.h"
 
+#include "gl/program_cache.hpp"
 #include <GLFW/glfw3.h>
 
 #include <array>
@@ -28,6 +29,7 @@ class GLFWWindow : public Screen
     using clk = std::chrono::steady_clock;
 
     int frame_counter = 0;
+    int refreshRate = 60;
 #ifdef __APPLE__
     int fps = 60;
     clk::duration frame_time = std::chrono::microseconds(1000000 / 60);
@@ -43,8 +45,9 @@ class GLFWWindow : public Screen
 public:
     GLFWwindow* window = nullptr;
 
-    explicit GLFWWindow(GLFWwindow* win) : window(win)
+    explicit GLFWWindow(GLFWwindow* win, int hz) : window(win)
     {
+        refreshRate = hz;
         update_scale();
         first = clk::now();
     }
@@ -65,6 +68,7 @@ public:
 
     ~GLFWWindow() override
     {
+        gl::ProgramCache::destroy_instance();
         if (window != nullptr) { glfwDestroyWindow(window); }
     }
 
@@ -128,9 +132,7 @@ public:
     {
         auto secs = to_sec(real_t - first);
         auto f = to_sec(delta);
-        auto* monitor = glfwGetWindowMonitor(window);
-        auto const* mode = glfwGetVideoMode(monitor);
-        return {secs, f, frame_counter,  fps, mode->refreshRate};
+        return {secs, f, frame_counter,  fps, refreshRate};
     }
 
     void set_target() override
@@ -259,7 +261,7 @@ public:
         glfwSetWindowSizeCallback(
             window, [](GLFWwindow*, int w, int h) { system->resized(w, h); });
         glViewport(0, 0, settings.display_width, settings.display_height);
-        return std::make_shared<GLFWWindow>(window);
+        return std::make_shared<GLFWWindow>(window, mode->refreshRate);
     }
 
     std::deque<AnyEvent> event_queue;
