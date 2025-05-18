@@ -129,7 +129,10 @@ struct ProgramCache
     ProgramCache() = default;
 
     static inline std::unique_ptr<ProgramCache> pc;
-    static void destroy_instance() { pc = nullptr; }
+    static void destroy_instance() { 
+
+        pc = nullptr;
+    }
 
     static ProgramCache& get_instance()
     {

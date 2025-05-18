@@ -42,7 +42,10 @@ struct Program
 
     ~Program()
     {
-        if (program != 0) { glDeleteProgram(program); }
+        if (program != 0) { 
+            // TODO: Temp remove because cached programs outlive context
+            //glDeleteProgram(program);
+        }
     }
 
     Program(VertexShader const& vs, FragmentShader const& fs)

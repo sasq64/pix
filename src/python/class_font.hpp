@@ -35,7 +35,12 @@ inline gl::TexRef text_to_image(FreetypeFont& font, std::string const& text,
         img.flip();
         tex = std::make_shared<gl::Texture>(img.width, img.height,
                                                       img.ptr, GL_RGBA, img.format);
+        // TODO: Intentionally leak texture here because gl context will normally be destroyed
+        //       before statics
+        new std::shared_ptr<gl::Texture>(tex);
         font_images[id] = tex;
+
+
     } else {
         tex = it->second;
     }
