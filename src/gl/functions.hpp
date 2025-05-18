@@ -141,6 +141,7 @@ enum class Type
     UnsignedInt = GL_UNSIGNED_INT,
     UnsignedShort = GL_UNSIGNED_SHORT,
     Float = GL_FLOAT,
+    Double = GL_DOUBLE,
 };
 
 template <typename T> inline T get(GLenum what)

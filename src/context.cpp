@@ -1,5 +1,7 @@
 #include "context.hpp"
 
+#include <tesselator.h>
+
 namespace pix {
 
 using gl::ProgramCache;
@@ -195,7 +197,7 @@ Context::Context(Context const& other) :
 }
 
 Context::Context(Vec2f _offset, Vec2f _view_size, Vec2f _target_size, GLuint fb)
-    : target{fb}, offset{_offset}, view_size{_view_size}, target_size{_target_size}, fg{color::white},
+    : target{fb}, view_size{_view_size}, offset{_offset}, target_size{_target_size}, fg{color::white},
       colored{
           ProgramCache::get_instance()
               .get_program<ProgramCache::Colored, ProgramCache::NoTransform>()},
@@ -257,6 +259,33 @@ void Context::draw_indexed(const CO& container, std::vector<T> indices, gl::Prim
     gl::drawElements(primitive, indices.size(), gl::Type::UnsignedShort, 0);
     pos.disable();
 }
+
+template <typename F, typename I>
+void Context::draw_indexed(F const* coords, size_t c_count, I const* indices, size_t i_count, gl::Primitive primitive)
+{
+    set_target();
+
+    filled.use();
+    filled.setUniform("frag_color", fg);
+    auto pos = filled.getAttribute("in_pos");
+    pos.enable();
+    gl::ArrayBuffer<GL_STREAM_DRAW> vbo{coords, c_count};
+    gl::ElementBuffer<GL_STREAM_DRAW> elements{indices, i_count};
+    vbo.bind();
+    elements.bind();
+    if constexpr (sizeof(F) == 4) {
+        gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float, 0 * sizeof(GLfloat), 0);
+    } else {
+        gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Double, 0 * sizeof(GLdouble), 0);
+    }
+    if constexpr (sizeof(I) == 2) {
+        gl::drawElements(primitive, i_count, gl::Type::UnsignedShort, 0);
+    } else {
+        gl::drawElements(primitive, i_count, gl::Type::UnsignedInt, 0);
+    }
+    pos.disable();
+}
+
 
 bool intersects(Vec2f v11, Vec2f v12, Vec2f v21, Vec2f v22)
 {
@@ -355,6 +384,28 @@ bool is_ear(Vec2f a, Vec2f b, Vec2f c, Vec2f const* vertices, size_t count)
     }
 
     return true; // No points inside the triangle and it is convex
+}
+
+void Context::draw_complex_polygon(std::vector<std::vector<Vec2f>> const& polygons)
+{
+    auto* tess = tessNewTess(nullptr);
+    for (auto const& vec : polygons) {
+        tessAddContour(tess, 2, vec.data(), 16, static_cast<int>(vec.size()));
+    }
+
+    tessTesselate(tess, TessWindingRule::TESS_WINDING_ODD, TessElementType::TESS_POLYGONS, 3, 2, nullptr);
+    auto* verts = tessGetVertices(tess);
+    auto* elems = tessGetElements(tess);
+    float f[8*1024];
+    const auto ec = tessGetElementCount(tess) * 3;
+    const auto vc = tessGetVertexCount(tess);
+    for (int i=0; i<vc; i++) {
+        auto const v = to_screen(verts[i*2], verts[i*2+1]);
+        f[i*2] = v.x;
+        f[i*2+1] = v.y;
+    }
+    draw_indexed(f, vc * 2, elems, ec, gl::Primitive::Triangles);
+    tessDeleteTess(tess);
 }
 
 void Context::draw_inconvex_polygon(Vec2f const* points, size_t count)
@@ -545,11 +596,10 @@ void Context::set_pixel(int x, int y, uint32_t col)
     col = (col & 0x00FF00FF) << 8 | (col & 0xFF00FF00) >> 8;
 
     glBindFramebuffer(GL_FRAMEBUFFER, target);
-    int width = view_size.x;
-    int height = view_size.y;
+    auto const width = static_cast<int>(view_size.x);
+    auto const height = static_cast<int>(view_size.y);
     if (pixels == nullptr) {
-        pixels = std::unique_ptr<uint32_t[]>(
-            new uint32_t[width * height]); // NOLINT
+        pixels = std::unique_ptr<uint32_t[]>(new uint32_t[width * height]);
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE,
                      pixels.get());
     }

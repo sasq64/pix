@@ -191,9 +191,8 @@ public:
     {
         run_loop();
         while (!std::visit(
-            [&](auto&& e) {
-                using T = std::decay_t<decltype(e)>;
-                if constexpr (std::is_same_v<T, NoEvent>) { return true; }
+            [&]<typename T>(T&& e) {
+                if constexpr (std::is_same_v<std::decay_t<T>, NoEvent>) { return true; }
                 f(e);
                 return false;
             },

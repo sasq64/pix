@@ -128,9 +128,16 @@ public:
     {
         auto secs = to_sec(real_t - first);
         auto f = to_sec(delta);
+        int rate = -1;
         auto* monitor = glfwGetWindowMonitor(window);
-        auto const* mode = glfwGetVideoMode(monitor);
-        return {secs, f, frame_counter,  fps, mode->refreshRate};
+        if (monitor != nullptr) {
+            rate = -2;
+            auto const* mode = glfwGetVideoMode(monitor);
+            if (mode != nullptr) {
+                rate = mode->refreshRate;
+            }
+        }
+        return {secs, f, frame_counter,  fps, rate};
     }
 
     void set_target() override

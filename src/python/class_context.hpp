@@ -98,7 +98,13 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
                                                           points.size());
             }
         },
-        "points"_a, "convex"_a = false, "Draw a filled polygon.");
+        "points"_a, "convex"_a = false, "Draw a filled polygon. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is split into triangles using the ear-clipping method.");
+    cls.def(
+        "complex_polygon",
+        [](T& self, std::vector<std::vector<Vec2f>> const& polygons) {
+                context_from(self)->draw_complex_polygon(polygons);
+        },
+        "polygons"_a, "Draw a complex filled polygon that can consist of holes.");
     cls.def(
         "plot",
         [](T& self, Vec2f const& to, uint32_t color) {
@@ -190,8 +196,16 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
     cls.def_property(
         "clip_size", [](T& self) { return context_from(self)->clip_size; },
         [](T& self, Vec2i xy) { context_from(self)->clip_size = xy; });
+    cls.def_property(
+        "scale", [](T& self) { return context_from(self)->target_scale; },
+        [](T& self, Vec2f xy) { context_from(self)->target_scale = xy; });
+    cls.def_property(
+        "offset", [](T& self) { return context_from(self)->offset; },
+        [](T& self, Vec2f xy) { context_from(self)->offset = xy; },
+    "The offset into a the context this context was created from, if any.");
     cls.def_property_readonly(
-        "size", [](T& self) { return context_from(self)->target_size; });
+        "size", [](T& self) { return context_from(self)->target_size; },
+    "The size of this context in pixels");
     cls.def_property_readonly(
         "target_size", [](T& self) { return context_from(self)->target_size; });
     cls.def(
@@ -203,6 +217,13 @@ inline void add_draw_functions(pybind11::class_<T, O...>& cls)
     cls.def(
         "flush", [](T& self) { context_from(self)->flush(); },
         "Flush pixel operations");
+    cls.def(
+        "get_pointer", [](T& self) {
+            auto ctx = context_from(self);
+            auto xy = Vec2f{Machine::get_instance().sys->get_pointer()};
+            return (xy - ctx->offset) / ctx->target_scale;
+        },
+        "Get the xy coordinate of the mouse pointer (in context space).");
 
     cls.doc() = "A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.";
 }
@@ -213,5 +234,5 @@ inline auto add_context_class(py::module_ const& mod)
     return py::class_<pix::Context, std::shared_ptr<pix::Context>>(mod,
                                                                    "Context")
         //.def(py::init<>(&make_context), "size"_a = Vec2f{0, 0})
-        .def("copy", &pix::Context::copy);
+        .def("copy", &pix::Context::copy, "Make a copy of the context.");
 }

@@ -349,7 +349,6 @@ THE SOFTWARE.
     FT_Memory      memory  = FT_FACE_MEMORY( face );
 
     bdf_font_t*    font = NULL;
-    bdf_options_t  options;
 
     FT_UNUSED( num_params );
     FT_UNUSED( params );
@@ -360,12 +359,8 @@ THE SOFTWARE.
     if ( FT_STREAM_SEEK( 0 ) )
       goto Exit;
 
-    options.correct_metrics = 1;   /* FZ XXX: options semantics */
-    options.keep_unencoded  = 1;
-    options.keep_comments   = 0;
-    options.font_spacing    = BDF_PROPORTIONAL;
-
-    error = bdf_load_font( stream, memory, &options, &font );
+    error = bdf_load_font( stream, memory,
+                           BDF_CORRECT_METRICS | BDF_KEEP_UNENCODED, &font );
     if ( FT_ERR_EQ( error, Missing_Startfont_Field ) )
     {
       FT_TRACE2(( "  not a BDF file\n" ));
@@ -780,8 +775,8 @@ THE SOFTWARE.
                   FT_UInt       glyph_index,
                   FT_Int32      load_flags )
   {
-    BDF_Face     bdf    = (BDF_Face)FT_SIZE_FACE( size );
-    FT_Face      face   = FT_FACE( bdf );
+    FT_Face      face   = size->face;
+    BDF_Face     bdf    = (BDF_Face)face;
     FT_Error     error  = FT_Err_Ok;
     FT_Bitmap*   bitmap = &slot->bitmap;
     bdf_glyph_t  glyph;

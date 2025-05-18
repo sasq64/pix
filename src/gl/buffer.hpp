@@ -51,6 +51,14 @@ template <BufferTarget Target, GLenum Usage = GL_STATIC_DRAW> struct Buffer
         set(data);
     }
 
+    template <typename T>
+    explicit Buffer(T const* data, size_t n)
+    {
+        glGenBuffers(1, &buffer);
+        bind();
+        set(data, n * sizeof(T));
+    }
+
     template <typename T> explicit Buffer(std::vector<T> const& data)
     {
         glGenBuffers(1, &buffer);
@@ -81,9 +89,9 @@ template <BufferTarget Target, GLenum Usage = GL_STATIC_DRAW> struct Buffer
     }
 
     // Bind this buffer and reset its content
-    void set(void* data, int size_in_bytes)
+    void set(void const* data, size_t size_in_bytes)
     {
-        assert(size >= size_in_bytes);
+        //assert(size >= size_in_bytes);
         bind();
         glBufferData(to_glenum(Target), size_in_bytes, data, Usage);
         size = size_in_bytes;

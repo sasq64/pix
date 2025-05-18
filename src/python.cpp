@@ -227,7 +227,7 @@ PYBIND11_MODULE(_pixpy, mod) {
             "Save an _Image_ to disk");
     mod.def("blend_color", &color::blend_color, "color0"_a, "color1"_a, "t"_a,
             "Blend two colors together. `t` should be between 0 and 1.");
-    mod.def("blend_colors", &color::blend_colors, "colors"_a, "t"_a,
+    mod.def("blend_colors", &color::blend_colors<std::vector<uint32_t>>, "colors"_a, "t"_a,
             "Get a color from a color range. Works similar to bilinear filtering of an 1D texture.");
     mod.def("add_color", &color::add_color, "color0"_a, "color1"_a);
     mod.def("rgba", &color::rgba, "red"_a, "green"_a, "blue"_a, "alpha"_a,

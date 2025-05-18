@@ -158,6 +158,10 @@ else ()
     set(SYSTEM src/glfw_system.cpp)
 endif ()
 
+file(GLOB TESS_FILES external/libtess2/Source/*.c)
+add_library(tess2 STATIC ${TESS_FILES})
+target_include_directories(tess2 PUBLIC external/libtess2/Include)
+
 
 set(PIX src/)
 add_library(pix STATIC
@@ -171,7 +175,7 @@ add_library(pix STATIC
     external/lodepng/lodepng.cpp)
 target_include_directories(pix PRIVATE external/lodepng external/earcut PUBLIC src)
 target_compile_options(pix PUBLIC -fvisibility=hidden)
-target_link_libraries(pix PRIVATE Warnings PUBLIC
+target_link_libraries(pix PRIVATE Warnings PUBLIC tess2
     Threads::Threads
     Graphics
     Freetype::Freetype)

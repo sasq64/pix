@@ -142,6 +142,7 @@ class Context:
     """
     clip_size: Union[Int2, Tuple[int, int]]
     clip_top_left: Union[Int2, Tuple[int, int]]
+    scale: Union[Float2, Int2, Tuple[float, float]]
     def circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw an (outline) circle
@@ -150,8 +151,14 @@ class Context:
         """
         Clear the context using given color.
         """
+    def complex_polygon(self, polygons: list[list[Float2]]) -> None:
+        """
+        Draw a complex filled polygon that can consist of holes.
+        """
     def copy(self) -> Context:
-        ...
+        """
+        Make a copy of the context.
+        """
     @typing.overload
     def draw(self, image: Image, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, center: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] = ..., rot: float = 0) -> None:
         """
@@ -177,6 +184,10 @@ class Context:
     def flush(self) -> None:
         """
         Flush pixel operations
+        """
+    def get_pointer(self) -> Float2:
+        """
+        Get the xy coordinate of the mouse pointer (in context space).
         """
     @typing.overload
     def line(self, start: Union[Float2, Int2, Tuple[float, float]], end: Union[Float2, Int2, Tuple[float, float]]) -> None:
@@ -204,7 +215,7 @@ class Context:
         """
     def polygon(self, points: list[Float2], convex: bool = False) -> None:
         """
-        Draw a filled polygon.
+        Draw a filled polygon. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is split into triangles using the ear-clipping method.
         """
     def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
@@ -242,6 +253,14 @@ class Context:
     def line_width(self, arg1: float) -> None:
         ...
     @property
+    def offset(self) -> Float2:
+        """
+        The offset into a the context this context was created from, if any.
+        """
+    @offset.setter
+    def offset(self, arg1: Union[Float2, Int2, Tuple[float, float]]) -> None:
+        ...
+    @property
     def point_size(self) -> float:
         """
         Set the point size in fractional pixels.
@@ -251,7 +270,9 @@ class Context:
         ...
     @property
     def size(self) -> Float2:
-        ...
+        """
+        The size of this context in pixels
+        """
     @property
     def target_size(self) -> Float2:
         ...
@@ -430,6 +451,7 @@ class Image:
     """
     clip_size: Union[Int2, Tuple[int, int]]
     clip_top_left: Union[Int2, Tuple[int, int]]
+    scale: Union[Float2, Int2, Tuple[float, float]]
     @typing.overload
     def __init__(self, width: int, height: int) -> None:
         """
@@ -452,6 +474,10 @@ class Image:
     def clear(self, color: int = 255) -> None:
         """
         Clear the context using given color.
+        """
+    def complex_polygon(self, polygons: list[list[Float2]]) -> None:
+        """
+        Draw a complex filled polygon that can consist of holes.
         """
     def copy_from(self, image: Image) -> None:
         """
@@ -491,6 +517,10 @@ class Image:
         """
         Flush pixel operations
         """
+    def get_pointer(self) -> Float2:
+        """
+        Get the xy coordinate of the mouse pointer (in context space).
+        """
     @typing.overload
     def line(self, start: Union[Float2, Int2, Tuple[float, float]], end: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
@@ -517,7 +547,7 @@ class Image:
         """
     def polygon(self, points: list[Float2], convex: bool = False) -> None:
         """
-        Draw a filled polygon.
+        Draw a filled polygon. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is split into triangles using the ear-clipping method.
         """
     def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
@@ -568,6 +598,14 @@ class Image:
         """
     @line_width.setter
     def line_width(self, arg1: float) -> None:
+        ...
+    @property
+    def offset(self) -> Float2:
+        """
+        The offset into a the context this context was created from, if any.
+        """
+    @offset.setter
+    def offset(self, arg1: Union[Float2, Int2, Tuple[float, float]]) -> None:
         ...
     @property
     def point_size(self) -> float:
@@ -729,6 +767,7 @@ class Screen:
     """
     clip_size: Union[Int2, Tuple[int, int]]
     clip_top_left: Union[Int2, Tuple[int, int]]
+    scale: Union[Float2, Int2, Tuple[float, float]]
     def circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw an (outline) circle
@@ -736,6 +775,10 @@ class Screen:
     def clear(self, color: int = 255) -> None:
         """
         Clear the context using given color.
+        """
+    def complex_polygon(self, polygons: list[list[Float2]]) -> None:
+        """
+        Draw a complex filled polygon that can consist of holes.
         """
     @typing.overload
     def draw(self, image: Image, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, center: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] = ..., rot: float = 0) -> None:
@@ -763,6 +806,10 @@ class Screen:
         """
         Flush pixel operations
         """
+    def get_pointer(self) -> Float2:
+        """
+        Get the xy coordinate of the mouse pointer (in context space).
+        """
     @typing.overload
     def line(self, start: Union[Float2, Int2, Tuple[float, float]], end: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
@@ -789,7 +836,7 @@ class Screen:
         """
     def polygon(self, points: list[Float2], convex: bool = False) -> None:
         """
-        Draw a filled polygon.
+        Draw a filled polygon. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is split into triangles using the ear-clipping method.
         """
     def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
@@ -852,6 +899,14 @@ class Screen:
     def line_width(self, arg1: float) -> None:
         ...
     @property
+    def offset(self) -> Float2:
+        """
+        The offset into a the context this context was created from, if any.
+        """
+    @offset.setter
+    def offset(self, arg1: Union[Float2, Int2, Tuple[float, float]]) -> None:
+        ...
+    @property
     def point_size(self) -> float:
         """
         Set the point size in fractional pixels.
@@ -871,7 +926,9 @@ class Screen:
         """
     @property
     def size(self) -> Float2:
-        ...
+        """
+        The size of this context in pixels
+        """
     @property
     def target_size(self) -> Float2:
         ...

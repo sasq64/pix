@@ -18,12 +18,14 @@ class Context
     GLuint target = 0;
 
     // The XY offset of our view into the framebuffer
-    Vec2f offset{0, 0};
     // The size of our view into the framebuffer
     Vec2f view_size{0, 0};
 public:
+    Vec2f offset{0, 0};
     // Actual size of framebuffer
     Vec2f target_size;
+
+    Vec2f target_scale{1, 1};
 
     // Clip (scissor) area
     Vec2i clip_start{0,0};
@@ -59,6 +61,9 @@ private:
     template <typename CO, typename T>
     void draw_indexed(CO const& container, std::vector<T> indices, gl::Primitive primitive);
 
+    template <typename F, typename I>
+    void draw_indexed(F const* coords, size_t c_count, I const* indices, size_t i_count, gl::Primitive primitive);
+
     std::vector<float> generate_circle(Vec2f center, float radius,
                                        bool include_center = true) const;
     std::array<float, 4> generate_line(Vec2f from, Vec2f to) const;
@@ -78,13 +83,14 @@ public:
 
     constexpr Vec2<float> to_screen(Vec2f const& v) const
     {
-        auto res = (v + offset) * Vec2f{2, -2} / target_size + Vec2f{-1, 1};
+        auto const res = (v * target_scale + offset) * Vec2f{2, -2} / target_size + Vec2f{-1, 1};
         return {static_cast<float>(res.x), static_cast<float>(res.y)};
     }
 
-    constexpr Vec2<float> to_screen(float x, float y) const
+    template <typename F>
+    constexpr Vec2<float> to_screen(F x, F y) const
     {
-        return to_screen(Vec2f{x, y});
+        return to_screen(Vec2f{static_cast<float>(x), static_cast<float>(y)});
     }
 
     Context(Context const& other);
@@ -127,6 +133,7 @@ public:
     void clear(gl::Color const& col) const;
     void draw_polygon(const Vec2f* points, size_t count);
     void draw_inconvex_polygon(const Vec2f* points, size_t count);
+    void draw_complex_polygon(std::vector<std::vector<Vec2f>> const& points);
 };
 
 bool intersects(Vec2f v11, Vec2f v12, Vec2f v21, Vec2f v22);
