@@ -1,5 +1,5 @@
 from skbuild import setup
-debug = True
+debug = False
 mode = "-DCMAKE_BUILD_TYPE=Debug" if debug else "-DCMAKE_BUILD_TYPE=Release"
 setup(
     name="pixpy",

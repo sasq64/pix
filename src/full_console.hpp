@@ -83,6 +83,17 @@ public:
 
     void set_color(uint32_t fg_, uint32_t bg_);
 
+    void colorize(int x, int y, int width);
+
+    void set_tile_images(int start_no, std::vector<gl::TexRef> const& images)
+    {
+        auto i = start_no;
+        for(auto const& img : images) {
+            auto target = console->get_texture_for_char(i++);
+            target.copy_from(img);
+        }
+    }
+
     void clear()
     {
         console->fill(fg, bg);

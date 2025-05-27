@@ -8,7 +8,7 @@ import typing
 from . import color
 from . import event
 from . import key
-__all__ = ['BLEND_ADD', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'was_pressed', 'was_released']
+__all__ = ['BLEND_ADD', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Console', 'Context', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'was_pressed', 'was_released']
 class Console:
     """
     A console is a 2D grid of tiles that can be rendered.
@@ -34,6 +34,10 @@ class Console:
     def clear(self) -> None:
         """
         Clear the console.
+        """
+    def colorize_section(self, x: int, y: int, width: int) -> None:
+        """
+        Colorize the given area with the current foreground and background color, without changing the characters
         """
     def get(self, arg0: Union[Int2, Tuple[int, int]]) -> int:
         """
@@ -68,6 +72,10 @@ class Console:
     def set_line(self, text: str) -> None:
         """
         Change the edited line.
+        """
+    def set_tile_images(self, start_no: int, images: list[Image]) -> None:
+        """
+        Set images to use for a set of indexes, starting at `start_no`.
         """
     def set_tiles(self, tiles: list[int]) -> None:
         """
@@ -283,9 +291,9 @@ class Float2:
     ONE: typing.ClassVar[Float2]  # value = Float2(1.000000, 1.000000)
     ZERO: typing.ClassVar[Float2]  # value = Float2(0.000000, 0.000000)
     @staticmethod
-    def from_angle(arg0: float) -> Float2:
+    def from_angle(angle: float) -> Float2:
         """
-        From angle
+        Rotates the X-axis (1,0) around `angle` counter-clockwise and returns the result.
         """
     @typing.overload
     def __add__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
@@ -371,7 +379,7 @@ class Float2:
         ...
     def angle(self) -> float:
         """
-        Get the angle between the vector and (1,0).
+        Get the (counter-clockwise) angle between the vector and the X-axis (1,0).
         """
     def ceil(self) -> Float2:
         ...
@@ -984,6 +992,10 @@ def all_events() -> list[event.NoEvent | event.Key | event.Move | event.Click | 
     """
     Return a list of all pending events.
     """
+def allow_break(on: bool) -> None:
+    """
+    Allow Ctrl-C to break out of run loop
+    """
 def blend_color(color0: int, color1: int, t: float) -> int:
     """
     Blend two colors together. `t` should be between 0 and 1.
@@ -1028,7 +1040,7 @@ def open_display(size: Union[Int2, Tuple[int, int]], full_screen: bool = False) 
     """
 def rgba(red: float, green: float, blue: float, alpha: float) -> int:
     """
-    Combine four color components into a color.
+    Combine four color float components into a 32-bit color.
     """
 def run_every_frame(arg0: typing.Callable[[], bool]) -> None:
     """

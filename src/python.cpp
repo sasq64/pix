@@ -91,18 +91,32 @@ std::shared_ptr<pix::Screen> open_display(int width, int height, bool full_scree
             auto [w, h] = m.screen->get_size();
             m.screen->resize(Vec2f(w, h), m.screen->get_scale());
         }
-        if (std::holds_alternative<KeyEvent>(e)) {
-            auto ke = std::get<KeyEvent>(e);
-            if (ke.key == 'c' && (ke.mods & 2) != 0) {
-                m.sys->post_event(QuitEvent{});
-                return System::Propagate::Stop;
-            }
-        }
         return System::Propagate::Pass;
     });
 
     return m.screen;
 }
+
+static bool allow_break = false;
+
+void set_allow_break(bool on)
+{
+    static int listener = m.sys->add_listener([](AnyEvent const &e) {
+        if (allow_break) {
+            if (std::holds_alternative<KeyEvent>(e)) {
+                auto ke = std::get<KeyEvent>(e);
+                if (ke.key == 'c' && (ke.mods & 2) != 0) {
+                    m.sys->post_event(QuitEvent{});
+                    return System::Propagate::Stop;
+                }
+            }
+        }
+        return System::Propagate::Pass;
+    });
+    allow_break = on;
+}
+
+
 
 std::shared_ptr<pix::Screen> open_display2(Vec2i size, bool full_screen) {
     return open_display(size.x, size.y, full_screen);
@@ -231,8 +245,9 @@ PYBIND11_MODULE(_pixpy, mod) {
             "Get a color from a color range. Works similar to bilinear filtering of an 1D texture.");
     mod.def("add_color", &color::add_color, "color0"_a, "color1"_a);
     mod.def("rgba", &color::rgba, "red"_a, "green"_a, "blue"_a, "alpha"_a,
-            "Combine four color components into a color.");
+            "Combine four color float components into a 32-bit color.");
     mod.def("load_font", &load_font, "name"_a, "size"_a = 0, "Load a TTF font.");
+    mod.def("allow_break", &set_allow_break, "on"_a, "Allow Ctrl-C to break out of run loop");
     mod.def(
         "inside_polygon",
         [](std::vector<Vec2f> const &points, Vec2f point) {

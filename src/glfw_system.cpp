@@ -177,6 +177,10 @@ class GLFWSystem : public System
         {GLFW_KEY_F7, Key::F7},          {GLFW_KEY_F8, Key::F8},
         {GLFW_KEY_F9, Key::F9},          {GLFW_KEY_F10, Key::F10},
         {GLFW_KEY_F11, Key::F11},        {GLFW_KEY_F12, Key::F12},
+        {GLFW_KEY_LEFT_CONTROL, Key::LCTRL},
+        {GLFW_KEY_RIGHT_CONTROL, Key::RCTRL},
+        {GLFW_KEY_LEFT_SHIFT, Key::LSHIFT},
+        {GLFW_KEY_RIGHT_SHIFT, Key::RSHIFT},
     };
 
     static inline std::unordered_map<Key, uint32_t> reverse_map;

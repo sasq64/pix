@@ -56,8 +56,9 @@ inline void add_console_class(py::module_ const& mod)
              "Create a new Console holding `cols`*`row` tiles. Use the provided `tile_set`.")
         // .def("render", &FullConsole::render, "context"_a, "pos"_a = Vec2f(0, 0),
         //      "size"_a = Vec2f(-1, -1),
-        //      "Render the console using the context. `pos` and `size` are in pixels. If `size` is "
-        //      "not given, it defaults to `tile_size*grid_size`.\n\nTo render a full screen console "
+        //      "Render the console using the context. `pos` and `size` are in pixels. If `size` is
+        //      " "not given, it defaults to `tile_size*grid_size`.\n\nTo render a full screen
+        //      console "
         //      "(scaling as needed):\n\n`console.render(screen.context, size=screen.size)`")
         .def("put", &FullConsole::put, "pos"_a, "tile"_a, "fg"_a = std::nullopt,
              "bg"_a = std::nullopt,
@@ -108,5 +109,10 @@ inline void add_console_class(py::module_ const& mod)
              "Write text to the console at the current cursor position and using the current "
              "colors. Will advance cursor position, and wrap if it passes the right border of the "
              "console.")
+        .def("set_tile_images", &FullConsole::set_tile_images, "start_no"_a, "images"_a,
+             "Set images to use for a set of indexes, starting at `start_no`.")
+        .def(
+            "colorize_section", &FullConsole::colorize, "x"_a, "y"_a, "width"_a,
+            "Colorize the given area with the current foreground and background color, without changing the characters")
         .doc() = "A console is a 2D grid of tiles that can be rendered.";
 }

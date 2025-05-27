@@ -26,7 +26,10 @@ inline void add_key_module(py::module_ const& mod)
     KEY(MIDDLE_MOUSE);
     KEY(MOUSE4);
     KEY(MOUSE5);
-
+    KEY(LCTRL);
+    KEY(RCTRL);
+    KEY(LSHIFT);
+    KEY(RSHIFT);
     KEY(FIRE);
     KEY(A1);
     KEY(X1);

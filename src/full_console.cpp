@@ -76,6 +76,13 @@ gl::TexRef FullConsole::get_font_texture()
     return gl::TexRef{console->get_font_texture()};
 }
 
+void FullConsole::colorize(int x, int y, int w)
+{
+    for (int i=x; i<x+w; i++) {
+        console->put_color(i, y, this->fg, this->bg);
+    }
+}
+
 Vec2i FullConsole::get_pixel_size() const
 {
     return console->get_pixel_size();
