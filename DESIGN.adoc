@@ -1,0 +1,64 @@
+
+= Runcible
+(or Primer: a Propædeutic Enchiridion)
+
+== MAIN PROJECT GOAL
+
+Getting _people_ to experience the _joy of programming_.
+
+(which means it will also be a good teaching tool).
+
+
+=== The Programming Environment
+
+* Is _immersive_ and _free of distractions_.
+* Allows for _experimentation_ and _investigation_.
+* Provides _extremely_ fast turn-around between editing and running.
+* Is good at instantly detecting as many code errors as possible,
+  and indicating them in the editor.
+* Should have fun / real world use (ie multiplayer games?)
+
+
+=== Teacher Bot
+
+The teacher bot is an AI teacher that can help the programmer.
+
+Prompting is important here to get the AI do act correctly;
+
+The AI should not generate code, and only provide example code in small bits
+when necessary.
+
+It should be clear that the AI is fallable.
+
+We should colllect meta data from user activity to allow good prompts. AND
+possible integration with third-party "teacher" AI systems
+
+
+=== Now vs The 80s
+
+The project is built on the experience of learning to program on home computers
+in the 80s and early 90s. The situation now is different in significant ways;
+
+The programming environment _was_ the front facing part of the computer.
+
+Learning to program in that environment had a clear path to writing real world
+software and games.
+
+Now its not clear that programming via text is at all the way most new creators
+will approach software development
+
+So:
+
+Young people will unlikely approach an environment like this on their own, it
+must happen through parents or teachers.
+
+But:
+
+I think a none-trivial set of persons who starts playing with this kind of
+environment _will_ enjoy it and learn through it.
+
+=== Additional Hooks
+
+* Gamification through AI led challenges
+* Writing games that your friend can test in real time
+
