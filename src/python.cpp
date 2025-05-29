@@ -18,9 +18,9 @@
 #include "machine.hpp"
 #include "system.hpp"
 #include "vec2.hpp"
-
+#include "utils.h"
 #include <pybind11/detail/common.h>
-#include <pybind11/pybind11.h>
+#include <pybind11/embed.h>
 #include <pybind11/stl/filesystem.h>
 
 #include <chrono>
@@ -152,8 +152,11 @@ void every_frame(std::function<bool()> const &fn) {
     m.sys->callbacks.push_back(fn);
 }
 
-
+#ifdef PYTHON_MODULE
 PYBIND11_MODULE(_pixpy, mod) {
+#else
+PYBIND11_EMBEDDED_MODULE(_pixpy, mod) {
+#endif
     mod.doc() = "pixpy native module";
 
     add_key_module(mod.def_submodule("key"));
@@ -269,3 +272,35 @@ PYBIND11_MODULE(_pixpy, mod) {
         },
         "points"_a, "point"_a, "Check if the `point` is inside the polygon formed by `points`.");
 }
+
+#ifndef PYTHON_MODULE
+int main()
+{
+    py::scoped_interpreter guard{}; // start the interpreter and keep it alive
+    py::module_ sys = py::module_::import("sys");
+    py::list sys_path = sys.attr("path");
+    setenv("PYTHONHOME", "../venv", 1);
+    py::list path = sys.attr("path");
+    sys_path.insert(0, "../venv/lib/python3.13/site-packages");
+
+    // Add your desired directory to the module path
+    sys_path.append("./pyi");
+    sys_path.append("../pyi");
+    sys_path.append("../examples");
+
+    py::dict globals = py::module_::import("__main__").attr("__dict__");
+    globals["__name__"] = "__main__";
+    auto code = utils::read_as_string(fs::path("../examples") / "pixide.py");
+    py::exec(code, globals);
+
+
+    // py::exec(R"(
+    //     import pixpy as pix
+    //     screen = pix.open_display(size=(640,480))
+    //     print(pix.open_display.__doc__)
+    //     while pix.run_loop():
+    //         screen.swap()
+    // )");
+    return 0;
+}
+#endif
