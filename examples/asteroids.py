@@ -42,7 +42,7 @@ class Sprite:
     def update(self):
         self.pos += self.velocity
 
-    def render(self, target: pix.Context):
+    def render(self, target: pix.Canvas):
         """Render the sprite to the target context."""
 
         # Check if position is outside screen
@@ -83,7 +83,7 @@ class State(Enum):
 class Asteroids:
     "An Asteroids game for pixpy."
 
-    def __init__(self, target: pix.Context):
+    def __init__(self, target: pix.Canvas):
         random.seed(19)
         self.target = target
         self.screen_size = target.size

@@ -3,6 +3,7 @@
 #define COLORS_HPP
 
 #include <cstdint>
+#include <cstddef>
 #include <tuple>
 
 namespace color {

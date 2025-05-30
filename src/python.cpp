@@ -77,10 +77,6 @@ std::shared_ptr<pix::Screen> open_display(int width, int height, bool full_scree
     auto display = m.sys->init_screen(settings);
     m.screen = std::make_shared<pix::Screen>(display);
 
-    auto [realw, realh] = m.screen->get_size();
-
-    // m.context = std::make_shared<pix::Context>(realw, realh, 0);
-    // m.context->vpscale = m.screen->get_scale();
     m.screen->vpscale = m.screen->get_scale();
 
     m.sys->add_listener([](AnyEvent const& e) {

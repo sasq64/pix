@@ -33,6 +33,7 @@ video tutorials.
  - Nicolas Caramelli
  - David Carlier
  - Arturo Castro
+ - Jose Luis Cercós Pita
  - Chi-kwan Chan
  - Victor Chernyakin
  - TheChocolateOre
@@ -48,6 +49,7 @@ video tutorials.
  - Andrew Corrigan
  - Bailey Cosier
  - Noel Cower
+ - James Cowgill
  - CuriouserThing
  - Bill Currie
  - Jason Daly
@@ -65,6 +67,7 @@ video tutorials.
  - Robin Eklind
  - Jan Ekström
  - Siavash Eliasi
+ - er-azh
  - Ahmad Fatoum
  - Nikita Fediuchin
  - Felipe Ferreira

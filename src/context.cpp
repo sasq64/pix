@@ -584,6 +584,7 @@ void Context::draw_points()
     pos.disable();
     cola.disable();
 }
+
 void Context::flush()
 {
     if (!point_cache.empty()) {

@@ -89,8 +89,8 @@ def main(_):
             #         'import pixpy.event as event',
             #         'import pixpy.key as key',
             #     ])
-        wf.replace_all(r"class Screen:", "class Screen(Context):")
-        wf.replace_all(r"class Image:", "class Image(Context):")
+        wf.replace_all(r"class Screen:", "class Screen(Canvas):")
+        wf.replace_all(r"class Image:", "class Image(Canvas):")
         wf.replace_all(r": Float2", ": Union[Float2, Int2, Tuple[float, float]]")
         wf.replace_all(r": Int2", ": Union[Int2, Tuple[int, int]]")
         wf.replace_all(r": os.PathLike", ": str")

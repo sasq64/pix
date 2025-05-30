@@ -60,7 +60,7 @@ class ListBox:
             self.selected = len(self.lines) - 1
         self.update()
 
-    def render(self, screen: pix.Context):
+    def render(self, screen: pix.Canvas):
         screen.draw_color = 0xFFFFFFFF
         screen.filled_rect(top_left=self.xy, size=self.con.size + (8, 8))
         screen.draw(self.con, top_left=self.xy + (4, 4))
