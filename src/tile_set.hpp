@@ -49,12 +49,12 @@ public:
     void add_char(char32_t c);
     [[nodiscard]] std::pair<int, int> get_size() const;
 
-    void render_chars(pix::Context* context, std::string const& tiles, Vec2f pos, Vec2f size);
-    void render_chars(pix::Context* context, std::string const& tiles,
+    void render_chars(pix::Context& context, std::string const& tiles, Vec2f pos, Vec2f size);
+    void render_chars(pix::Context& context, std::string const& tiles,
                       std::vector<Vec2f> const& points);
 
-    void render_tiles(pix::Context* context, int32_t const* tiles, size_t n, Vec2f pos,
+    void render_tiles(pix::Context& context, int32_t const* tiles, size_t n, Vec2f pos,
                       Vec2f size);
-    void render_tiles(pix::Context* context, int32_t const* tiles,
+    void render_tiles(pix::Context& context, int32_t const* tiles,
                       std::vector<Vec2f> const& points);
 };

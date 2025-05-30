@@ -453,7 +453,7 @@ class Font:
         """
         Create an image containing the given text.
         """
-class Image:
+class Image(Context):
     """
     A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.
     """
@@ -769,7 +769,7 @@ class Int2:
     @property
     def yx(self) -> Int2:
         ...
-class Screen:
+class Screen(Context):
     """
     A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.
     """

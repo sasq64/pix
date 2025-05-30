@@ -1,6 +1,6 @@
 import os
-import sys
 import re
+import sys
 
 
 class WorkFile:
@@ -21,7 +21,7 @@ class WorkFile:
 
     def save(self):
         self.file.close()
-        nl = [line.rstrip() + '\n' for line in self.lines]
+        nl = [line.rstrip() + "\n" for line in self.lines]
         with open(self.file_name, "w") as f:
             f.writelines(nl)
 
@@ -41,7 +41,7 @@ class WorkFile:
     def add_all_after(self, pattern, lines: list[str]):
         i = self.find(pattern)
         if i is not None:
-            self.lines = self.lines[:i + 1] + lines + self.lines[i + 1:]
+            self.lines = self.lines[: i + 1] + lines + self.lines[i + 1 :]
 
     def remove_lines_containing(self, pattern):
         for i in reversed(range(len(self.lines))):
@@ -80,48 +80,52 @@ class WorkFile:
 
 
 def main(_):
-    with WorkFile('python/pixpy/__init__.pyi') as wf:
-        if not wf.find('from typing'):
-            wf.add_after('from __future__',
-                         'from typing import Union, Tuple, List')
-        # if not wf.find('color as color'):
-        #     wf.add_all_after('import os', [
-        #         'import pixpy.color as color',
-        #         'import pixpy.event as event',
-        #         'import pixpy.key as key',
-        #     ])
-        wf.replace_all(r': Float2', ': Union[Float2, Int2, Tuple[float, float]]')
-        wf.replace_all(r': Int2', ': Union[Int2, Tuple[int, int]]')
-        wf.replace_all(r': os.PathLike', ': str')
-        wf.replace_all(r'Optional\[Float2\]',
-                       'Optional[Union[Float2, Int2, Tuple[float, float]]]')
-        wf.replace_all(r'pixpy\._pixpy\.', '')
+    with WorkFile("python/pixpy/__init__.pyi") as wf:
+        if not wf.find("from typing"):
+            wf.add_after("from __future__", "from typing import Union, Tuple, List")
+            # if not wf.find('color as color'):
+            #     wf.add_all_after('import os', [
+            #         'import pixpy.color as color',
+            #         'import pixpy.event as event',
+            #         'import pixpy.key as key',
+            #     ])
+        wf.replace_all(r"class Screen:", "class Screen(Context):")
+        wf.replace_all(r"class Image:", "class Image(Context):")
+        wf.replace_all(r": Float2", ": Union[Float2, Int2, Tuple[float, float]]")
+        wf.replace_all(r": Int2", ": Union[Int2, Tuple[int, int]]")
+        wf.replace_all(r": os.PathLike", ": str")
+        wf.replace_all(
+            r"Optional\[Float2\]", "Optional[Union[Float2, Int2, Tuple[float, float]]]"
+        )
+        wf.replace_all(r"pixpy\._pixpy\.", "")
 
-        ops = ['add', 'sub', 'mul', 'truediv', 'floordiv', 'eq', 'ne']
+        ops = ["add", "sub", "mul", "truediv", "floordiv", "eq", "ne"]
 
-        start = wf.find('class Int2')
+        start = wf.find("class Int2")
         if start is not None:
             for op in ops:
                 print(op)
-                a = wf.find(f'.*__{op}__.*Float2', start)
-                b = wf.find(f'.*__{op}__.*Int2', start)
+                a = wf.find(f".*__{op}__.*Float2", start)
+                b = wf.find(f".*__{op}__.*Int2", start)
                 print(a, b)
                 if a is not None and b is not None and b == a + 2:
                     wf.swap_line(a, b)
 
-    with WorkFile('python/pixpy/event.pyi') as wf:
-        line_no = wf.find('class AnyEvent')
+    with WorkFile("python/pixpy/event.pyi") as wf:
+        line_no = wf.find("class AnyEvent")
         if line_no is not None:
             wf.remove_line(line_no)
             wf.remove_line(line_no)
-        if not wf.find('import pixpy$'):
-            wf.add_after('import typing', 'import pixpy')
-        wf.replace_all(r'_pixpy\.', '')
-        if not wf.find('AnyEvent ='):
-            wf.add_line(len(wf),
-                        'AnyEvent = typing.Union' +
-                        '[NoEvent, Key, Move, Click, Text, Resize, Quit]')
+        if not wf.find("import pixpy$"):
+            wf.add_after("import typing", "import pixpy")
+        wf.replace_all(r"_pixpy\.", "")
+        if not wf.find("AnyEvent ="):
+            wf.add_line(
+                len(wf),
+                "AnyEvent = typing.Union"
+                + "[NoEvent, Key, Move, Click, Text, Resize, Quit]",
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv)

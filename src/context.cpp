@@ -613,33 +613,15 @@ void Context::flush_pixels()
     if (dirty) {
         // TODO: Better way of drawing to a FBO than creating a temporary
         // texture and drawing a quad?
-
         int width = view_size.x;
         int height = view_size.y;
         int x = offset.x;
         int y = offset.y;
-
-        if (texture != nullptr)
-        {
-            texture->update(x, y, width, height, pixels.get());
-        }
-        else
-        {
-//        GLuint tex_id;
-//        glGenTextures(1, &tex_id);
-//        glBindTexture(GL_TEXTURE_2D, tex_id);
-//        glBindFramebuffer(GL_FRAMEBUFFER, target);
-//        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-//                               GL_TEXTURE_2D, tex_id, 0);
-//        glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels.get());
-//        glDeleteTextures(1, &tex_id);
-
-            auto tex = std::make_shared<gl::Texture>(width, height, pixels.get());
-            auto oldfg = fg;
-            fg = 0xffffffff;
-            blit(pix::ImageView{gl::TexRef{tex}}, {0,0}, view_size);
-            fg = oldfg;
-        }
+        auto tex = std::make_shared<gl::Texture>(width, height, pixels.get());
+        auto oldfg = fg;
+        fg = 0xffffffff;
+        blit(pix::ImageView{gl::TexRef{tex}}, {0,0}, view_size);
+        fg = oldfg;
         dirty = false;
         pixels = nullptr;
     }

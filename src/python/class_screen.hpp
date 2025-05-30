@@ -35,10 +35,6 @@ inline auto add_screen_class(py::module_ const& mod, auto ctx_class)
         "Current FPS. Set to 0 to disable fixed FPS. Then use `seconds` or "
         "`delta` to sync your movement.");
     screen.def_property_readonly(
-        "context",
-        [](pix::Screen& screen) { return &screen; },
-        "Get the screen context.");
-    screen.def_property_readonly(
         "size", [](pix::Screen const& screen) { return Vec2i{screen.get_size()}; }, "Size (in pixels) of screen.");
     screen.def_property_readonly(
         "width", [](pix::Screen const& s) { return s.get_size().first; });

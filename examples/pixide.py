@@ -276,7 +276,7 @@ class PixIDE:
                 pass
 
         if self.comp_enabled:
-            self.comp.render(screen.context)
+            self.comp.render(screen)
 
 
 def info_box(text: str):
@@ -289,7 +289,7 @@ def info_box(text: str):
     con.write(text)
     psz = sz * (8, 16) + (8, 8)
     xy = screen.size - psz
-    screen.context.draw_color = 0x000040FF
+    screen.draw_color = 0x000040FF
     screen.filled_rect(top_left=xy, size=psz)
     screen.draw(con, top_left=xy + (4, 4))
 
@@ -335,7 +335,7 @@ def main():
     # while pix.run_loop():
     #     screen.clear()
     #     repl.update(pix.all_events())
-    #     # repl.render(screen.context)
+    #     # repl.render(screen)
     #     screen.draw(repl.con, size=repl.con.size)
     #     screen.swap()
     #

@@ -34,8 +34,6 @@ public:
     Vec2i clip_start{0, 0};
     Vec2i clip_size{0, 0};
 
-    std::shared_ptr<gl::Texture> texture;
-
     // Viewport scale (for when window size != framebuffer size)
     float vpscale = 1.0F;
 

@@ -40,12 +40,12 @@ inline pix::ImageView get_image_for(std::shared_ptr<TileSet> self, int32_t tile)
 
 inline void render_chars(std::shared_ptr<TileSet> self, std::shared_ptr<pix::Screen> screen, std::string const& text, Vec2f pos, Vec2f size)
 {
-    self->render_chars(context_from(*screen), text, pos, size);
+    self->render_chars(*screen, text, pos, size);
 };
 
 inline void render_chars2(std::shared_ptr<TileSet> self, std::shared_ptr<pix::Screen> screen, std::string const& text, std::vector<Vec2f> points)
 {
-    self->render_chars(context_from(*screen), text, points);
+    self->render_chars(*screen, text, points);
 };
 
 template<typename T>

@@ -2,12 +2,13 @@
 Asteroids example for pixpy
 """
 
-import pixpy as pix
-from pixpy import Float2
 import math
 import random
-from enum import Enum
 from dataclasses import dataclass, field
+from enum import Enum
+
+import pixpy as pix
+from pixpy import Float2
 
 
 @dataclass
@@ -53,16 +54,18 @@ class Sprite:
                 self.dead = True
         target.draw(image=self.image, center=self.pos, rot=self.rotation)
 
-
     F2 = Float2 | tuple[float, float]
 
     @staticmethod
-    def from_lines(size: Float2 | tuple[float, float], points: list[Float2] | list[tuple[float, float]]):
+    def from_lines(
+        size: Float2 | tuple[float, float],
+        points: list[Float2] | list[tuple[float, float]],
+    ):
         """Create a sprite from lines"""
         image = pix.Image(size)
         image.clear(pix.color.TRANSP)
         image.line_width = 1
-        image.lines(points + [points[0]]) # type: ignore
+        image.lines(points + [points[0]])  # type: ignore
         return Sprite(image, pos=Float2.ZERO)
 
 
@@ -99,7 +102,7 @@ class Asteroids:
         self.bullet = pix.Image((4, 4))
         self.bullet.filled_circle(center=(2, 2), radius=2)
         self.bullets: list[Sprite] = []
-        self.game_state : State = State.PLAYING
+        self.game_state: State = State.PLAYING
         self.score = 0
         self.frame_counter = 0
         self.font = pix.load_font("data/hyperspace_bold.ttf")
@@ -252,7 +255,7 @@ class Asteroids:
 
 def main():
     screen = pix.open_display(size=(1280, 1024))
-    game = Asteroids(screen.context)
+    game = Asteroids(screen)
 
     print(screen.size)
     while pix.run_loop():
