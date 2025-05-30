@@ -10,10 +10,9 @@ import jedi  # type: ignore
 import pixpy as pix
 import tree_sitter
 import tree_sitter_python as tspython
+from editor import TextEdit
 from jedi.api import Completion  # type: ignore
-
-from .editor import TextEdit
-from .repl import Repl
+from repl import Repl
 
 fwd = Path(os.path.dirname(os.path.abspath(__file__)))
 hack_font = (fwd / "data" / "Hack.ttf").as_posix()
@@ -240,7 +239,7 @@ class PixIDE:
                 self.edit.click(int(e.x), int(e.y) - self.con.tile_size.y)
                 continue
             keep.append(e)
-        self.comp.set_pos(self.con.cursor_pos * self.con.tile_size)
+        # self.comp.set_pos(self.con.cursor_pos * self.con.tile_size)
         self.edit.update(keep)
         if should_update:
             x, _ = self.edit.get_location()
@@ -332,15 +331,15 @@ def main():
     con.clear()
     con.write("HELLO")
 
-    repl = Repl(con)
-    while pix.run_loop():
-        screen.clear()
-        repl.update(pix.all_events())
-        # repl.render(screen.context)
-        screen.draw(repl.con, size=repl.con.size)
-        screen.swap()
-
-    sys.exit(0)
+    # repl = Repl(con)
+    # while pix.run_loop():
+    #     screen.clear()
+    #     repl.update(pix.all_events())
+    #     # repl.render(screen.context)
+    #     screen.draw(repl.con, size=repl.con.size)
+    #     screen.swap()
+    #
+    # sys.exit(0)
 
     ide = PixIDE()
 

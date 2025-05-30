@@ -1,5 +1,6 @@
 #pragma once
 
+#include "image_view.hpp"
 #include "tile_set.hpp"
 
 #include "gl/color.hpp"
@@ -59,7 +60,7 @@ public:
         return tile_set->tile_texture;
     }
 
-    gl::TexRef get_texture_for_char(char32_t c)
+    pix::ImageView get_texture_for_char(char32_t c)
     {
         return tile_set->get_texture_for_char(c);
     }

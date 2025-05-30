@@ -2,6 +2,7 @@
 
 #include "gl/gl.hpp"
 #include "gl/texture.hpp"
+#include "image_view.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -53,7 +54,7 @@ struct Image
     unsigned format = 0;
 };
 
-gl::TexRef load_png(std::filesystem::path const& name);
+pix::ImageView load_png(std::filesystem::path const& name);
 Image load_jpg(std::filesystem::path const& name);
 void save_png(Image const& image, std::string_view name);
 

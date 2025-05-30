@@ -1,5 +1,6 @@
 #include "full_console.hpp"
 
+#include "image_view.hpp"
 #include "utf8.h"
 
 template <typename T, typename S=int>
@@ -71,9 +72,9 @@ FullConsole::~FullConsole()
     if (listener >= 0) { system->remove_listener(listener); }
 }
 
-gl::TexRef FullConsole::get_font_texture()
+pix::ImageView FullConsole::get_font_texture()
 {
-    return gl::TexRef{console->get_font_texture()};
+    return pix::ImageView{gl::TexRef{console->get_font_texture()}};
 }
 
 void FullConsole::colorize(int x, int y, int w)

@@ -16,7 +16,7 @@ namespace py = pybind11;
 
 static std::unordered_map<std::string, std::shared_ptr<gl::Texture>> font_images;
 
-inline gl::TexRef text_to_image(FreetypeFont& font, std::string const& text,
+inline pix::ImageView text_to_image(FreetypeFont& font, std::string const& text,
                                 int size, uint32_t color)
 {
     auto id = text + "::" + std::to_string(size) + "::" + std::to_string(color);
@@ -44,7 +44,7 @@ inline gl::TexRef text_to_image(FreetypeFont& font, std::string const& text,
     } else {
         tex = it->second;
     }
-    return gl::TexRef{tex};
+    return pix::ImageView{gl::TexRef{tex}};
 }
 
 inline std::shared_ptr<FreetypeFont> make_font(std::string const& font_name)

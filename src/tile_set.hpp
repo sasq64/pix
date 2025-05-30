@@ -43,7 +43,7 @@ public:
 
     char32_t get_char_from_uv(uint32_t uv);
 
-    gl::TexRef get_texture_for_char(char32_t c);
+    pix::ImageView get_texture_for_char(char32_t c);
 
     [[nodiscard]] std::pair<float, float> get_uvscale() const;
     void add_char(char32_t c);

@@ -43,7 +43,7 @@ public:
     //void set_cursor(int x, int y) { cursor = {x,y}; }
     void set_cursor(Vec2i xy) { cursor = xy; }
 
-    gl::TexRef get_font_texture();
+    pix::ImageView get_font_texture();
 
     Vec2i get_pixel_size() const;
 
@@ -85,7 +85,7 @@ public:
 
     void colorize(int x, int y, int width);
 
-    void set_tile_images(int start_no, std::vector<gl::TexRef> const& images)
+    void set_tile_images(int start_no, std::vector<pix::ImageView> const& images)
     {
         auto i = start_no;
         for(auto const& img : images) {
@@ -99,7 +99,7 @@ public:
         console->fill(fg, bg);
     }
 
-    gl::TexRef get_texture_for_char(int32_t c)
+    pix::ImageView get_texture_for_char(int32_t c)
     {
         return console->get_texture_for_char(c);
     }

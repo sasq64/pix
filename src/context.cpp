@@ -1,4 +1,5 @@
 #include "context.hpp"
+#include "image_view.hpp"
 
 #include <tesselator.h>
 
@@ -156,7 +157,7 @@ void Context::filled_circle(Vec2f const& v, float r)
     draw_filled(generate_circle(v, r, true), gl::Primitive::TriangleFan);
 }
 
-void Context::blit(gl::TexRef const& tex, Vec2f pos, Vec2f size)
+void Context::blit(pix::ImageView const& tex, Vec2f pos, Vec2f size)
 {
     tex.bind();
     if (size.x == 0) {
@@ -169,7 +170,7 @@ void Context::blit(gl::TexRef const& tex, Vec2f pos, Vec2f size)
     draw_textured(vdata, gl::Primitive::TriangleFan);
 }
 
-void Context::draw(gl::TexRef const& tex, Vec2f center, Vec2f size, float rot)
+void Context::draw(pix::ImageView const& tex, Vec2f center, Vec2f size, float rot)
 {
     tex.bind();
     if (size.x == 0) {
@@ -636,7 +637,7 @@ void Context::flush_pixels()
             auto tex = std::make_shared<gl::Texture>(width, height, pixels.get());
             auto oldfg = fg;
             fg = 0xffffffff;
-            blit(gl::TexRef{tex}, {0,0}, view_size);
+            blit(pix::ImageView{gl::TexRef{tex}}, {0,0}, view_size);
             fg = oldfg;
         }
         dirty = false;

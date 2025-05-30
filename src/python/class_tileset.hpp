@@ -4,6 +4,7 @@
 #include "../tile_set.hpp"
 #include "../vec2.hpp"
 #include "class_context.hpp"
+#include "image_view.hpp"
 
 #include <pybind11/detail/common.h>
 #include <pybind11/pybind11.h>
@@ -32,7 +33,7 @@ inline std::shared_ptr<TileSet> make_tileset2(Vec2f size)
     return std::make_shared<TileSet>(std::pair{size.x, size.y});
 }
 
-inline gl::TexRef get_image_for(std::shared_ptr<TileSet> self, int32_t tile)
+inline pix::ImageView get_image_for(std::shared_ptr<TileSet> self, int32_t tile)
 {
     return self->get_texture_for_char(tile);
 }

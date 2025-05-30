@@ -1,5 +1,6 @@
 #include "tile_set.hpp"
 
+#include "image_view.hpp"
 #include "utf8.h"
 
 static constexpr int align(int val, int a)
@@ -48,25 +49,22 @@ char32_t TileSet::get_char_from_uv(uint32_t uv)
     return reverse_chars[uv];
 }
 
-TileSet::TileSet(std::string const& font_file, int size,
-                 std::pair<int, int> tsize)
-    : font_ptr{std::make_shared<FreetypeFont>(font_file.c_str(), size)},
-      char_array{0xffffffff}, char_width{tsize.first}, char_height{tsize.second}
-{
-    init();
-}
-
-TileSet::TileSet(std::shared_ptr<FreetypeFont> freetype_font,
-                 std::pair<int, int> tsize)
-    : font_ptr{std::move(freetype_font)}, char_array{0xffffffff},
+TileSet::TileSet(std::string const& font_file, int size, std::pair<int, int> tsize)
+    : font_ptr{std::make_shared<FreetypeFont>(font_file.c_str(), size)}, char_array{0xffffffff},
       char_width{tsize.first}, char_height{tsize.second}
 {
     init();
 }
 
+TileSet::TileSet(std::shared_ptr<FreetypeFont> freetype_font, std::pair<int, int> tsize)
+    : font_ptr{std::move(freetype_font)}, char_array{0xffffffff}, char_width{tsize.first},
+      char_height{tsize.second}
+{
+    init();
+}
+
 TileSet::TileSet(std::pair<int, int> tile_size)
-    : char_array{0xffffffff}, char_width(tile_size.first),
-      char_height(tile_size.second)
+    : char_array{0xffffffff}, char_width(tile_size.first), char_height(tile_size.second)
 {
     init();
 }
@@ -75,14 +73,11 @@ void TileSet::init()
 {
     std::vector<uint32_t> data;
     data.resize(texture_width * texture_height);
-    if (char_width <= 0) {
-        std::tie(char_width, char_height) = font_ptr->get_size();
-    }
+    if (char_width <= 0) { std::tie(char_width, char_height) = font_ptr->get_size(); }
 
     std::fill(data.begin(), data.end(), 0);
 
-    tile_texture =
-        std::make_shared<gl::Texture>(texture_width, texture_height, data);
+    tile_texture = std::make_shared<gl::Texture>(texture_width, texture_height, data);
     std::fill(char_array.begin(), char_array.end(), 0xffffffff);
     if (font_ptr) {
         for (char32_t c = 0x20; c <= 0x7f; c++) {
@@ -95,9 +90,8 @@ void TileSet::init()
 
 std::pair<float, float> TileSet::get_uvscale() const
 {
-    return std::pair{
-        static_cast<float>(char_width) / static_cast<float>(texture_width),
-        static_cast<float>(char_height) / static_cast<float>(texture_height)};
+    return std::pair{static_cast<float>(char_width) / static_cast<float>(texture_width),
+                     static_cast<float>(char_height) / static_cast<float>(texture_height)};
 }
 
 uint32_t TileSet::get_offset(char32_t c)
@@ -122,7 +116,7 @@ std::pair<int, int> TileSet::get_size() const
     return font_ptr->get_size();
 }
 
-gl::TexRef TileSet::get_texture_for_char(char32_t c)
+pix::ImageView TileSet::get_texture_for_char(char32_t c)
 {
     auto fx = texture_width / 256;
     auto fy = texture_height / 256;
@@ -145,8 +139,8 @@ gl::TexRef TileSet::get_texture_for_char(char32_t c)
     auto du = static_cast<float>(char_width * dx);
     auto dv = static_cast<float>(char_height * dy);
 
-    gl::TexRef tr{tile_texture,
-                       std::array{u, v, u + du, v, u + du, v + dv, u, v + dv}};
+    pix::ImageView tr{
+        gl::TexRef{tile_texture, std::array{u, v, u + du, v, u + du, v + dv, u, v + dv}}};
     return tr;
 }
 
@@ -155,21 +149,20 @@ void TileSet::render_chars(pix::Context* context, std::string const& text, Vec2f
     auto us = utf8::utf8_decode(text);
     render_tiles(context, (int32_t*)us.data(), us.length(), pos, size);
 }
-void TileSet::render_chars(pix::Context* context, std::string const& text, std::vector<Vec2f> const& points)
+void TileSet::render_chars(pix::Context* context, std::string const& text,
+                           std::vector<Vec2f> const& points)
 {
     auto us = utf8::utf8_decode(text);
     render_tiles(context, (int32_t*)us.data(), points);
-
 }
-void TileSet::render_tiles(pix::Context* context, int32_t const* tiles, size_t count, Vec2f pos, Vec2f size)
+void TileSet::render_tiles(pix::Context* context, int32_t const* tiles, size_t count, Vec2f pos,
+                           Vec2f size)
 {
     context->set_target();
-    if (size == Vec2f{0,0}) {
-        size = Vec2f(char_width, char_height);
-    }
+    if (size == Vec2f{0, 0}) { size = Vec2f(char_width, char_height); }
 
     tile_texture->bind();
-    for(size_t i = 0; i<count; i++) {
+    for (size_t i = 0; i < count; i++) {
         auto c = tiles[i];
         auto img = get_texture_for_char(c);
         auto vdata = context->generate_quad_with_uvs(pos, size);
@@ -179,14 +172,15 @@ void TileSet::render_tiles(pix::Context* context, int32_t const* tiles, size_t c
     }
 }
 
-void TileSet::render_tiles(pix::Context* context, int32_t const* tiles, std::vector<Vec2f> const& points)
+void TileSet::render_tiles(pix::Context* context, int32_t const* tiles,
+                           std::vector<Vec2f> const& points)
 {
     context->set_target();
 
     tile_texture->bind();
     auto size = Vec2f(char_width, char_height);
     int n = points.size();
-    for(int i = 0; i<n; i++) {
+    for (int i = 0; i < n; i++) {
         auto c = tiles[i];
         auto img = get_texture_for_char(c);
         auto vdata = context->generate_quad_with_uvs(points[i], size);

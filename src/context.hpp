@@ -12,6 +12,8 @@
 
 namespace pix {
 
+class ImageView;
+
 class Context
 {
     // The GL target frame buffer
@@ -20,6 +22,7 @@ class Context
     // The XY offset of our view into the framebuffer
     // The size of our view into the framebuffer
     Vec2f view_size{0, 0};
+
 public:
     Vec2f offset{0, 0};
     // Actual size of framebuffer
@@ -28,8 +31,8 @@ public:
     Vec2f target_scale{1, 1};
 
     // Clip (scissor) area
-    Vec2i clip_start{0,0};
-    Vec2i clip_size{0,0};
+    Vec2i clip_start{0, 0};
+    Vec2i clip_size{0, 0};
 
     std::shared_ptr<gl::Texture> texture;
 
@@ -49,20 +52,20 @@ public:
     std::vector<float> point_cache;
 
 private:
-    Vec2f last_point{0,0};
+    Vec2f last_point{0, 0};
 
     gl::Program& colored;
     gl::Program& textured;
     gl::Program& filled;
 
-    template <typename CO>
-    void draw_filled(CO const& container, gl::Primitive primitive);
+    template <typename CO> void draw_filled(CO const& container, gl::Primitive primitive);
 
     template <typename CO, typename T>
     void draw_indexed(CO const& container, std::vector<T> indices, gl::Primitive primitive);
 
-    template <typename F, typename I>
-    void draw_indexed(F const* coords, size_t c_count, I const* indices, size_t i_count, gl::Primitive primitive);
+    template <typename F, typename I> void draw_indexed(F const* coords, size_t c_count,
+                                                        I const* indices, size_t i_count,
+                                                        gl::Primitive primitive);
 
     std::vector<float> generate_circle(Vec2f center, float radius,
                                        bool include_center = true) const;
@@ -70,16 +73,14 @@ private:
     std::vector<float> generate_lines(float const* screen_cords, int count) const;
     std::array<float, 8> generate_quad(Vec2f top_left, Vec2f size) const;
     std::array<float, 8> rotated_quad(Vec2f center, Vec2f sz, float rot) const;
-    std::array<float, 16> rotated_quad_with_uvs(Vec2f center, Vec2f sz,
-                                                float rot) const;
+    std::array<float, 16> rotated_quad_with_uvs(Vec2f center, Vec2f sz, float rot) const;
 
     void draw_points();
 
 public:
     std::array<float, 16> generate_quad_with_uvs(Vec2f pos, Vec2f size) const;
 
-    template <typename CO>
-    void draw_textured(CO const& container, gl::Primitive primitive);
+    template <typename CO> void draw_textured(CO const& container, gl::Primitive primitive);
 
     constexpr Vec2<float> to_screen(Vec2f const& v) const
     {
@@ -87,8 +88,7 @@ public:
         return {static_cast<float>(res.x), static_cast<float>(res.y)};
     }
 
-    template <typename F>
-    constexpr Vec2<float> to_screen(F x, F y) const
+    template <typename F> constexpr Vec2<float> to_screen(F x, F y) const
     {
         return to_screen(Vec2f{static_cast<float>(x), static_cast<float>(y)});
     }
@@ -96,7 +96,15 @@ public:
     Context(Context const& other);
     Context(float w, float h, GLuint fb = 0);
     Context(Vec2f _offset, Vec2f _view_size, Vec2f _target_size, GLuint fb = 0);
-    
+
+    Context(gl::TexRef const& tr)
+        : Context{{static_cast<float>(tr.x()), static_cast<float>(tr.y())},
+                  {static_cast<float>(tr.width()), static_cast<float>(tr.height())},
+                  {static_cast<float>(tr.tex->width), static_cast<float>(tr.tex->height)},
+                  tr.get_target()}
+    {
+    }
+
     std::shared_ptr<Context> copy() { return std::make_shared<Context>(*this); };
 
     Vec2f screen_size() const { return target_size; }
@@ -112,7 +120,6 @@ public:
 
     void flush_pixels();
 
-
     void set_color(gl::Color const& col);
     void set_blend_mode(uint32_t mode);
 
@@ -123,12 +130,11 @@ public:
     void lines(std::vector<Vec2f> const& points);
     void filled_rect(Vec2f top_left, Vec2f size);
     void rect(Vec2f top_left, Vec2f size);
-    void blit(gl::TexRef const& tex, Vec2f pos = {0,0}, Vec2f size = {0,0});
-    void draw(gl::TexRef const& tex, Vec2f center, Vec2f size, float rot);
+    void blit(pix::ImageView const& tex, Vec2f pos = {0, 0}, Vec2f size = {0, 0});
+    void draw(pix::ImageView const& tex, Vec2f center, Vec2f size, float rot);
 
     void plot(Vec2f point, gl::Color col);
     void flush();
-
 
     void clear(gl::Color const& col) const;
     void draw_polygon(const Vec2f* points, size_t count);
