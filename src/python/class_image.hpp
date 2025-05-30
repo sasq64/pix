@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../vec2.hpp"
-
 #include "../gl/texture.hpp"
 #include "image_view.hpp"
 
@@ -9,8 +8,6 @@
 #include <pybind11/pybind11.h>
 
 #include <memory>
-#include <string>
-#include <tuple>
 
 namespace py = pybind11;
 

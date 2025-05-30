@@ -1,7 +1,5 @@
 #pragma once
 
-#include "gl/buffer.hpp"
-#include "gl/program_cache.hpp"
 #include "gl/texture.hpp"
 
 #include "context.hpp"

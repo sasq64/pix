@@ -17,7 +17,6 @@
 #include "machine.hpp"
 #include "screen.hpp"
 #include "system.hpp"
-#include "utils.h"
 #include "vec2.hpp"
 #include <pybind11/detail/common.h>
 #include <pybind11/embed.h>

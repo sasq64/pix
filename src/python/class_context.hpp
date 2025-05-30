@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../colors.hpp"
-#include "../gl/texture.hpp"
 #include "../machine.hpp"
 #include "../vec2.hpp"
 #include "full_console.hpp"
@@ -10,9 +9,6 @@
 #include <optional>
 #include <pybind11/detail/common.h>
 #include <pybind11/pybind11.h>
-
-#include <string>
-#include <tuple>
 
 namespace py = pybind11;
 
@@ -185,6 +181,7 @@ inline auto add_context_class(py::module_ const& mod)
     cls.def(
         "flush", [](pix::Context& self) { self.flush(); },
         "Flush pixel operations");
+    cls.def("to_image", &pix::Context::to_image, "Create a new image from this context");
     cls.def(
         "get_pointer", [](pix::Context& self) {
             auto xy = Vec2f{Machine::get_instance().sys->get_pointer()};

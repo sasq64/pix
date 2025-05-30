@@ -78,8 +78,6 @@ Create a color from 4 color components
 
 Represents the display on which rendering takes place. Normally you have only one Screen, that which is returned by `open_display()`.
 
-A Screen is also associated with a _Context_ (see below) and can be rendered to.
-
 === Methods
 
 ==== swap
@@ -119,8 +117,6 @@ that case you need to make sure all your movements are time based.
 == pix.Image
 
 An Image is a reference to an array of pixels. More specifically, it is a set of UV coordinates and a reference to an Open GL/GLES Texture.
-
-An Image can be associated with a `Context` (see below), so you can render to it.
 
 === Constructors
 [source,python]
@@ -219,18 +215,7 @@ Static reference to the _unscii_ font, used as default font for the console.
 
 A `Context` is a rendering context that keeps track of rendering state. You normally need a Context to perform any rendering.
 
-The `Screen` object, as well as all `Image` objects can be treated as Contexts implicitly. This means that they behave as though they've _inherited_ or _mixed in_ a context.
-
-=== Constructors
-[source,python]
-Context(image: Image) -> Context
-
-Create a rendering context from an image
-
-[source,python]
-Context(screen: Screen) -> Context
-
-Create a rendering context from a (the) screen
+The `Screen` object, as well as all `Image` both inherit `Context`.
 
 === Methods
 

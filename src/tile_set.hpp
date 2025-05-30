@@ -1,9 +1,5 @@
 #pragma once
 
-#include "gl/color.hpp"
-#include "gl/functions.hpp"
-#include "gl/gl.hpp"
-#include "gl/program.hpp"
 #include "gl/texture.hpp"
 
 #include "context.hpp"
@@ -11,7 +7,6 @@
 #include "vec2.hpp"
 
 #include <string>
-#include <tuple>
 #include <unordered_map>
 
 class TileSet

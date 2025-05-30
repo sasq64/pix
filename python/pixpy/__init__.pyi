@@ -165,15 +165,15 @@ class Context:
         """
     def copy(self) -> Context:
         """
-        Make a copy of the context.
+        Make a copy of the self.
         """
     @typing.overload
-    def draw(self, image: Image, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, center: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] = ..., rot: float = 0) -> None:
+    def draw(self, image: ..., top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, center: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] = ..., rot: float = 0) -> None:
         """
         Render an image. The image can either be aligned to its top left corner, or centered, in which case it can also be rotated.
         """
     @typing.overload
-    def draw(self, drawable: Console, top_left: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
+    def draw(self, drawable: FullConsole, top_left: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
         """
         Render a console. `top_left` and `size` are in pixels. If `size` is not given, it defaults to `tile_size*grid_size`.
 
@@ -232,6 +232,10 @@ class Context:
     def set_pixel(self, pos: Union[Int2, Tuple[int, int]], color: int) -> None:
         """
         Write a pixel into the image.
+        """
+    def to_image(self) -> ...:
+        """
+        Create a new image from this context
         """
     @property
     def blend_mode(self) -> int:
@@ -455,11 +459,8 @@ class Font:
         """
 class Image(Context):
     """
-    A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.
+    A (GPU Side) _image_, represented by a texture reference and 4 UV coordinates. Images works like arrays in the sense that it is cheap to create new views to images (using crop(), split() etc).
     """
-    clip_size: Union[Int2, Tuple[int, int]]
-    clip_top_left: Union[Int2, Tuple[int, int]]
-    scale: Union[Float2, Int2, Tuple[float, float]]
     @typing.overload
     def __init__(self, width: int, height: int) -> None:
         """
@@ -475,18 +476,6 @@ class Image(Context):
         """
         Create an image from an array of 32-bit colors.
         """
-    def circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
-        """
-        Draw an (outline) circle
-        """
-    def clear(self, color: int = 255) -> None:
-        """
-        Clear the context using given color.
-        """
-    def complex_polygon(self, polygons: list[list[Float2]]) -> None:
-        """
-        Draw a complex filled polygon that can consist of holes.
-        """
     def copy_from(self, image: Image) -> None:
         """
         Render one image into another.
@@ -498,72 +487,6 @@ class Image(Context):
     def crop(self, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] | None = None) -> Image:
         """
         Crop an image. Returns a view into the old image.
-        """
-    @typing.overload
-    def draw(self, image: Image, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, center: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] = ..., rot: float = 0) -> None:
-        """
-        Render an image. The image can either be aligned to its top left corner, or centered, in which case it can also be rotated.
-        """
-    @typing.overload
-    def draw(self, drawable: Console, top_left: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
-        """
-        Render a console. `top_left` and `size` are in pixels. If `size` is not given, it defaults to `tile_size*grid_size`.
-
-        To render a full screen console (scaling as needed):
-
-        `console.render(screen.context, size=screen.size)`
-        """
-    def filled_circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
-        """
-        Draw a filled circle.
-        """
-    def filled_rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
-        """
-        Draw a filled rectangle.
-        """
-    def flush(self) -> None:
-        """
-        Flush pixel operations
-        """
-    def get_pointer(self) -> Float2:
-        """
-        Get the xy coordinate of the mouse pointer (in context space).
-        """
-    @typing.overload
-    def line(self, start: Union[Float2, Int2, Tuple[float, float]], end: Union[Float2, Int2, Tuple[float, float]]) -> None:
-        """
-        Draw a line between start and end.
-        """
-    @typing.overload
-    def line(self, end: Union[Float2, Int2, Tuple[float, float]]) -> None:
-        """
-        Draw a line from the end of the last line to the given position.
-        """
-    def lines(self, points: list[Float2]) -> None:
-        """
-        Draw a line strip from all the given points.
-        """
-    @typing.overload
-    def plot(self, center: Union[Float2, Int2, Tuple[float, float]], color: int) -> None:
-        """
-        Draw a point.
-        """
-    @typing.overload
-    def plot(self, points: typing.Any, colors: typing.Any) -> None:
-        """
-        Draw `n` points given by the array like objects. `points` should n*2 floats and `colors` should contain `n` unsigned ints.
-        """
-    def polygon(self, points: list[Float2], convex: bool = False) -> None:
-        """
-        Draw a filled polygon. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is split into triangles using the ear-clipping method.
-        """
-    def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
-        """
-        Draw a rectangle.
-        """
-    def set_pixel(self, pos: Union[Int2, Tuple[int, int]], color: int) -> None:
-        """
-        Write a pixel into the image.
         """
     def set_texture_filter(self, min: bool, max: bool) -> None:
         """
@@ -578,50 +501,7 @@ class Image(Context):
     def split(self, size: Union[Float2, Int2, Tuple[float, float]]) -> list[Image]:
         ...
     @property
-    def blend_mode(self) -> int:
-        """
-        Set the blend mode. Normally one of the constants `pix.BLEND_ADD`, `pix.BLEND_MULTIPLY` or `pix.BLEND_NORMAL`.
-        """
-    @blend_mode.setter
-    def blend_mode(self, arg1: int) -> None:
-        ...
-    @property
-    def context(self) -> Context:
-        ...
-    @property
-    def draw_color(self) -> int:
-        """
-        Set the draw color.
-        """
-    @draw_color.setter
-    def draw_color(self, arg1: int) -> None:
-        ...
-    @property
     def height(self) -> float:
-        ...
-    @property
-    def line_width(self) -> float:
-        """
-        Set the line with in fractional pixels.
-        """
-    @line_width.setter
-    def line_width(self, arg1: float) -> None:
-        ...
-    @property
-    def offset(self) -> Float2:
-        """
-        The offset into a the context this context was created from, if any.
-        """
-    @offset.setter
-    def offset(self, arg1: Union[Float2, Int2, Tuple[float, float]]) -> None:
-        ...
-    @property
-    def point_size(self) -> float:
-        """
-        Set the point size in fractional pixels.
-        """
-    @point_size.setter
-    def point_size(self, arg1: float) -> None:
         ...
     @property
     def pos(self) -> Float2:
@@ -630,9 +510,6 @@ class Image(Context):
         """
     @property
     def size(self) -> Float2:
-        ...
-    @property
-    def target_size(self) -> Float2:
         ...
     @property
     def width(self) -> float:
@@ -771,119 +648,19 @@ class Int2:
         ...
 class Screen(Context):
     """
-    A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.
+    The main window. Currently there can be only one instance of this class.
     """
-    clip_size: Union[Int2, Tuple[int, int]]
-    clip_top_left: Union[Int2, Tuple[int, int]]
-    scale: Union[Float2, Int2, Tuple[float, float]]
-    def circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
-        """
-        Draw an (outline) circle
-        """
-    def clear(self, color: int = 255) -> None:
-        """
-        Clear the context using given color.
-        """
-    def complex_polygon(self, polygons: list[list[Float2]]) -> None:
-        """
-        Draw a complex filled polygon that can consist of holes.
-        """
-    @typing.overload
-    def draw(self, image: Image, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, center: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] = ..., rot: float = 0) -> None:
-        """
-        Render an image. The image can either be aligned to its top left corner, or centered, in which case it can also be rotated.
-        """
-    @typing.overload
-    def draw(self, drawable: Console, top_left: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
-        """
-        Render a console. `top_left` and `size` are in pixels. If `size` is not given, it defaults to `tile_size*grid_size`.
-
-        To render a full screen console (scaling as needed):
-
-        `console.render(screen.context, size=screen.size)`
-        """
-    def filled_circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
-        """
-        Draw a filled circle.
-        """
-    def filled_rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
-        """
-        Draw a filled rectangle.
-        """
-    def flush(self) -> None:
-        """
-        Flush pixel operations
-        """
-    def get_pointer(self) -> Float2:
-        """
-        Get the xy coordinate of the mouse pointer (in context space).
-        """
-    @typing.overload
-    def line(self, start: Union[Float2, Int2, Tuple[float, float]], end: Union[Float2, Int2, Tuple[float, float]]) -> None:
-        """
-        Draw a line between start and end.
-        """
-    @typing.overload
-    def line(self, end: Union[Float2, Int2, Tuple[float, float]]) -> None:
-        """
-        Draw a line from the end of the last line to the given position.
-        """
-    def lines(self, points: list[Float2]) -> None:
-        """
-        Draw a line strip from all the given points.
-        """
-    @typing.overload
-    def plot(self, center: Union[Float2, Int2, Tuple[float, float]], color: int) -> None:
-        """
-        Draw a point.
-        """
-    @typing.overload
-    def plot(self, points: typing.Any, colors: typing.Any) -> None:
-        """
-        Draw `n` points given by the array like objects. `points` should n*2 floats and `colors` should contain `n` unsigned ints.
-        """
-    def polygon(self, points: list[Float2], convex: bool = False) -> None:
-        """
-        Draw a filled polygon. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is split into triangles using the ear-clipping method.
-        """
-    def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
-        """
-        Draw a rectangle.
-        """
     def set_as_target(self) -> None:
         ...
-    def set_pixel(self, pos: Union[Int2, Tuple[int, int]], color: int) -> None:
-        """
-        Write a pixel into the image.
-        """
     def swap(self) -> None:
         """
         Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This is normally the last thing you do in your render loop.
         """
     @property
-    def blend_mode(self) -> int:
-        """
-        Set the blend mode. Normally one of the constants `pix.BLEND_ADD`, `pix.BLEND_MULTIPLY` or `pix.BLEND_NORMAL`.
-        """
-    @blend_mode.setter
-    def blend_mode(self, arg1: int) -> None:
-        ...
-    @property
-    def context(self) -> Context:
-        ...
-    @property
     def delta(self) -> float:
         """
         Time in seconds for last frame.
         """
-    @property
-    def draw_color(self) -> int:
-        """
-        Set the draw color.
-        """
-    @draw_color.setter
-    def draw_color(self, arg1: int) -> None:
-        ...
     @property
     def fps(self) -> int:
         """
@@ -899,30 +676,6 @@ class Screen(Context):
     def height(self) -> int:
         ...
     @property
-    def line_width(self) -> float:
-        """
-        Set the line with in fractional pixels.
-        """
-    @line_width.setter
-    def line_width(self, arg1: float) -> None:
-        ...
-    @property
-    def offset(self) -> Float2:
-        """
-        The offset into a the context this context was created from, if any.
-        """
-    @offset.setter
-    def offset(self, arg1: Union[Float2, Int2, Tuple[float, float]]) -> None:
-        ...
-    @property
-    def point_size(self) -> float:
-        """
-        Set the point size in fractional pixels.
-        """
-    @point_size.setter
-    def point_size(self, arg1: float) -> None:
-        ...
-    @property
     def refresh_rate(self) -> int:
         """
         Actual refresh rate of current monitor.
@@ -933,13 +686,10 @@ class Screen(Context):
         Total seconds elapsed since starting pix.
         """
     @property
-    def size(self) -> Float2:
+    def size(self) -> Int2:
         """
-        The size of this context in pixels
+        Size (in pixels) of screen.
         """
-    @property
-    def target_size(self) -> Float2:
-        ...
     @property
     def width(self) -> int:
         ...
@@ -972,7 +722,7 @@ class TileSet:
         """
         Get the image for a specific character. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.
         """
-    def get_tileset_image(self) -> Image:
+    def get_tileset_image(self) -> ...:
         """
         Get the entire tileset image. Typically used with `save_png()` to check generated tileset.
         """
@@ -1050,7 +800,7 @@ def run_loop() -> bool:
     """
     Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way
     """
-def save_png(image: Image, file_name: str) -> None:
+def save_png(image: ..., file_name: str) -> None:
     """
     Save an _Image_ to disk
     """

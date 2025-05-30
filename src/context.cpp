@@ -1,5 +1,6 @@
 #include "context.hpp"
 #include "image_view.hpp"
+#include "colors.hpp"
 
 #include <tesselator.h>
 
@@ -606,6 +607,21 @@ void Context::set_pixel(int x, int y, uint32_t col)
     }
     dirty = true;
     pixels[x + width * y] = col;
+}
+
+pix::ImageView Context::to_image() const
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, target);
+    auto const width = static_cast<int>(view_size.x);
+    auto const height = static_cast<int>(view_size.y);
+    auto temp = std::unique_ptr<uint32_t[]>(new uint32_t[width * height]);
+    int x = offset.x ;
+    int y = offset.y;
+    // TODO: Read correct rectangle
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE,
+                 temp.get());
+    auto tex = std::make_shared<gl::Texture>(width, height, temp.get());
+    return pix::ImageView{gl::TexRef{tex}};
 }
 
 void Context::flush_pixels()

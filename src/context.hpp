@@ -1,11 +1,8 @@
 #pragma once
 
-#include "colors.hpp"
-#include "gl/buffer.hpp"
 #include "gl/color.hpp"
 #include "gl/functions.hpp"
 #include "gl/program.hpp"
-#include "gl/program_cache.hpp"
 #include "gl/texture.hpp"
 
 #include "vec2.hpp"
@@ -138,6 +135,7 @@ public:
     void draw_polygon(const Vec2f* points, size_t count);
     void draw_inconvex_polygon(const Vec2f* points, size_t count);
     void draw_complex_polygon(std::vector<std::vector<Vec2f>> const& points);
+    pix::ImageView to_image() const;
 };
 
 bool intersects(Vec2f v11, Vec2f v12, Vec2f v21, Vec2f v22);
