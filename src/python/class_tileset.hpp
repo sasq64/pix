@@ -3,7 +3,7 @@
 #include "../machine.hpp"
 #include "../tile_set.hpp"
 #include "../vec2.hpp"
-#include "class_context.hpp"
+#include "class_canvas.hpp"
 #include "image_view.hpp"
 
 #include <pybind11/detail/common.h>

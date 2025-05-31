@@ -3,10 +3,8 @@
 #include "../font.hpp"
 #include "../gl/texture.hpp"
 #include "../image.hpp"
-#include "../vec2.hpp"
-#include "pixel_console.hpp"
 
-#include <pybind11/detail/common.h>
+//#include <pybind11/detail/common.h>
 #include <pybind11/pybind11.h>
 
 #include <memory>
@@ -19,12 +17,11 @@ static std::unordered_map<std::string, std::shared_ptr<gl::Texture>> font_images
 inline pix::ImageView text_to_image(FreetypeFont& font, std::string const& text,
                                 int size, uint32_t color)
 {
-    auto id = text + "::" + std::to_string(size) + "::" + std::to_string(color);
+    const auto id = text + "::" + std::to_string(size) + "::" + std::to_string(color);
 
     std::shared_ptr<gl::Texture> tex;
-    auto it = font_images.find(id);
 
-    if (it == font_images.end()) {
+    if (const auto it = font_images.find(id); it == font_images.end()) {
         font.set_pixel_size(size);
         auto [w, h] = font.text_size(text);
         pix::Image img(w, h);
@@ -37,7 +34,7 @@ inline pix::ImageView text_to_image(FreetypeFont& font, std::string const& text,
                                                       img.ptr, GL_RGBA, img.format);
         // TODO: Intentionally leak texture here because gl context will normally be destroyed
         //       before statics
-        new std::shared_ptr<gl::Texture>(tex);
+        new std::shared_ptr(tex);
         font_images[id] = tex;
 
 
@@ -64,7 +61,4 @@ inline auto add_font_class(py::module_ const& mod)
         .def_readonly_static("UNSCII_FONT", &FreetypeFont::unscii,
                              "Get a reference to the built in unscii font.")
         .doc() = "Represents a TTF (Freetype) font that can be used to create text images.";
-
-
-
 }

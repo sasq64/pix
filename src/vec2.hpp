@@ -23,20 +23,20 @@ template <typename T> struct V2Iterator
 
     auto operator++()
     {
-        current.x++;
+        ++current.x;
         if (current.x == limit.x) {
-            current.y++;
+            ++current.y;
             if (current.y < limit.y) { current.x = start.x; }
         }
         return *this;
     }
 
-    bool operator==(V2Iterator<T> const& other) const
+    bool operator==(V2Iterator const& other) const
     {
         return other.current == current;
     }
 
-    bool operator!=(V2Iterator<T> const& other) const
+    bool operator!=(V2Iterator const& other) const
     {
         return other.current != current;
     }
@@ -74,8 +74,8 @@ template <typename T> struct Vec2
 
     constexpr Vec2() = default;
 
-    constexpr Vec2(std::pair<T, T> const& p)
-        : x{p.first}, y{p.second} {} // NOLINT
+    constexpr Vec2(std::pair<T, T> const& p) // NOLINT
+        : x{p.first}, y{p.second} {}
     constexpr Vec2(T _x, T _y) : x{_x}, y{_y} {}
 
     constexpr T& operator[](size_t i) { return i == 0 ? x : y; }
@@ -170,12 +170,10 @@ template <typename T> struct Vec2
     {
         if (x == 0)
             return (y > 0) ? M_PI / 2 : (y == 0) ? 0 : M_PI * 3 / 2;
-        else if (y == 0)
+        if (y == 0)
             return (x >= 0) ? 0 : M_PI;
         auto ret = atanf(y / x);
-        if (x < 0 && y < 0)
-            ret = M_PI + ret;
-        else if (x < 0)
+        if (x < 0)
             ret = M_PI + ret;
         else if (y < 0)
             ret = 2 * M_PI + ret;
@@ -195,7 +193,7 @@ template <typename T> struct Vec2
     }
     constexpr Vec2 operator+=(Vec2 v) { return iadd(v); }
 
-    constexpr Vec2 adds(T v) const { return {v + x, v + y}; }
+    [[nodiscard]] constexpr Vec2 adds(T v) const { return {v + x, v + y}; }
     constexpr Vec2 operator+(T v) const { return adds(v); }
 
     constexpr Vec2& iadds(T v)
@@ -207,7 +205,7 @@ template <typename T> struct Vec2
     constexpr Vec2 operator+=(T v) { return iadds(v); }
 
     // sub
-    constexpr Vec2 sub(Vec2 v) const { return {x - v.x, y - v.y}; }
+    [[nodiscard]] constexpr Vec2 sub(Vec2 v) const { return {x - v.x, y - v.y}; }
     constexpr Vec2 operator-(Vec2 v) const { return sub(v); }
 
     constexpr Vec2& isub(Vec2 v)
@@ -218,7 +216,7 @@ template <typename T> struct Vec2
     }
     constexpr Vec2 operator-=(Vec2 v) const { return isub(v); }
 
-    constexpr Vec2 subs(T s) const { return {x - s, y - s}; }
+    [[nodiscard]] constexpr Vec2 subs(T s) const { return {x - s, y - s}; }
     constexpr Vec2 operator-(T v) const { return subs(v); }
 
     constexpr Vec2& isubs(T v)
@@ -231,7 +229,7 @@ template <typename T> struct Vec2
 
     // mul
 
-    constexpr Vec2 mul(Vec2 v) const { return {v.x * x, v.y * y}; }
+    [[nodiscard]] constexpr Vec2 mul(Vec2 v) const { return {v.x * x, v.y * y}; }
     constexpr Vec2 operator*(Vec2 v) const { return mul(v); }
 
     constexpr Vec2& imul(Vec2 v)
@@ -243,7 +241,7 @@ template <typename T> struct Vec2
     constexpr Vec2 operator*=(Vec2 v) const { return imul(v); }
 
     // scalar mul
-    constexpr Vec2 muls(T s) const { return {s * x, s * y}; }
+    [[nodiscard]] constexpr Vec2 muls(T s) const { return {s * x, s * y}; }
     constexpr Vec2 operator*(T v) const { return muls(v); }
 
     template <typename S> constexpr Vec2& imuls(S s)
@@ -258,7 +256,7 @@ template <typename T> struct Vec2
     }
 
     // div
-    constexpr Vec2 div(Vec2 v) const { return {x / v.x, y / v.y}; }
+    [[nodiscard]] constexpr Vec2 div(Vec2 v) const { return {x / v.x, y / v.y}; }
     constexpr Vec2 operator/(Vec2 v) const { return div(v); }
 
     constexpr Vec2& idiv(Vec2 v)
@@ -269,28 +267,28 @@ template <typename T> struct Vec2
     }
     constexpr Vec2 operator/=(Vec2 v) const { return idiv(v); }
 
-    constexpr Vec2 divs(T v) const { return {x / v, y / v}; }
+    [[nodiscard]] constexpr Vec2 divs(T v) const { return {x / v, y / v}; }
     constexpr Vec2 operator/(T v) const { return divs(v); }
 
-    constexpr Vec2 fdiv(Vec2 v) const
+    [[nodiscard]] constexpr Vec2 fdiv(Vec2 v) const
     {
-        if constexpr (std::is_integral<T>::value) {
+        if constexpr (std::is_integral_v<T>) {
             return {x / v.x, y / v.y};
         } else {
             return {floorf(x / v.x), floorf(y / v.y)};
         }
     }
 
-    constexpr Vec2 fdivs(T v) const
+    [[nodiscard]] constexpr Vec2 fdivs(T v) const
     {
-        if constexpr (std::is_integral<T>::value) {
+        if constexpr (std::is_integral_v<T>) {
             return {x / v, y / v};
         } else {
             return {floorf(x / v), floorf(y / v)};
         }
     }
 
-    constexpr std::size_t len() { return 2; }
+    constexpr std::size_t len() { return 2; } // NOLINT
 
     constexpr static inline Vec2 from_angle(double a)
     {
@@ -299,23 +297,21 @@ template <typename T> struct Vec2
 
     static inline bool instersects(Vec2 v11, Vec2 v12, Vec2 v21, Vec2 v22)
     {
-        double d1, d2;
-        double a1, a2, b1, b2, c1, c2;
 
         // Convert vector 1 to a line (line 1) of infinite length.
         // We want the line in linear equation standard form: A*x + B*y + C = 0
         // See: http://en.wikipedia.org/wiki/Linear_equation
-        a1 = v12.y - v11.y;
-        b1 = v11.x - v12.x;
-        c1 = (v12.x * v11.y) - (v11.x * v12.y);
+        double a1 = v12.y - v11.y;
+        double b1 = v11.x - v12.x;
+        double c1 = (v12.x * v11.y) - (v11.x * v12.y);
 
         // Every point (x,y), that solves the equation above, is on the line,
         // every point that does not solve it, is not. The equation will have a
         // positive result if it is on one side of the line and a negative one
         // if is on the other side of it. We insert (x1,y1) and (x2,y2) of vector
         // 2 into the equation above.
-        d1 = (a1 * v21.x) + (b1 * v21.y) + c1;
-        d2 = (a1 * v22.x) + (b1 * v22.y) + c1;
+        double d1 = (a1 * v21.x) + (b1 * v21.y) + c1;
+        double d2 = (a1 * v22.x) + (b1 * v22.y) + c1;
 
         // If d1 and d2 both have the same sign, they are both on the same side
         // of our line 1 and in that case no intersection is possible. Careful,
@@ -327,12 +323,12 @@ template <typename T> struct Vec2
         // The fact that vector 2 intersected the infinite line 1 above doesn't
         // mean it also intersects the vector 1. Vector 1 is only a subset of that
         // infinite line 1, so it may have intersected that line before the vector
-        // started or after it ended. To know for sure, we have to repeat the
+        // started or after it ended. To know for sure, we have to repeat
         // the same test the other way round. We start by calculating the
         // infinite line 2 in linear equation standard form.
-        a2 = v22.y - v21.y;
-        b2 = v21.x - v22.x;
-        c2 = (v22.x * v21.y) - (v21.x * v22.y);
+        double a2 = v22.y - v21.y;
+        double b2 = v21.x - v22.x;
+        double c2 = (v22.x * v21.y) - (v21.x * v22.y);
 
         // Calculate d1 and d2 again, this time using points of vector 1.
         d1 = (a2 * v11.x) + (b2 * v11.y) + c2;
@@ -373,7 +369,7 @@ template <typename T> struct Vec2
 
     std::string repr()
     {
-        if constexpr (std::is_integral<T>::value) {
+        if constexpr (std::is_integral_v<T>) {
             return "Vec2i(" + std::to_string(x) + ", " + std::to_string(y) +
                    ")";
         } else {

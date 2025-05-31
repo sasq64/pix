@@ -12,7 +12,7 @@
 
 namespace py = pybind11;
 
-inline auto add_context_class(py::module_ const& mod)
+inline auto add_canvas_class(py::module_ const& mod)
 {
     using namespace pybind11::literals;
     using namespace pybind11::literals;
@@ -25,7 +25,7 @@ inline auto add_context_class(py::module_ const& mod)
     return cls;
 }
 
-inline void add_context_functions(auto& cls)
+inline void add_canvas_functions(auto& cls)
 {
 
     using namespace pybind11::literals;
@@ -114,13 +114,13 @@ inline void add_context_functions(auto& cls)
         "not given, it defaults to `tile_size*grid_size`.\n\nTo render a full screen console "
         "(scaling as needed):\n\n`console.render(screen.context, size=screen.size)`");
     cls.def(
-        "clear", [](pix::Context& self, uint32_t color) { self.clear(color); },
+        "clear", [](pix::Context const& self, uint32_t color) { self.clear(color); },
         "color"_a = color::black, "Clear the context using given color.");
     cls.def_property(
-        "draw_color", [](Context& self) { return self.fg.to_rgba(); },
+        "draw_color", [](Context const& self) { return self.fg.to_rgba(); },
         [](Context& self, uint32_t color) { self.set_color(color); }, "Set the draw color.");
     cls.def_property(
-        "blend_mode", [](Context& self) { return self.fg.to_rgba(); },
+        "blend_mode", [](Context const& self) { return self.fg.to_rgba(); },
         [](Context& self, uint32_t mode) { self.set_blend_mode(mode); },
         "Set the blend mode. Normally one of the constants `pix.BLEND_ADD`, `pix.BLEND_MULTIPLY` or `pix.BLEND_NORMAL`.");
     cls.def_readwrite("point_size", &Context::point_size,
@@ -143,7 +143,7 @@ inline void add_context_functions(auto& cls)
     cls.def("to_image", &Context::to_image, "Create a new image from this context");
     cls.def(
         "get_pointer",
-        [](Context& self) {
+        [](Context const& self) {
             auto xy = Vec2f{Machine::get_instance().sys->get_pointer()};
             return (xy - self.offset) / self.target_scale;
         },

@@ -1,5 +1,5 @@
+#include "python/class_canvas.hpp"
 #include "python/class_console.hpp"
-#include "python/class_context.hpp"
 #include "python/class_font.hpp"
 #include "python/class_image.hpp"
 #include "python/class_screen.hpp"
@@ -18,6 +18,8 @@
 #include "screen.hpp"
 #include "system.hpp"
 #include "vec2.hpp"
+#include "utils.h"
+
 #include <pybind11/detail/common.h>
 #include <pybind11/embed.h>
 #include <pybind11/stl/filesystem.h>
@@ -172,14 +174,13 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     pybind11::implicitly_convertible<std::tuple<int, double>, Vec2f>();
     pybind11::implicitly_convertible<Vec2i, Vec2f>();
 
-    auto ctx = add_context_class(mod);
+    auto ctx = add_canvas_class(mod);
 
     auto tc = add_image_class(mod, ctx);
-    // add_draw_functions(tc);
     tc.def_property_readonly(
         "size", [](pix::ImageView const& self) { return Vec2f{self.width(), self.height()}; });
 
-    add_context_functions(ctx);
+    add_canvas_functions(ctx);
     add_font_class(mod);
     add_tileset_class(mod);
     add_console_class(mod);
@@ -187,12 +188,11 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     add_event_mod(mod.def_submodule("event"));
 
     auto screen = add_screen_class(mod, ctx);
-    // add_draw_functions(screen);
 
     const char* doc;
 
     // pybind11::implicitly_convertible<std::shared_ptr<Screen, pix::Context>();
-    //  MODULE
+
     mod.def(
         "open_display", &open_display, "width"_a = -1, "height"_a = -1, "full_screen"_a = false,
         doc =

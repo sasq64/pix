@@ -51,16 +51,16 @@ public:
     std::vector<uint32_t> get_tiles();
     void set_tiles(std::vector<uint32_t> const& data);
 
-    std::pair<int, int> get_size() const { return {cols, rows}; }
+    [[nodiscard]] std::pair<int, int> get_size() const { return {cols, rows}; }
     template <typename T = int> std::pair<T, T> get_char_size() const;
-    std::pair<int, int> get_pixel_size() const;
+    [[nodiscard]] std::pair<int, int> get_pixel_size() const;
 
-    std::shared_ptr<gl::Texture> get_font_texture() const
+    [[nodiscard]] std::shared_ptr<gl::Texture> get_font_texture() const
     {
         return tile_set->tile_texture;
     }
 
-    pix::ImageView get_texture_for_char(char32_t c)
+    [[nodiscard]] pix::ImageView get_texture_for_char(char32_t c) const
     {
         return tile_set->get_texture_for_char(c);
     }

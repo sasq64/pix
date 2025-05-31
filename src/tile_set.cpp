@@ -5,9 +5,9 @@
 
 #include <algorithm>
 
-static constexpr int align(int val, int a)
+static constexpr int align32(int val)
 {
-    return (val + (a - 1)) & (~(a - 1));
+    return (val + 3) & (~3);
 }
 
 void TileSet::add_char(char32_t c)
@@ -39,10 +39,10 @@ std::pair<int, int> TileSet::alloc_char(char32_t c)
     if (c <= 0xffff) { char_array[c] = uv; }
 
     auto res = next_pos;
-    next_pos.first += align(char_width + gap, 4);
+    next_pos.first += align32(char_width + gap);
     if (next_pos.first >= (texture_width - cw - gap)) {
         next_pos.first = 0;
-        next_pos.second += align(char_height + gap, 4);
+        next_pos.second += align32(char_height + gap);
     }
     return res;
 }
@@ -80,13 +80,13 @@ void TileSet::init()
     std::ranges::fill(data, 0);
 
     tile_texture = std::make_shared<gl::Texture>(texture_width, texture_height, data);
-    std::fill(char_array.begin(), char_array.end(), 0xffffffff);
+    std::ranges::fill(char_array, 0xffffffff);
     if (font_ptr) {
         for (char32_t c = 0x20; c <= 0x7f; c++) {
             add_char(c);
         }
     }
-    std::fill(data.begin(), data.end(), 0xff);
+    std::ranges::fill(data, 0xff);
     tile_texture->bind(0);
 }
 
@@ -149,14 +149,15 @@ pix::ImageView TileSet::get_texture_for_char(char32_t c)
 void TileSet::render_chars(pix::Context& context, std::string const& text, Vec2f pos, Vec2f size)
 {
     auto us = utf8::utf8_decode(text);
-    render_tiles(context, (int32_t*)us.data(), us.length(), pos, size);
+    render_tiles(context, reinterpret_cast<int32_t*>(us.data()), us.length(), pos, size);
 }
 void TileSet::render_chars(pix::Context& context, std::string const& text,
                            std::vector<Vec2f> const& points)
 {
     auto us = utf8::utf8_decode(text);
-    render_tiles(context, (int32_t*)us.data(), points);
+    render_tiles(context, reinterpret_cast<int32_t*>(us.data()), points);
 }
+
 void TileSet::render_tiles(pix::Context& context, int32_t const* tiles, size_t count, Vec2f pos,
                            Vec2f size)
 {
@@ -165,10 +166,10 @@ void TileSet::render_tiles(pix::Context& context, int32_t const* tiles, size_t c
 
     tile_texture->bind();
     for (size_t i = 0; i < count; i++) {
-        auto c = tiles[i];
+        auto const c = tiles[i];
         auto img = get_texture_for_char(c);
         auto vdata = context.generate_quad_with_uvs(pos, size);
-        std::copy(img.uvs().begin(), img.uvs().end(), vdata.begin() + 8);
+        std::ranges::copy(img.uvs(), vdata.begin() + 8);
         context.draw_textured(vdata, gl::Primitive::TriangleFan);
         pos.x += size.x;
     }
@@ -180,13 +181,13 @@ void TileSet::render_tiles(pix::Context& context, int32_t const* tiles,
     context.set_target();
 
     tile_texture->bind();
-    auto size = Vec2f(char_width, char_height);
-    int n = points.size();
-    for (int i = 0; i < n; i++) {
-        auto c = tiles[i];
+    auto const size = Vec2f(char_width, char_height);
+    auto const n = points.size();
+    for (size_t i = 0; i < n; i++) {
+        auto const c = tiles[i];
         auto img = get_texture_for_char(c);
         auto vdata = context.generate_quad_with_uvs(points[i], size);
-        std::copy(img.uvs().begin(), img.uvs().end(), vdata.begin() + 8);
+        std::ranges::copy(img.uvs(), vdata.begin() + 8);
         context.draw_textured(vdata, gl::Primitive::TriangleFan);
     }
 }

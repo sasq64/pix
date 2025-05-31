@@ -8,17 +8,17 @@
 
 namespace color {
 
-static inline constexpr uint32_t tob(double f)
+static constexpr uint32_t tob(double f)
 {
     return static_cast<int>(f * 255);
 }
 
-inline constexpr uint32_t rgba(double r, double g, double b, double a)
+constexpr uint32_t rgba(double r, double g, double b, double a)
 {
     return (tob(r) << 24) | (tob(g) << 16) | (tob(b) << 8) | tob(a);
 }
 
-inline constexpr std::tuple<float, float, float, float> color2tuple(uint32_t color)
+constexpr std::tuple<float, float, float, float> color2tuple(uint32_t color)
 {
     auto r = (color >> 24) / 255.0;
     auto g = ((color >> 16) & 0xff) / 255.0;
