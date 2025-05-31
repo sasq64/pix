@@ -173,13 +173,13 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     pybind11::implicitly_convertible<Vec2i, Vec2f>();
 
     auto ctx = add_context_class(mod);
-    // add_draw_functions(ctx);
 
     auto tc = add_image_class(mod, ctx);
     // add_draw_functions(tc);
     tc.def_property_readonly(
         "size", [](pix::ImageView const& self) { return Vec2f{self.width(), self.height()}; });
 
+    add_context_functions(ctx);
     add_font_class(mod);
     add_tileset_class(mod);
     add_console_class(mod);

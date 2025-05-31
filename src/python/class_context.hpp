@@ -20,7 +20,17 @@ inline auto add_context_class(py::module_ const& mod)
 
     auto cls = py::class_<Context, std::shared_ptr<Context>>(mod, "Canvas")
                    .def("copy", &Context::copy, "Make a copy of the self.");
+    cls.doc() =
+        "A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.";
+    return cls;
+}
 
+inline void add_context_functions(auto& cls)
+{
+
+    using namespace pybind11::literals;
+    using namespace pybind11::literals;
+    using Context = pix::Context;
     cls.def("circle", &Context::circle, "center"_a, "radius"_a, "Draw an (outline) circle");
 
     cls.def("filled_circle", &Context::filled_circle, "center"_a, "radius"_a,
@@ -139,7 +149,6 @@ inline auto add_context_class(py::module_ const& mod)
         },
         "Get the xy coordinate of the mouse pointer (in context space).");
 
-    cls.doc() =
-        "A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.";
-    return cls;
 }
+
+  

@@ -1,5 +1,6 @@
 import pixpy as pix
 
+
 class Repl:
     def __init__(self, con: pix.Console):
         self.con = con
@@ -20,6 +21,5 @@ class Repl:
             elif isinstance(e, pix.event.Key):
                 pass
 
-    def render(self, target: pix.Context):
+    def render(self, target: pix.Canvas):
         target.draw(self.con, self.con.size)
-

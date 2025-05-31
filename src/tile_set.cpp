@@ -3,6 +3,8 @@
 #include "image_view.hpp"
 #include "utf8.h"
 
+#include <algorithm>
+
 static constexpr int align(int val, int a)
 {
     return (val + (a - 1)) & (~(a - 1));
@@ -75,7 +77,7 @@ void TileSet::init()
     data.resize(texture_width * texture_height);
     if (char_width <= 0) { std::tie(char_width, char_height) = font_ptr->get_size(); }
 
-    std::fill(data.begin(), data.end(), 0);
+    std::ranges::fill(data, 0);
 
     tile_texture = std::make_shared<gl::Texture>(texture_width, texture_height, data);
     std::fill(char_array.begin(), char_array.end(), 0xffffffff);
