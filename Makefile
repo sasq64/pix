@@ -6,10 +6,9 @@ all :
 	cp build/_pixpy*.so python/pixpy/
 
 dist: stubs
-	python3 setup.py sdist
-	python3 setup.py bdist_wheel
+	python -m build
 
-run:
+run: all
 	PYTHONPATH=build python3 test.py
 
 go:

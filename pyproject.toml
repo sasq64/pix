@@ -1,25 +1,28 @@
 [project]
 name = "pixpy"
-version = "0.1.14"
+version = "0.1.15"
 description = "Graphics library"
 authors = [
     {name = "Jonas Minnberg", email="sasq64@gmail.com"}
 ]
-license = {file = "LICENSE.md"}
+license = "MIT"
 readme = "docs/index.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [project.urls]
 repository = "https://github.com/sasq64/pix"
 documentation = "https://pixpy.readthedocs.org"
 
 [build-system]
-requires = [
-    "setuptools>=42",
-    "scikit-build>=0.15",
-    "wheel",
-    "ninja",
-    "cmake>=3.12",
+requires = [ "scikit-build-core>=0.11" ]
+build-backend = "scikit_build_core.build"
+[tool.scikit-build]
+sdist.exclude = ["NOTES.md", "data/", "examples/"]
+minimum-version = "build-system.requires"
+cmake.args=[
+    "--no-warn-unused-cli",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DPYTHON_MODULE=ON",
+    "-DMACOSX_DEPLOYMENT_TARGET=10.15",
 ]
-build-backend = "setuptools.build_meta"
 

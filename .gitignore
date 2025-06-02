@@ -3,6 +3,7 @@ _build/
 _skbuild/
 .cache/
 .idea/
+.vscode/
 dist/
 stubs/
 .DS_Store
@@ -11,4 +12,6 @@ stubs/
 *.dat
 __pycache__/
 cmake-build-*/
-
+doc/*.html
+doc/*.pdf
+compile_commands.json
