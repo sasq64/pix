@@ -21,7 +21,9 @@
 #include "utils.h"
 
 #include <pybind11/detail/common.h>
+#ifndef PYTHON_MODULE
 #include <pybind11/embed.h>
+#endif
 #include <pybind11/stl/filesystem.h>
 
 #include <chrono>
