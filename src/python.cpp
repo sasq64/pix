@@ -17,12 +17,12 @@
 #include "machine.hpp"
 #include "screen.hpp"
 #include "system.hpp"
-#include "vec2.hpp"
 #include "utils.h"
+#include "vec2.hpp"
 
 #include <pybind11/detail/common.h>
 #ifndef PYTHON_MODULE
-#include <pybind11/embed.h>
+#    include <pybind11/embed.h>
 #endif
 #include <pybind11/stl/filesystem.h>
 
@@ -69,14 +69,16 @@ void init()
     }));
 }
 
-std::shared_ptr<pix::Screen> open_display(int width, int height, bool full_screen)
+std::shared_ptr<pix::Screen> open_display(int width, int height, bool full_screen,
+                                          bool visible = true)
 {
     if (m.screen != nullptr) { return m.screen; }
     init();
     Display::Settings const settings{.screen =
                                          full_screen ? DisplayType::Full : DisplayType::Window,
                                      .display_width = width,
-                                     .display_height = height};
+                                     .display_height = height,
+                                     .visible = visible};
 
     auto display = m.sys->init_screen(settings);
     m.screen = std::make_shared<pix::Screen>(display);
@@ -113,9 +115,9 @@ void set_allow_break(bool on)
     allow_break = on;
 }
 
-std::shared_ptr<pix::Screen> open_display2(Vec2i size, bool full_screen)
+std::shared_ptr<pix::Screen> open_display2(Vec2i size, bool full_screen, bool visible =true)
 {
-    return open_display(size.x, size.y, full_screen);
+    return open_display(size.x, size.y, full_screen, visible);
 }
 
 void save_png(pix::ImageView const& image, fs::path const& file_name)
@@ -197,11 +199,11 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     // pybind11::implicitly_convertible<std::shared_ptr<Screen, pix::Context>();
 
     mod.def(
-        "open_display", &open_display, "width"_a = -1, "height"_a = -1, "full_screen"_a = false,
+        "open_display", &open_display, "width"_a = -1, "height"_a = -1, "full_screen"_a = false, "visible"_a = true,
         doc =
             "Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.\nSubsequent calls to this method returns the same screen instance, "
             "since you can only have one active display in pix.");
-    mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false, doc);
+    mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false, "visible"_a = true, doc);
     mod.def("get_display", [] { return m.screen; });
     mod.def(
         "all_events", [] { return m.sys->all_events(); }, "Return a list of all pending events.");

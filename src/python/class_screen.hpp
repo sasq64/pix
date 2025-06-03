@@ -13,6 +13,9 @@ inline auto add_screen_class(py::module_ const& mod, auto ctx_class)
 {
     auto screen = py::class_<pix::Screen, std::shared_ptr<pix::Screen>>(mod, "Screen", ctx_class);
     screen.def("set_as_target", &pix::Screen::set_target);
+    screen.def_property(
+        "visible", [](pix::Screen const& screen) { return screen.visible; },
+        [](pix::Screen& screen, bool on) { screen.set_visible(on); }, "Is the window visible?");
     screen.def_property_readonly(
         "frame_counter", [](pix::Screen const&) { return Machine::get_instance().frame_counter; });
     screen.def_property_readonly(
@@ -29,8 +32,9 @@ inline auto add_screen_class(py::module_ const& mod, auto ctx_class)
         [](pix::Screen& screen, int fps) { screen.set_fps(fps); },
         "Current FPS. Set to 0 to disable fixed FPS. Then use `seconds` or "
         "`delta` to sync your movement.");
-    screen.def_property_readonly(
+    screen.def_property(
         "size", [](pix::Screen const& screen) { return Vec2f{screen.get_size()}; },
+        [](pix::Screen& screen, Vec2f size) { screen.set_size({(int)size.x, (int)size.y}); },
         "Size (in pixels) of screen.");
     screen.def_property_readonly("width", [](pix::Screen const& s) { return s.get_size().first; });
     screen.def_property_readonly("height",

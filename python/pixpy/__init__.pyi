@@ -693,6 +693,17 @@ class Screen(Canvas):
         """
         Size (in pixels) of screen.
         """
+    @size.setter
+    def size(self, arg1: Union[Float2, Int2, Tuple[float, float]]) -> None:
+        ...
+    @property
+    def visible(self) -> bool:
+        """
+        Is the window visible?
+        """
+    @visible.setter
+    def visible(self, arg1: bool) -> None:
+        ...
     @property
     def width(self) -> int:
         ...
@@ -780,13 +791,13 @@ def load_png(file_name: str) -> Image:
     Create an _Image_ from a png file on disk.
     """
 @typing.overload
-def open_display(width: int = -1, height: int = -1, full_screen: bool = False) -> Screen:
+def open_display(width: int = -1, height: int = -1, full_screen: bool = False, visible: bool = True) -> Screen:
     """
     Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.
     Subsequent calls to this method returns the same screen instance, since you can only have one active display in pix.
     """
 @typing.overload
-def open_display(size: Union[Int2, Tuple[int, int]], full_screen: bool = False) -> Screen:
+def open_display(size: Union[Int2, Tuple[int, int]], full_screen: bool = False, visible: bool = True) -> Screen:
     """
     Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.
     Subsequent calls to this method returns the same screen instance, since you can only have one active display in pix.

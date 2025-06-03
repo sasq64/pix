@@ -100,6 +100,7 @@ public:
         std::string title = "pix";
         int display_width = 1600;
         int display_height = 1200;
+        bool visible = true;
     };
 
     struct Time
@@ -118,6 +119,8 @@ public:
     virtual void set_target(){};
     virtual float get_scale() { return 1.0F; }
     [[nodiscard]] virtual std::pair<int, int> get_size() const { return {-1, -1}; }
+    virtual void set_size(int w, int h) {}
+    virtual void set_visible(bool on) {}
 };
 
 class Input
@@ -244,6 +247,7 @@ public:
     }
 
     virtual std::pair<float, float> get_pointer() { return {-1, -1}; }
+
 };
 
 std::unique_ptr<System> create_sdl_system();

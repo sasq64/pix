@@ -110,7 +110,7 @@ class PixIDE:
             0x6B89FF,  # dark blue
         ]
 
-        self.font_size: Final = 20
+        self.font_size: Final = 14
         font = pix.load_font(hack_font, self.font_size)
         ts = pix.TileSet(font)
         self.ar_ok: Final = font.make_image("▶", 30, pix.color.GREEN)
@@ -118,10 +118,12 @@ class PixIDE:
 
         self.comp_enabled: bool = False
         self.con: Final = pix.Console(120, 40, ts)
+        print(self.con.tile_size)
 
         self.title: Final = pix.Console(
             90, 1, font_file=hack_font, font_size=self.font_size
         )
+        print(self.title.tile_size)
         self.title.set_color(pix.color.WHITE, 0xE17092FF)
         self.title.clear()
         self.title.write("example.py")
@@ -323,7 +325,9 @@ def run(source: str):
 
 def main():
     global screen
-    screen = pix.open_display(width=80 * 8 * 2, height=25 * 16 * 2, full_screen=False)
+    screen = pix.open_display(
+        width=120 * 13, height=40 * 24, full_screen=False, visible=True
+    )
     font_size = 24
     font = pix.load_font(hack_font, font_size)
     ts = pix.TileSet(font)
@@ -344,6 +348,8 @@ def main():
     # sys.exit(0)
 
     ide = PixIDE()
+    screen.size = ide.con.size
+    # screen.visible = True
 
     print("RUN")
     while pix.run_loop():
