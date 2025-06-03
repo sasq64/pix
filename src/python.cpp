@@ -118,8 +118,9 @@ std::shared_ptr<pix::Screen> open_display2(Vec2i size, bool full_screen)
     return open_display(size.x, size.y, full_screen);
 }
 
-void save_png(gl::TexRef const& tex, fs::path const& file_name)
+void save_png(pix::ImageView const& image, fs::path const& file_name)
 {
+    auto const& tex = image.get_tex();
     auto pixels = tex.read_pixels();
     pix::Image img{static_cast<int>(tex.width()), static_cast<int>(tex.height()), pixels.data()};
     img.flip();
@@ -166,6 +167,7 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     mod.attr("BLEND_NORMAL") = (GL_SRC_ALPHA << 16) | GL_ONE_MINUS_SRC_ALPHA;
     mod.attr("BLEND_ADD") = (GL_SRC_ALPHA << 16) | GL_ONE;
     mod.attr("BLEND_MULTIPLY") = (GL_DST_COLOR << 16) | GL_ZERO;
+    mod.attr("BLEND_COPY") = (GL_ONE << 16) | GL_ZERO;
 
     add_vec2_class(mod);
 
@@ -176,16 +178,15 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     pybind11::implicitly_convertible<std::tuple<int, double>, Vec2f>();
     pybind11::implicitly_convertible<Vec2i, Vec2f>();
 
+    auto con_class = add_console_class(mod);
     auto ctx = add_canvas_class(mod);
-
     auto tc = add_image_class(mod, ctx);
-    tc.def_property_readonly(
-        "size", [](pix::ImageView const& self) { return Vec2f{self.width(), self.height()}; });
 
     add_canvas_functions(ctx);
     add_font_class(mod);
     add_tileset_class(mod);
-    add_console_class(mod);
+
+    add_console_functions(con_class);
 
     add_event_mod(mod.def_submodule("event"));
 

@@ -42,12 +42,12 @@ auto star = std::vector<Vec2f>{
 };
 
 int main() {
-    constexpr std::array colors{color::blue, color::red, color::yellow};
+    //constexpr std::array colors{color::blue, color::red, color::yellow};
+    constexpr std::array colors{0x800000ffU, 0xff0000ffU, 0x00ff00ffU};
 
     for (int i = 0; i < 20; i++) {
         auto d = static_cast<float>(i) / 20;
         auto col = color::blend_colors(colors, d);
-        printf("%.2f -> %08x\n", d, col);
     }
 
     auto sys = create_glfw_system();

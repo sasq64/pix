@@ -3,6 +3,7 @@
 #include "../font.hpp"
 #include "../gl/texture.hpp"
 #include "../image.hpp"
+#include "../vec2.hpp"
 
 //#include <pybind11/detail/common.h>
 #include <pybind11/pybind11.h>
@@ -13,6 +14,13 @@
 namespace py = pybind11;
 
 static std::unordered_map<std::string, std::shared_ptr<gl::Texture>> font_images;
+
+inline Vec2f text_size(FreetypeFont& font, std::string const& text, int size)
+{
+    font.set_pixel_size(size);
+    auto [w, h] = font.text_size(text);
+    return Vec2f(w, h);
+}
 
 inline pix::ImageView text_to_image(FreetypeFont& font, std::string const& text,
                                 int size, uint32_t color)
@@ -55,6 +63,8 @@ inline auto add_font_class(py::module_ const& mod)
     py::class_<FreetypeFont, std::shared_ptr<FreetypeFont>>(mod, "Font")
         .def(py::init<>(&make_font), "font_file"_a = "",
              "Create a font from a TTF file.")
+        .def("text_size", &text_size, py::arg("text"), "size"_a,
+             "Return the size (bounding rectangle) of the given text.")
         .def("make_image", &text_to_image, py::arg("text"), "size"_a,
              "color"_a = 0xffffffff,
              "Create an image containing the given text.")

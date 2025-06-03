@@ -110,14 +110,14 @@ class PixIDE:
             0x6B89FF,  # dark blue
         ]
 
-        self.font_size: Final = 24
+        self.font_size: Final = 20
         font = pix.load_font(hack_font, self.font_size)
         ts = pix.TileSet(font)
         self.ar_ok: Final = font.make_image("▶", 30, pix.color.GREEN)
         self.ar_error: Final = font.make_image("▶", 30, pix.color.RED)
 
         self.comp_enabled: bool = False
-        self.con: Final = pix.Console(90, 39, ts)
+        self.con: Final = pix.Console(120, 40, ts)
 
         self.title: Final = pix.Console(
             90, 1, font_file=hack_font, font_size=self.font_size
@@ -257,7 +257,8 @@ class PixIDE:
         # self.con.colorize_section(0,11,100)
         # self.con.set_color(pix.color.WHITE, pix.color.LIGHT_BLUE)
         screen.clear(pix.color.DARK_GREY)
-        screen.draw(self.con, top_left=(0, self.con.tile_size.y), size=self.con.size)
+        size = screen.size - (0, self.con.tile_size.y)
+        screen.draw(self.con, top_left=(0, self.con.tile_size.y), size=size)
         screen.draw(self.title, size=self.title.size)
         if self.auto_run:
             source = self.edit.get_text()
@@ -326,10 +327,11 @@ def main():
     font_size = 24
     font = pix.load_font(hack_font, font_size)
     ts = pix.TileSet(font)
-    con = pix.Console(90, 39, ts)
-    con.set_color(pix.color.ORANGE, pix.color.BLACK)
-    con.clear()
-    con.write("HELLO")
+
+    # con = pix.Console(90, 39, ts)
+    # con.set_color(pix.color.ORANGE, pix.color.BLACK)
+    # con.clear()
+    # con.write("HELLO")
 
     # repl = Repl(con)
     # while pix.run_loop():

@@ -3,6 +3,7 @@
 #define COLORS_HPP
 
 #include <cstdint>
+#include <cstdio>
 #include <cstddef>
 #include <tuple>
 
@@ -40,17 +41,20 @@ constexpr uint32_t blend_color(uint32_t a, uint32_t b, float d)
 template <typename Container>
 constexpr uint32_t blend_colors(Container const& colors, float d)
 {
-    auto o = colors.size() * d;
+    auto o = (colors.size() - 1) * d;
     auto i = static_cast<size_t>(o);
     auto j = i+1;
     if (j >= colors.size()) { j = colors.size()-1; }
-    d = o - i;
+    auto t = o - i;
 
-    //printf("%zu - %zu %f\n", i, j, d);
     auto [ra, ga, ba, aa] = color2tuple(colors[j]);
     auto [rb, gb, bb, ab] = color2tuple(colors[i]);
-    return rgba(ra * d + rb * (1-d), ga * d + gb * (1-d),
-                ba * d + bb * (1-d), aa * d + ab * (1-d));
+    auto col = rgba(ra * t + rb * (1-t),
+                    ga * t + gb * (1-t),
+                    ba * t + bb * (1-t), 
+                    aa * t + ab * (1-t));
+    //printf("%.2f -> %zu %zu %.2f ->%08x\n", d, i, j, t, col);
+    return col;
 }
 
 inline constexpr uint32_t add_color(uint32_t a, uint32_t b)

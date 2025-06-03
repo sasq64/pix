@@ -13,6 +13,7 @@ class ImageView : public Context
 
 public:
     gl::TexRef& get_tex() { return tex; }
+    gl::TexRef const& get_tex() const { return tex; }
 
     explicit ImageView(gl::TexRef const& tr) : Context{tr}, tex{tr} {}
     ImageView(int w, int h) : ImageView{gl::TexRef(w, h)} {}

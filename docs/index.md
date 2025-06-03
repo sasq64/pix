@@ -42,7 +42,7 @@ Normally you create your own main loop and do this yourself;
 ```python
 import pixpy as pix
 
-screen = pix.open_display(width=1280, height=720)
+screen = pix.open_display(size=(1280,720))
 
 x = 0
 while pix.run_loop():
@@ -57,7 +57,7 @@ To read the keyboard and/or mouse, you can use _is_pressed()_ or _was_pressed()_
 ```python
 import pixpy as pix
 
-screen = pix.open_display(width=640, height=480)
+screen = pix.open_display(size=(640,480))
 
 background = pix.load_png("data/background.png")
 sprite = pix.load_png("data/ufo.png")
@@ -73,6 +73,8 @@ while pix.run_loop():
         pos += (2,0)
     elif pix.is_pressed(pix.key.LEFT):
         pos -= (2,0)
+    elif pix.was_pressed(pix.key.ENTER):
+        fire()
         
     screen.draw(image=sprite, center=pos)
     screen.swap()
@@ -84,7 +86,7 @@ For more advanced needs you use events
 # A simple paint program
 import pixpy as pix
 
-screen = pix.open_display(width=1280, height=720)
+screen = pix.open_display(size=(1280,720))
 canvas = pix.Image(size=screen.size)
 
 while pix.run_loop():
@@ -113,7 +115,7 @@ between two Int2 will always be promoted to a Float2.
 
 ## Images
 
-All images are actually just references into Open GL Textures.This means that it's easy to cheaply manipulate images without doing a lot of copying.
+All images are actually just references into Open GL Textures. This means that it's easy to cheaply manipulate images without doing a lot of copying.
 
 One way to think of it is that an image is like an _array slice_ or _array view_; it is cheap to create another view into an existing image.
 
@@ -144,7 +146,7 @@ The console starts out with a backing font that lets you write text;
 ```python
 import pixpy as pix
 
-screen = pix.open_display(width=1280, height=720)
+screen = pix.open_display(size=(1280,720))
 con = pix.Console(cols=80, rows=50)
 con.write('Hello\n')
 screen.draw(con)
@@ -156,7 +158,7 @@ screen.draw(con)
 ```python
 import pixpy as pix
 
-screen = pix.open_display(width=1280, height=720)
+screen = pix.open_display(size=(1280,720))
 con = pix.Console(cols=40, rows=25)
 con.write('What is your name?\n')
 con.read_line()
@@ -180,7 +182,7 @@ Note that the `split()` call below is (as we mentioned) cheap &mdash; we only cr
 ```python
 import pixpy as pix
 
-screen = pix.open_display(width=1280, height=720)
+screen = pix.open_display(size=(1280,720))
 con = pix.Console(cols=128, rows=128)
 
 # Load our tile sheet, and split it into an array of tile images

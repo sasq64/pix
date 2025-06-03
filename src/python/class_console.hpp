@@ -40,13 +40,16 @@ inline std::shared_ptr<FullConsole> make_console2(int32_t cols, int32_t rows,
     return fcon;
 }
 
-inline void add_console_class(py::module_ const& mod)
+inline auto add_console_class(py::module_ const& mod)
+{
+    // Console
+    return py::class_<FullConsole, std::shared_ptr<FullConsole>>(mod, "Console");
+}
+
+inline void add_console_functions(auto& cls)
 {
     using namespace pybind11::literals;
-    // Console
-    py::class_<FullConsole, std::shared_ptr<FullConsole>>(mod, "Console")
-        .def(
-            py::init<>(&make_console), "cols"_a, "rows"_a, "font_file"_a = "",
+    cls.def(py::init<>(&make_console), "cols"_a, "rows"_a, "font_file"_a = "",
             "tile_size"_a = Vec2i{-1, -1}, "font_size"_a = 16,
             "Create a new Console holding `cols`*`rows` tiles.\n\n`font_file` is the file name of "
             "a TTF font to use as backing. If no font is given, the built in _Unscii_ font will "

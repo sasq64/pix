@@ -21,13 +21,12 @@ inline auto add_canvas_class(py::module_ const& mod)
     auto cls = py::class_<Context, std::shared_ptr<Context>>(mod, "Canvas")
                    .def("copy", &Context::copy, "Make a copy of the self.");
     cls.doc() =
-        "A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.";
+        "A `Canvas` is used for rendering. It is implemented by both `Screen` and `Image`.";
     return cls;
 }
 
 inline void add_canvas_functions(auto& cls)
 {
-
     using namespace pybind11::literals;
     using namespace pybind11::literals;
     using Context = pix::Context;
@@ -112,10 +111,10 @@ inline void add_canvas_functions(auto& cls)
         "drawable"_a, "top_left"_a = Vec2f{0, 0}, "size"_a = Vec2f{0, 0},
         "Render a console. `top_left` and `size` are in pixels. If `size` is "
         "not given, it defaults to `tile_size*grid_size`.\n\nTo render a full screen console "
-        "(scaling as needed):\n\n`console.render(screen.context, size=screen.size)`");
+        "(scaling as needed):\n\n`console.render(screen, size=screen.size)`");
     cls.def(
         "clear", [](pix::Context const& self, uint32_t color) { self.clear(color); },
-        "color"_a = color::black, "Clear the context using given color.");
+        "color"_a = color::black, "Clear the canvas using given color.");
     cls.def_property(
         "draw_color", [](Context const& self) { return self.fg.to_rgba(); },
         [](Context& self, uint32_t color) { self.set_color(color); }, "Set the draw color.");
@@ -127,27 +126,27 @@ inline void add_canvas_functions(auto& cls)
                       "Set the point size in fractional pixels.");
     cls.def_readwrite("line_width", &Context::line_width,
                       "Set the line with in fractional pixels.");
-    cls.def_property_readonly("context", [](Context& self) { return &self; });
+    //cls.def_property_readonly("context", [](Context& self) { return &self; });
     cls.def_readwrite("clip_top_left", &Context::clip_start);
     cls.def_readwrite("clip_size", &Context::clip_size);
     cls.def_readwrite("scale", &Context::target_scale);
     cls.def_readwrite("offset", &Context::offset,
-                      "The offset into a the context this context was created from, if any.");
-    cls.def_readonly("size", &Context::target_size, "The size of this context in pixels");
+                      "The offset into a the source canvas this canvas was created from, if any.");
+    cls.def_readonly("size", &Context::target_size, "The size of this canvas in pixels");
     cls.def_readonly("target_size", &Context::target_size);
     cls.def(
         "set_pixel",
         [](Context& self, Vec2i pos, uint32_t color) { self.set_pixel(pos.x, pos.y, color); },
         "pos"_a, "color"_a, "Write a pixel into the image.");
     cls.def("flush", &Context::flush, "Flush pixel operations");
-    cls.def("to_image", &Context::to_image, "Create a new image from this context");
+    cls.def("to_image", &Context::to_image, "Create a new image from this canvas");
     cls.def(
         "get_pointer",
         [](Context const& self) {
             auto xy = Vec2f{Machine::get_instance().sys->get_pointer()};
             return (xy - self.offset) / self.target_scale;
         },
-        "Get the xy coordinate of the mouse pointer (in context space).");
+        "Get the xy coordinate of the mouse pointer (in canvas space).");
 
 }
 

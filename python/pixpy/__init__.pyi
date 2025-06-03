@@ -8,10 +8,10 @@ import typing
 from . import color
 from . import event
 from . import key
-__all__ = ['BLEND_ADD', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'was_pressed', 'was_released']
+__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'was_pressed', 'was_released']
 class Canvas:
     """
-    A `Context` is used for rendering. It is implemented by both `Screen` and `Image`.
+    A `Canvas` is used for rendering. It is implemented by both `Screen` and `Image`.
     """
     clip_size: Union[Int2, Tuple[int, int]]
     clip_top_left: Union[Int2, Tuple[int, int]]
@@ -22,7 +22,7 @@ class Canvas:
         """
     def clear(self, color: int = 255) -> None:
         """
-        Clear the context using given color.
+        Clear the canvas using given color.
         """
     def complex_polygon(self, polygons: list[list[Float2]]) -> None:
         """
@@ -38,13 +38,13 @@ class Canvas:
         Render an image. The image can either be aligned to its top left corner, or centered, in which case it can also be rotated.
         """
     @typing.overload
-    def draw(self, drawable: FullConsole, top_left: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
+    def draw(self, drawable: Console, top_left: Union[Float2, Int2, Tuple[float, float]] = ..., size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
         """
         Render a console. `top_left` and `size` are in pixels. If `size` is not given, it defaults to `tile_size*grid_size`.
 
         To render a full screen console (scaling as needed):
 
-        `console.render(screen.context, size=screen.size)`
+        `console.render(screen, size=screen.size)`
         """
     def filled_circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
@@ -60,7 +60,7 @@ class Canvas:
         """
     def get_pointer(self) -> Float2:
         """
-        Get the xy coordinate of the mouse pointer (in context space).
+        Get the xy coordinate of the mouse pointer (in canvas space).
         """
     @typing.overload
     def line(self, start: Union[Float2, Int2, Tuple[float, float]], end: Union[Float2, Int2, Tuple[float, float]]) -> None:
@@ -100,7 +100,7 @@ class Canvas:
         """
     def to_image(self) -> Image:
         """
-        Create a new image from this context
+        Create a new image from this canvas
         """
     @property
     def blend_mode(self) -> int:
@@ -109,9 +109,6 @@ class Canvas:
         """
     @blend_mode.setter
     def blend_mode(self, arg1: int) -> None:
-        ...
-    @property
-    def context(self) -> Canvas:
         ...
     @property
     def draw_color(self) -> int:
@@ -132,7 +129,7 @@ class Canvas:
     @property
     def offset(self) -> Float2:
         """
-        The offset into a the context this context was created from, if any.
+        The offset into a the source canvas this canvas was created from, if any.
         """
     @offset.setter
     def offset(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> None:
@@ -148,7 +145,7 @@ class Canvas:
     @property
     def size(self) -> Float2:
         """
-        The size of this context in pixels
+        The size of this canvas in pixels
         """
     @property
     def target_size(self) -> Float2:
@@ -457,6 +454,10 @@ class Font:
         """
         Create an image containing the given text.
         """
+    def text_size(self, text: str, size: int) -> Float2:
+        """
+        Return the size (bounding rectangle) of the given text.
+        """
 class Image(Canvas):
     """
     A (GPU Side) _image_, represented by a texture reference and 4 UV coordinates. Images works like arrays in the sense that it is cheap to create new views to images (using crop(), split() etc).
@@ -510,7 +511,9 @@ class Image(Canvas):
         """
     @property
     def size(self) -> Float2:
-        ...
+        """
+        Size of the image in (fractional) pixels.
+        """
     @property
     def width(self) -> float:
         ...
@@ -686,7 +689,7 @@ class Screen(Canvas):
         Total seconds elapsed since starting pix.
         """
     @property
-    def size(self) -> Int2:
+    def size(self) -> Float2:
         """
         Size (in pixels) of screen.
         """
@@ -722,7 +725,7 @@ class TileSet:
         """
         Get the image for a specific character. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.
         """
-    def get_tileset_image(self) -> ...:
+    def get_tileset_image(self) -> Image:
         """
         Get the entire tileset image. Typically used with `save_png()` to check generated tileset.
         """
@@ -800,7 +803,7 @@ def run_loop() -> bool:
     """
     Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way
     """
-def save_png(image: ..., file_name: str) -> None:
+def save_png(image: Image, file_name: str) -> None:
     """
     Save an _Image_ to disk
     """
@@ -813,5 +816,6 @@ def was_released(key: int | str) -> bool:
     Returns _True_ if the keyboard or mouse key was pressed this loop. `run_loop()` refreshes these states.
     """
 BLEND_ADD: int = 50462721
+BLEND_COPY: int = 65536
 BLEND_MULTIPLY: int = 50724864
 BLEND_NORMAL: int = 50463491
