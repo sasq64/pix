@@ -25,10 +25,8 @@ class FullConsole
     void refresh();
     int listener = -1;
 
-
     System::Propagate put_event(KeyEvent const& event);
     System::Propagate put_event(TextEvent const& te);
-
 
 public:
     FullConsole(std::shared_ptr<PixConsole> const& con,
@@ -40,7 +38,7 @@ public:
     void set_wrap(bool on) { wrap = on; }
 
     Vec2i get_cursor() const { return cursor; }
-    //void set_cursor(int x, int y) { cursor = {x,y}; }
+    // void set_cursor(int x, int y) { cursor = {x,y}; }
     void set_cursor(Vec2i xy) { cursor = xy; }
 
     pix::ImageView get_font_texture();
@@ -66,8 +64,11 @@ public:
     Vec2i get_size() const { return Vec2i{console->get_size()}; }
     Vec2i get_tile_size() const { return Vec2i{console->get_char_size()}; }
 
-    //void put(Vec2i pos, uint32_t c) { console->put(pos.x, pos.y, fg, bg, c); }
-    void put(Vec2i pos, uint32_t c, std::optional<uint32_t> fg_ = std::nullopt, std::optional<uint32_t> bg_ = std::nullopt) {
+    // void put(Vec2i pos, uint32_t c) { console->put(pos.x, pos.y, fg, bg, c);
+    // }
+    void put(Vec2i pos, uint32_t c, std::optional<uint32_t> fg_ = std::nullopt,
+             std::optional<uint32_t> bg_ = std::nullopt)
+    {
         console->put(pos.x, pos.y, fg_.value_or(fg), bg_.value_or(bg), c);
     }
     void text(Vec2i pos, std::string const& txt)
@@ -85,19 +86,17 @@ public:
 
     void colorize(int x, int y, int width);
 
-    void set_tile_images(int start_no, std::vector<pix::ImageView> const& images)
+    void set_tile_images(int start_no,
+                         std::vector<pix::ImageView> const& images)
     {
         auto i = start_no;
-        for(auto const& img : images) {
+        for (auto const& img : images) {
             auto target = console->get_texture_for_char(i++);
             target.copy_from(img);
         }
     }
 
-    void clear()
-    {
-        console->fill(fg, bg);
-    }
+    void clear() { console->fill(fg, bg); }
 
     pix::ImageView get_texture_for_char(int32_t c)
     {

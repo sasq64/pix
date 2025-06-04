@@ -30,20 +30,25 @@ inline void add_canvas_functions(auto& cls)
     using namespace pybind11::literals;
     using namespace pybind11::literals;
     using Context = pix::Context;
-    cls.def("circle", &Context::circle, "center"_a, "radius"_a, "Draw an (outline) circle");
+    cls.def("circle", &Context::circle, "center"_a, "radius"_a,
+            "Draw an (outline) circle");
 
     cls.def("filled_circle", &Context::filled_circle, "center"_a, "radius"_a,
             "Draw a filled circle.");
 
     cls.def(
-        "line", [](Context& self, Vec2f const& from, Vec2f const& to) { self.line(from, to); },
+        "line",
+        [](Context& self, Vec2f const& from, Vec2f const& to) {
+            self.line(from, to);
+        },
         "start"_a, "end"_a, "Draw a line between start and end.");
 
     cls.def(
         "line", [](Context& self, Vec2f const& to) { self.line(to); }, "end"_a,
         "Draw a line from the end of the last line to the given position.");
 
-    cls.def("lines", &Context::lines, "points"_a, "Draw a line strip from all the given points.");
+    cls.def("lines", &Context::lines, "points"_a,
+            "Draw a line strip from all the given points.");
 
     cls.def(
         "polygon",
@@ -60,7 +65,9 @@ inline void add_canvas_functions(auto& cls)
             "Draw a complex filled polygon that can consist of holes.");
     cls.def(
         "plot",
-        [](Context& self, Vec2f const& to, uint32_t color) { self.plot(to, gl::Color(color)); },
+        [](Context& self, Vec2f const& to, uint32_t color) {
+            self.plot(to, gl::Color(color));
+        },
         "center"_a, "color"_a, "Draw a point.");
 
     cls.def(
@@ -79,18 +86,23 @@ inline void add_canvas_functions(auto& cls)
         py::arg("points"), py::arg("colors"),
         "Draw `n` points given by the array like objects. `points` should n*2 floats and `colors` should contain `n` unsigned ints.");
     cls.def(
-        "rect", [](Context& self, Vec2f const& xy, Vec2f const& size) { self.rect(xy, size); },
+        "rect",
+        [](Context& self, Vec2f const& xy, Vec2f const& size) {
+            self.rect(xy, size);
+        },
         "top_left"_a, "size"_a, "Draw a rectangle.");
 
     cls.def(
         "filled_rect",
-        [](Context& self, Vec2f const& xy, Vec2f const& size) { self.filled_rect(xy, size); },
+        [](Context& self, Vec2f const& xy, Vec2f const& size) {
+            self.filled_rect(xy, size);
+        },
         "top_left"_a, "size"_a, "Draw a filled rectangle.");
 
     cls.def(
         "draw",
-        [](Context& self, pix::ImageView& tr, std::optional<Vec2f> xy, std::optional<Vec2f> center,
-           Vec2f size, float rot) {
+        [](Context& self, pix::ImageView& tr, std::optional<Vec2f> xy,
+           std::optional<Vec2f> center, Vec2f size, float rot) {
             tr.flush();
             if (center) {
                 self.draw(tr, *center, size, rot);
@@ -100,24 +112,25 @@ inline void add_canvas_functions(auto& cls)
                 self.blit(tr, {0, 0}, size);
             }
         },
-        "image"_a, "top_left"_a = std::nullopt, "center"_a = std::nullopt, "size"_a = Vec2f{0, 0},
-        "rot"_a = 0,
+        "image"_a, "top_left"_a = std::nullopt, "center"_a = std::nullopt,
+        "size"_a = Vec2f{0, 0}, "rot"_a = 0,
         "Render an image. The image can either be aligned to its top left corner, or centered, in which case it can also be rotated.");
     cls.def(
         "draw",
-        [](Context& self, FullConsole& con, Vec2f const& xy, Vec2f const& size) {
-            con.render2(&self, xy, size);
-        },
+        [](Context& self, FullConsole& con, Vec2f const& xy,
+           Vec2f const& size) { con.render2(&self, xy, size); },
         "drawable"_a, "top_left"_a = Vec2f{0, 0}, "size"_a = Vec2f{0, 0},
         "Render a console. `top_left` and `size` are in pixels. If `size` is "
         "not given, it defaults to `tile_size*grid_size`.\n\nTo render a full screen console "
         "(scaling as needed):\n\n`console.render(screen, size=screen.size)`");
     cls.def(
-        "clear", [](pix::Context const& self, uint32_t color) { self.clear(color); },
+        "clear",
+        [](pix::Context const& self, uint32_t color) { self.clear(color); },
         "color"_a = color::black, "Clear the canvas using given color.");
     cls.def_property(
         "draw_color", [](Context const& self) { return self.fg.to_rgba(); },
-        [](Context& self, uint32_t color) { self.set_color(color); }, "Set the draw color.");
+        [](Context& self, uint32_t color) { self.set_color(color); },
+        "Set the draw color.");
     cls.def_property(
         "blend_mode", [](Context const& self) { return self.fg.to_rgba(); },
         [](Context& self, uint32_t mode) { self.set_blend_mode(mode); },
@@ -126,20 +139,24 @@ inline void add_canvas_functions(auto& cls)
                       "Set the point size in fractional pixels.");
     cls.def_readwrite("line_width", &Context::line_width,
                       "Set the line with in fractional pixels.");
-    //cls.def_property_readonly("context", [](Context& self) { return &self; });
     cls.def_readwrite("clip_top_left", &Context::clip_start);
     cls.def_readwrite("clip_size", &Context::clip_size);
     cls.def_readwrite("scale", &Context::target_scale);
-    cls.def_readwrite("offset", &Context::offset,
-                      "The offset into a the source canvas this canvas was created from, if any.");
-    cls.def_readonly("size", &Context::target_size, "The size of this canvas in pixels");
+    cls.def_readwrite(
+        "offset", &Context::offset,
+        "The offset into a the source canvas this canvas was created from, if any.");
+    cls.def_readonly("size", &Context::target_size,
+                     "The size of this canvas in pixels");
     cls.def_readonly("target_size", &Context::target_size);
     cls.def(
         "set_pixel",
-        [](Context& self, Vec2i pos, uint32_t color) { self.set_pixel(pos.x, pos.y, color); },
+        [](Context& self, Vec2i pos, uint32_t color) {
+            self.set_pixel(pos.x, pos.y, color);
+        },
         "pos"_a, "color"_a, "Write a pixel into the image.");
     cls.def("flush", &Context::flush, "Flush pixel operations");
-    cls.def("to_image", &Context::to_image, "Create a new image from this canvas");
+    cls.def("to_image", &Context::to_image,
+            "Create a new image from this canvas");
     cls.def(
         "get_pointer",
         [](Context const& self) {
@@ -147,7 +164,4 @@ inline void add_canvas_functions(auto& cls)
             return (xy - self.offset) / self.target_scale;
         },
         "Get the xy coordinate of the mouse pointer (in canvas space).");
-
 }
-
-  

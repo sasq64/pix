@@ -1,4 +1,3 @@
-import builtins
 import os.path
 import sys
 
@@ -348,7 +347,7 @@ def main():
     # sys.exit(0)
 
     ide = PixIDE()
-    screen.size = ide.con.size
+    # screen.size = ide.con.size
     # screen.visible = True
 
     print("RUN")

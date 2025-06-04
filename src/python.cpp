@@ -17,11 +17,11 @@
 #include "machine.hpp"
 #include "screen.hpp"
 #include "system.hpp"
-#include "utils.h"
 #include "vec2.hpp"
 
 #include <pybind11/detail/common.h>
 #ifndef PYTHON_MODULE
+#    include "utils.h"
 #    include <pybind11/embed.h>
 #endif
 #include <pybind11/stl/filesystem.h>
@@ -69,16 +69,16 @@ void init()
     }));
 }
 
-std::shared_ptr<pix::Screen> open_display(int width, int height, bool full_screen,
-                                          bool visible = true)
+std::shared_ptr<pix::Screen> open_display(int width, int height,
+                                          bool full_screen, bool visible = true)
 {
     if (m.screen != nullptr) { return m.screen; }
     init();
-    Display::Settings const settings{.screen =
-                                         full_screen ? DisplayType::Full : DisplayType::Window,
-                                     .display_width = width,
-                                     .display_height = height,
-                                     .visible = visible};
+    Display::Settings const settings{
+        .screen = full_screen ? DisplayType::Full : DisplayType::Window,
+        .display_width = width,
+        .display_height = height,
+        .visible = visible};
 
     auto display = m.sys->init_screen(settings);
     m.screen = std::make_shared<pix::Screen>(display);
@@ -115,7 +115,8 @@ void set_allow_break(bool on)
     allow_break = on;
 }
 
-std::shared_ptr<pix::Screen> open_display2(Vec2i size, bool full_screen, bool visible =true)
+std::shared_ptr<pix::Screen> open_display2(Vec2i size, bool full_screen,
+                                           bool visible = true)
 {
     return open_display(size.x, size.y, full_screen, visible);
 }
@@ -124,7 +125,8 @@ void save_png(pix::ImageView const& image, fs::path const& file_name)
 {
     auto const& tex = image.get_tex();
     auto pixels = tex.read_pixels();
-    pix::Image img{static_cast<int>(tex.width()), static_cast<int>(tex.height()), pixels.data()};
+    pix::Image img{static_cast<int>(tex.width()),
+                   static_cast<int>(tex.height()), pixels.data()};
     img.flip();
     pix::save_png(img, file_name.string());
 }
@@ -199,25 +201,37 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     // pybind11::implicitly_convertible<std::shared_ptr<Screen, pix::Context>();
 
     mod.def(
-        "open_display", &open_display, "width"_a = -1, "height"_a = -1, "full_screen"_a = false, "visible"_a = true,
+        "open_display", &open_display, "width"_a = -1, "height"_a = -1,
+        "full_screen"_a = false, "visible"_a = true,
         doc =
             "Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.\nSubsequent calls to this method returns the same screen instance, "
             "since you can only have one active display in pix.");
-    mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false, "visible"_a = true, doc);
+    mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false,
+            "visible"_a = true, doc);
     mod.def("get_display", [] { return m.screen; });
     mod.def(
-        "all_events", [] { return m.sys->all_events(); }, "Return a list of all pending events.");
+        "all_events", [] { return m.sys->all_events(); },
+        "Return a list of all pending events.");
     mod.def(
-        "is_pressed", [](std::variant<int, char32_t> key) { return std::visit(&is_pressed, key); },
+        "is_pressed",
+        [](std::variant<int, char32_t> key) {
+            return std::visit(&is_pressed, key);
+        },
         "key"_a, "Returns _True_ if the keyboard or mouse key is held down.");
     mod.def(
         "was_pressed",
-        [](std::variant<int, char32_t> key) { return std::visit(&was_pressed, key); }, "key"_a,
+        [](std::variant<int, char32_t> key) {
+            return std::visit(&was_pressed, key);
+        },
+        "key"_a,
         "Returns _True_ if the keyboard or mouse key was pressed this loop. "
         "`run_loop()` refreshes these states.");
     mod.def(
         "was_released",
-        [](std::variant<int, char32_t> key) { return std::visit(&was_released, key); }, "key"_a,
+        [](std::variant<int, char32_t> key) {
+            return std::visit(&was_released, key);
+        },
+        "key"_a,
         "Returns _True_ if the keyboard or mouse key was pressed this loop. "
         "`run_loop()` refreshes these states.");
     mod.def(
@@ -231,17 +245,21 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
         "Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way");
     mod.def("load_png", &pix::load_png, "file_name"_a,
             "Create an _Image_ from a png file on disk.");
-    mod.def("save_png", &save_png, "image"_a, "file_name"_a, "Save an _Image_ to disk");
+    mod.def("save_png", &save_png, "image"_a, "file_name"_a,
+            "Save an _Image_ to disk");
     mod.def("blend_color", &color::blend_color, "color0"_a, "color1"_a, "t"_a,
             "Blend two colors together. `t` should be between 0 and 1.");
     mod.def(
-        "blend_colors", &color::blend_colors<std::vector<uint32_t>>, "colors"_a, "t"_a,
+        "blend_colors", &color::blend_colors<std::vector<uint32_t>>, "colors"_a,
+        "t"_a,
         "Get a color from a color range. Works similar to bilinear filtering of an 1D texture.");
     mod.def("add_color", &color::add_color, "color0"_a, "color1"_a);
     mod.def("rgba", &color::rgba, "red"_a, "green"_a, "blue"_a, "alpha"_a,
             "Combine four color float components into a 32-bit color.");
-    mod.def("load_font", &load_font, "name"_a, "size"_a = 0, "Load a TTF font.");
-    mod.def("allow_break", &set_allow_break, "on"_a, "Allow Ctrl-C to break out of run loop");
+    mod.def("load_font", &load_font, "name"_a, "size"_a = 0,
+            "Load a TTF font.");
+    mod.def("allow_break", &set_allow_break, "on"_a,
+            "Allow Ctrl-C to break out of run loop");
     mod.def(
         "inside_polygon",
         [](std::vector<Vec2f> const& points, Vec2f point) {
@@ -257,7 +275,8 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
             if (pix::intersects(point, s, a, b)) { count++; }
             return (count & 1) == 1;
         },
-        "points"_a, "point"_a, "Check if the `point` is inside the polygon formed by `points`.");
+        "points"_a, "point"_a,
+        "Check if the `point` is inside the polygon formed by `points`.");
 }
 
 #ifndef PYTHON_MODULE

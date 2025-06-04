@@ -3,8 +3,10 @@
 #include "image_view.hpp"
 #include "utf8.h"
 
-template <typename T, typename S=int>
-static constexpr S len(T&& t) { return static_cast<S>(t.size()); }
+template <typename T, typename S = int> static constexpr S len(T&& t)
+{
+    return static_cast<S>(t.size());
+}
 
 System::Propagate FullConsole::put_event(const KeyEvent& event)
 {
@@ -64,7 +66,7 @@ FullConsole::FullConsole(const std::shared_ptr<PixConsole>& con,
             e);
     });
     std::tie(cols, rows) = console->get_size();
-    //printf("%d x %d\n", rows, cols);
+    // printf("%d x %d\n", rows, cols);
 }
 
 FullConsole::~FullConsole()
@@ -79,7 +81,7 @@ pix::ImageView FullConsole::get_font_texture()
 
 void FullConsole::colorize(int x, int y, int w)
 {
-    for (int i=x; i<x+w; i++) {
+    for (int i = x; i < x + w; i++) {
         console->put_color(i, y, this->fg, this->bg);
     }
 }
@@ -91,7 +93,7 @@ Vec2i FullConsole::get_pixel_size() const
 
 void FullConsole::read_line()
 {
-    //printf("GET LINE\n");
+    // printf("GET LINE\n");
 
     cursor_on = true;
     edit_start = cursor;
