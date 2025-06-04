@@ -12,62 +12,10 @@ import tree_sitter_python as tspython
 from editor import TextEdit
 from jedi.api import Completion  # type: ignore
 from repl import Repl
+from utils.list_box import ListBox
 
 fwd = Path(os.path.dirname(os.path.abspath(__file__)))
 hack_font = (fwd / "data" / "Hack.ttf").as_posix()
-
-
-class ListBox:
-    def __init__(self):
-        self.con: Final = pix.Console(20, 10, font_file=hack_font, font_size=24)
-        self.xy: pix.Int2 = pix.Int2(0, 0)
-        self.selected: int = 0
-        self.lines: list[str] = []
-
-    def set_lines(self, lines: list[str]):
-        old_line = self.get_selection()
-        self.lines = lines
-        self.selected = 0
-        if old_line is not None:
-            try:
-                self.selected = self.lines.index(old_line)
-            except ValueError:
-                pass
-        self.update()
-
-    def set_pos(self, xy: pix.Int2):
-        self.xy = xy
-
-    def update(self):
-        pos = pix.Int2(0, 0)
-        self.con.set_color(pix.color.WHITE, pix.color.BLACK)
-        self.con.clear()
-        for i, line in enumerate(self.lines):
-            self.con.cursor_pos = pos
-            if self.selected == i:
-                self.con.set_color(pix.color.WHITE, pix.color.BLUE)
-            else:
-                self.con.set_color(pix.color.WHITE, pix.color.BLACK)
-            self.con.write(line)
-            pos += (0, 1)
-
-    def move(self, dy: int):
-        self.selected += dy
-        if self.selected < 0:
-            self.selected = 0
-        if self.selected >= len(self.lines):
-            self.selected = len(self.lines) - 1
-        self.update()
-
-    def render(self, screen: pix.Canvas):
-        screen.draw_color = 0xFFFFFFFF
-        screen.filled_rect(top_left=self.xy, size=self.con.size + (8, 8))
-        screen.draw(self.con, top_left=self.xy + (4, 4))
-
-    def get_selection(self) -> str | None:
-        if len(self.lines) > self.selected:
-            return self.lines[self.selected]
-        return None
 
 
 class PixIDE:
@@ -167,7 +115,7 @@ class PixIDE:
     def update_completion(self):
         script = jedi.Script(self.edit.get_text(), path=self.current_file)
         x, y = self.edit.get_location()
-        self.result: list[Completion] = script.complete(line=y + 1, column=x)
+        self.result = script.complete(line=y + 1, column=x)
         self.comp.set_lines(list([str(r.name) for r in self.result]))  # type: ignore
         self.comp_enabled = True
 
