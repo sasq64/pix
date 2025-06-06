@@ -1,6 +1,7 @@
 import pixpy as pix
 import math
 
+RASTER_COLORS = [pix.color.LIGHT_RED, pix.color.LIGHT_BLUE, pix.color.LIGHT_GREEN, pix.color.YELLOW]
 
 def raster(colors: list[int], y: int, h: int, col0: int, col1: int):
     """
@@ -16,7 +17,6 @@ def raster(colors: list[int], y: int, h: int, col0: int, col1: int):
             colors[i + y] = pix.add_color(colors[i + y], col)
 
 screen = pix.open_display(size=(1280,720))
-raster_colors = [pix.color.RED, pix.color.BLUE, pix.color.GREEN, pix.color.YELLOW]
 
 while pix.run_loop():
     screen.clear()
@@ -27,7 +27,7 @@ while pix.run_loop():
     # Draw colors into the array
     for i in range(10):
         y = int((math.sin(s) + 1) * 120 - 10)
-        raster(colors, y, 48, pix.color.BLACK, raster_colors[i & 3])
+        raster(colors, y, 78, pix.color.BLACK, RASTER_COLORS[i & 3])
         s += 0.3
     # Create a 1x256 image from the colors
     texture = pix.Image(1, colors)
@@ -36,7 +36,7 @@ while pix.run_loop():
     screen.draw(
         texture,
         center=screen.size / 2,
-        size=screen.size,
-        #rot=screen.frame_counter / 500,
+        size=screen.size * 2,
+        rot=screen.frame_counter / 500,
     )
     screen.swap()

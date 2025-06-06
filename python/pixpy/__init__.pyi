@@ -8,7 +8,7 @@ import typing
 from . import color
 from . import event
 from . import key
-__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'was_pressed', 'was_released']
+__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'quit_loop', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'was_pressed', 'was_released']
 class Canvas:
     """
     A `Canvas` is used for rendering. It is implemented by both `Screen` and `Image`.
@@ -103,6 +103,14 @@ class Canvas:
         Create a new image from this canvas
         """
     @property
+    def backface_culling(self) -> bool:
+        """
+        If true, backward facing polygons will not be rendered.
+        """
+    @backface_culling.setter
+    def backface_culling(self, arg0: bool) -> None:
+        ...
+    @property
     def blend_mode(self) -> int:
         """
         Set the blend mode. Normally one of the constants `pix.BLEND_ADD`, `pix.BLEND_MULTIPLY` or `pix.BLEND_NORMAL`.
@@ -161,7 +169,7 @@ class Console:
 
         `font_file` is the file name of a TTF font to use as backing. If no font is given, the built in _Unscii_ font will be used.
 
-        `tile_size` sets the size in pixels of each tile. If not given, it will be derived from the size of a character in the font with the provided `font_size`
+        `tile_size` sets the size in pixels of each tile. If not given, it will be derived from the size of a character in the font with the provided `font_size`.
         """
     @typing.overload
     def __init__(self, cols: int, rows: int, tile_set: TileSet) -> None:
@@ -190,7 +198,7 @@ class Console:
         """
         Get the image of a specific tile. Use to render the tile manually, or to copy another image into the tile;
 
-        `console.get_image_for(1024).copy_from(some_tile_image)`
+        `console.get_image_for(1024).copy_from(some_tile_image)`.
         """
     def get_tiles(self) -> list[int]:
         """
@@ -265,17 +273,17 @@ class Console:
     @property
     def grid_size(self) -> Int2:
         """
-        Get number cols and rows
+        Get number cols and rows.
         """
     @property
     def size(self) -> Int2:
         """
-        Get size of consoles in pixels (tile_size * grid_size)
+        Get size of consoles in pixels (tile_size * grid_size).
         """
     @property
     def tile_size(self) -> Int2:
         """
-        Get size of a single tile
+        Get size of a single tile.
         """
     @property
     def wrapping(self) -> bool:
@@ -460,7 +468,7 @@ class Font:
         """
 class Image(Canvas):
     """
-    A (GPU Side) _image_, represented by a texture reference and 4 UV coordinates. Images works like arrays in the sense that it is cheap to create new views to images (using crop(), split() etc).
+    A (GPU Side) _image_, represented by a texture reference and 4 UV coordinates. Images works like arrays in the sense that it is cheap to create new views into images (using crop(), split() etc).
     """
     @typing.overload
     def __init__(self, width: int, height: int) -> None:
@@ -479,11 +487,11 @@ class Image(Canvas):
         """
     def copy_from(self, image: Image) -> None:
         """
-        Render one image into another.
+        Render another image into this one.
         """
     def copy_to(self, image: Image) -> None:
         """
-        Render one image into another.
+        Render this image into another.
         """
     def crop(self, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] | None = None) -> Image:
         """
@@ -500,7 +508,9 @@ class Image(Canvas):
         """
     @typing.overload
     def split(self, size: Union[Float2, Int2, Tuple[float, float]]) -> list[Image]:
-        ...
+        """
+        Split the image into exactly size.x * size.y images.
+        """
     @property
     def height(self) -> float:
         ...
@@ -729,7 +739,7 @@ class TileSet:
     @typing.overload
     def get_image_for(self, arg0: int) -> Image:
         """
-        Get the image for a specific tile. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.
+        Get the image for a specific tile. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room.for the new tile in the tile texture.
         """
     @typing.overload
     def get_image_for(self, arg0: str) -> Image:
@@ -743,7 +753,7 @@ class TileSet:
     @typing.overload
     def render_text(self, screen: ..., text: str, pos: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
         """
-        Render characters from the TileSet at given `pos` and given `size` (defaults to tile_size)
+        Render characters from the TileSet at given `pos` and given `size` (defaults to tile_size).
         """
     @typing.overload
     def render_text(self, screen: ..., text: str, points: list[Float2]) -> None:
@@ -801,6 +811,10 @@ def open_display(size: Union[Int2, Tuple[int, int]], full_screen: bool = False, 
     """
     Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.
     Subsequent calls to this method returns the same screen instance, since you can only have one active display in pix.
+    """
+def quit_loop() -> None:
+    """
+    Make run_loop() return False. Thread safe
     """
 def rgba(red: float, green: float, blue: float, alpha: float) -> int:
     """

@@ -10,6 +10,19 @@ from enum import Enum
 import pixpy as pix
 from pixpy import Float2
 
+INVINCIBLE = False
+BULLET_SIZE = 6
+SCORE_COLOR = 0xffff00ff
+SCORE_SIZE = 32
+
+LAUNCH_CHANGE_COUNT = 0
+last_change_count = 0
+def was_changed() -> bool:
+    global last_change_count
+    if LAUNCH_CHANGE_COUNT != last_change_count:
+        last_change_count = LAUNCH_CHANGE_COUNT
+        return True
+    return False
 
 @dataclass
 class Sprite:
@@ -85,14 +98,11 @@ class Asteroids:
 
     def __init__(self, target: pix.Canvas):
         random.seed(19)
-        self.target = target
-        self.screen_size = target.size
         self.ship = Sprite.from_lines((32, 32), [(28, 16), (4, 8), (8, 16), (4, 24)])
         "The player ship sprite"
-
-        self.life_image = self.ship.image
-        "The image to represent lives."
-
+        self.generate_graphics()
+        self.target = target
+        self.screen_size = target.size
         self.ship.pos = self.screen_size / 2
         self.asteroid_count = 4
         "Number of asteroids to spawn when screen is cleared."
@@ -106,17 +116,31 @@ class Asteroids:
         self.score = 0
         self.frame_counter = 0
         self.font = pix.load_font("data/hyperspace_bold.ttf")
+
+        self.asteroids: list[Sprite] = []
+        "Current active asteroid sprites"
+
+        self.spawn_asteroids()
+
+    def generate_graphics(self):
+        ship = Sprite.from_lines((32, 32), [(28, 16), (4, 8), (8, 16), (4, 24)])
+        "The player ship sprite"
+        self.ship.image = ship.image
+
+        self.life_image = self.ship.image
+        "The image to represent lives."
+        bs = Float2(BULLET_SIZE, BULLET_SIZE)
+        self.bullet = pix.Image(bs)
+        self.bullet.filled_circle(center=bs / 2, radius=bs.y / 2)
+        self.font = pix.load_font("data/hyperspace_bold.ttf")
         self.numbers = [
-            self.font.make_image(text=chr(0x30 + i), size=32, color=pix.color.YELLOW)
+            self.font.make_image(text=chr(0x30 + i), size=SCORE_SIZE, color=SCORE_COLOR)
             for i in range(10)
         ]
         "Array of digit images used to render numbers."
 
         self.game_over = self.font.make_image("GAME_OVER", 48)
-        self.asteroids: list[Sprite] = []
-        "Current active asteroid sprites"
 
-        self.spawn_asteroids()
 
     def render(self):
         """Render and update the game."""
@@ -236,6 +260,8 @@ class Asteroids:
         new_asteroids: list[Sprite] = []
         for a in self.asteroids:
             if (self.ship.pos - a.pos).mag() < (a.radius + 10):
+                if INVINCIBLE:
+                    continue
                 a.dead = True
                 self.lives -= 1
                 if self.lives == 0:
@@ -259,6 +285,8 @@ def main():
 
     print(screen.size)
     while pix.run_loop():
+        if was_changed():
+            game.generate_graphics()
         screen.clear()
         game.render()
         screen.swap()
