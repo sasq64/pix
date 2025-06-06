@@ -2,6 +2,7 @@
 
 #include "keycodes.h"
 
+#include <atomic>
 #include <deque>
 #include <functional>
 #include <memory>
@@ -141,6 +142,7 @@ private:
     using Listener = std::function<Propagate(AnyEvent)>;
     int counter = 0;
     std::unordered_map<int, Listener> listeners;
+    std::atomic<bool> do_quit_loop{};
 
 protected:
     virtual std::deque<AnyEvent> internal_all_events() { return {}; }
@@ -183,6 +185,11 @@ public:
         return result;
     }
 
+    // Thread safe
+    void quit_loop() {
+        do_quit_loop = true;
+    }
+
     virtual void post_event(AnyEvent const& event)
     {
         posted_events.emplace_back(event);
@@ -206,7 +213,6 @@ public:
     // Return false if app should quit
     bool run_loop()
     {
-        bool quit = false;
         for (auto&& event : internal_all_events()) {
             bool propagate = true;
             for (auto&& [_, listener] : listeners) {
@@ -221,7 +227,7 @@ public:
             }
             if (std::holds_alternative<QuitEvent>(event)) {
                 log("Got quit event");
-                quit = true;
+                do_quit_loop = true;
                 break;
             }
         }
@@ -230,7 +236,11 @@ public:
             const auto keep_running = (*it)();
             it = keep_running ? it+1 : callbacks.erase(it);
         }
-        return !quit;
+        if (do_quit_loop) {
+            do_quit_loop = false;
+            return false;
+        }
+        return true;
     }
 
     virtual bool is_pressed(uint32_t /*code*/, int /*device*/ = -1)

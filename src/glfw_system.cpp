@@ -89,7 +89,8 @@ public:
         clk::time_point t = clk::now();
         auto const secs =
             static_cast<double>(
-                std::chrono::duration_cast<std::chrono::microseconds>(t - t0).count()) /
+                std::chrono::duration_cast<std::chrono::microseconds>(t - t0)
+                    .count()) /
             1000000.0;
         sync_time = sync_time * 0.8 + secs * 0.2;
         // printf("SECS %.4f %.4f\n", secs, free_time);
@@ -125,7 +126,8 @@ public:
 
     static inline constexpr double to_sec(clk::duration d)
     {
-        return static_cast<double>(duration_cast<std::chrono::microseconds>(d).count()) /
+        return static_cast<double>(
+                   duration_cast<std::chrono::microseconds>(d).count()) /
                1000'000.0;
     }
     Time get_time() const override
@@ -221,7 +223,8 @@ public:
         }
     };
 
-    std::shared_ptr<Display> init_screen(Display::Settings const& settings) override
+    std::shared_ptr<Display>
+    init_screen(Display::Settings const& settings) override
     {
         glfwWindowHint(GLFW_SAMPLES, 4);
         glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
@@ -246,11 +249,15 @@ public:
         } else {
             monitor = nullptr;
         }
-        printf("%d V", settings.visible);
-        //if (!settings.visible) { glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); }
-        if (width <= 0 || height <= 0) { throw system_exception("Illegal window size"); }
-        window = glfwCreateWindow(width, height, settings.title.c_str(), monitor, nullptr);
-        if (window == nullptr) { throw system_exception("Could not open graphics window"); }
+        // if (!settings.visible) { glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); }
+        if (width <= 0 || height <= 0) {
+            throw system_exception("Illegal window size");
+        }
+        window = glfwCreateWindow(width, height, settings.title.c_str(),
+                                  monitor, nullptr);
+        if (window == nullptr) {
+            throw system_exception("Could not open graphics window");
+        }
         glfwMakeContextCurrent(window);
 
         glfwSwapInterval(1);
@@ -277,28 +284,35 @@ public:
         glfwSetCharCallback(window, [](GLFWwindow*, unsigned int codepoint) {
             system->char_was_pressed(codepoint);
         });
-        glfwSetKeyCallback(window, [](GLFWwindow*, int key, int scancode, int action, int mods) {
+        glfwSetKeyCallback(window, [](GLFWwindow*, int key, int scancode,
+                                      int action, int mods) {
             system->key_was_pressed(key, scancode, action, mods);
         });
-        glfwSetMouseButtonCallback(window, [](GLFWwindow*, int button, int action, int mods) {
-            system->mouse_was_pressed(button, action, mods);
+        glfwSetMouseButtonCallback(
+            window, [](GLFWwindow*, int button, int action, int mods) {
+                system->mouse_was_pressed(button, action, mods);
+            });
+        glfwSetCursorPosCallback(window, [](GLFWwindow*, double x, double y) {
+            system->mouse_move(x, y);
         });
-        glfwSetCursorPosCallback(
-            window, [](GLFWwindow*, double x, double y) { system->mouse_move(x, y); });
-        glfwSetWindowSizeCallback(window,
-                                  [](GLFWwindow*, int w, int h) { system->resized(w, h); });
+        glfwSetWindowSizeCallback(
+            window, [](GLFWwindow*, int w, int h) { system->resized(w, h); });
         glViewport(0, 0, settings.display_width, settings.display_height);
         return std::make_shared<GLFWWindow>(window, mode->refreshRate);
     }
 
     std::deque<AnyEvent> event_queue;
 
-    void post_event(AnyEvent const& event) override { event_queue.emplace_back(event); }
+    void post_event(AnyEvent const& event) override
+    {
+        event_queue.emplace_back(event);
+    }
 
     void mouse_move(double x, double y)
     {
         int buttons = glfwGetMouseButton(window, 0);
-        event_queue.emplace_back(MoveEvent{static_cast<float>(x), static_cast<float>(y), buttons});
+        event_queue.emplace_back(
+            MoveEvent{static_cast<float>(x), static_cast<float>(y), buttons});
     }
 
     void mouse_was_pressed(int button, int action, int mods)
@@ -308,8 +322,9 @@ public:
             double y = 0;
             pressed.insert(static_cast<uint32_t>(Key::LEFT_MOUSE) + button);
             glfwGetCursorPos(window, &x, &y);
-            event_queue.emplace_back(ClickEvent{static_cast<float>(x), static_cast<float>(y),
-                                                button, static_cast<uint32_t>(mods)});
+            event_queue.emplace_back(ClickEvent{static_cast<float>(x),
+                                                static_cast<float>(y), button,
+                                                static_cast<uint32_t>(mods)});
         } else {
             released.insert(static_cast<uint32_t>(Key::LEFT_MOUSE) + button);
         }
@@ -324,7 +339,8 @@ public:
 
     void char_was_pressed(unsigned codepoint)
     {
-        auto s = utf8::utf8_encode(std::u32string(1, static_cast<char32_t>(codepoint)));
+        auto s = utf8::utf8_encode(
+            std::u32string(1, static_cast<char32_t>(codepoint)));
         event_queue.emplace_back(TextEvent{s, 0});
     }
 
@@ -338,7 +354,8 @@ public:
         if (key >= 0x20 && key <= 0x7f) {
             auto c = static_cast<uint32_t>(std::tolower(key));
             if (down) {
-                event_queue.emplace_back(KeyEvent{c, static_cast<uint32_t>(mods), 0});
+                event_queue.emplace_back(
+                    KeyEvent{c, static_cast<uint32_t>(mods), 0});
                 pressed.insert(c);
             } else {
                 released.insert(c);
@@ -349,7 +366,8 @@ public:
                 auto k32 = static_cast<uint32_t>(it->second);
                 if (down) {
                     pressed.insert(k32);
-                    event_queue.emplace_back(KeyEvent{k32, static_cast<uint32_t>(mods), 0});
+                    event_queue.emplace_back(
+                        KeyEvent{k32, static_cast<uint32_t>(mods), 0});
                 } else {
                     released.insert(k32);
                 }
@@ -360,15 +378,24 @@ public:
     bool is_pressed(uint32_t code, int device) override
     {
         auto key = static_cast<Key>(code);
-        if (key == Key::LEFT_MOUSE) { return glfwGetMouseButton(window, 0) != GLFW_RELEASE; }
-        if (key == Key::RIGHT_MOUSE) { return glfwGetMouseButton(window, 1) != GLFW_RELEASE; }
-        if (key == Key::MIDDLE_MOUSE) { return glfwGetMouseButton(window, 2) != GLFW_RELEASE; }
+        if (key == Key::LEFT_MOUSE) {
+            return glfwGetMouseButton(window, 0) != GLFW_RELEASE;
+        }
+        if (key == Key::RIGHT_MOUSE) {
+            return glfwGetMouseButton(window, 1) != GLFW_RELEASE;
+        }
+        if (key == Key::MIDDLE_MOUSE) {
+            return glfwGetMouseButton(window, 2) != GLFW_RELEASE;
+        }
         if (code >= 0x20 && code <= 0x7f) {
-            return glfwGetKey(window, std::toupper(static_cast<int>(code))) != GLFW_RELEASE;
+            return glfwGetKey(window, std::toupper(static_cast<int>(code))) !=
+                   GLFW_RELEASE;
         }
 
         auto it = reverse_map.find(key);
-        if (it != reverse_map.end()) { return glfwGetKey(window, it->second) != GLFW_RELEASE; }
+        if (it != reverse_map.end()) {
+            return glfwGetKey(window, it->second) != GLFW_RELEASE;
+        }
         return false;
     }
 
@@ -377,7 +404,8 @@ public:
     bool was_pressed(uint32_t code, int device = -1) override
     {
         if (!loop_called) {
-            throw system_exception("run_loop() must be called before reading events");
+            throw system_exception(
+                "run_loop() must be called before reading events");
         }
         return pressed.contains(code);
     }
@@ -385,14 +413,17 @@ public:
     bool was_released(uint32_t code, int device = -1) override
     {
         if (!loop_called) {
-            throw system_exception("run_loop() must be called before reading events");
+            throw system_exception(
+                "run_loop() must be called before reading events");
         }
         return released.contains(code);
     }
 
     std::deque<AnyEvent> internal_all_events() override
     {
-        if (!swapped) { std::this_thread::sleep_for(std::chrono::milliseconds(5)); }
+        if (!swapped) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
         swapped = false;
         loop_called = true;
         // event_queue.clear();

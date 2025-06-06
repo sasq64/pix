@@ -36,6 +36,8 @@ public:
 
     mutable bool dirty = false;
 
+    bool backface_culling = true;
+
     std::unique_ptr<uint32_t[]> pixels; // NOLINT
 
     float line_width = 1;

@@ -18,9 +18,9 @@ inline auto add_screen_class(py::module_ const& mod, auto ctx_class)
         "visible", [](pix::Screen const& screen) { return screen.visible; },
         [](pix::Screen& screen, bool on) { screen.set_visible(on); },
         "Is the window visible?");
-    screen.def_property_readonly("frame_counter", [](pix::Screen const&) {
-        return Machine::get_instance().frame_counter;
-    });
+    screen.def_property_readonly(
+        "frame_counter",
+        [](pix::Screen const& screen) { return screen.frame_counter(); });
     screen.def_property_readonly(
         "seconds",
         [](pix::Screen const& screen) { return screen.get_time().seconds; },
@@ -55,7 +55,7 @@ inline auto add_screen_class(py::module_ const& mod, auto ctx_class)
         "swap",
         [](std::shared_ptr<pix::Screen> const& screen) {
             auto& m = Machine::get_instance();
-            m.frame_counter++;
+            // m.frame_counter++;
             screen->flush();
             screen->swap();
         },

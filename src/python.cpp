@@ -55,24 +55,25 @@ void init()
 #else
         m.sys = create_glfw_system();
 #endif
-    }
-    auto atexit = py::module_::import("atexit");
-    atexit.attr("register")(py::cpp_function([] {
-        if (m.frame_counter == 0 && m.screen != nullptr) {
-            log("Running at exit\n");
-            m.screen->swap();
-            while (m.sys->run_loop()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        auto atexit = py::module_::import("atexit");
+        atexit.attr("register")(py::cpp_function([] {
+            if (pix::Screen::instance != nullptr &&
+                pix::Screen::instance->frame_counter() == 0) {
+                log("Running at exit\n");
+                pix::Screen::instance->swap();
+                while (m.sys->run_loop()) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
             }
-        }
-        log("Done");
-    }));
+            log("Done");
+        }));
+    }
 }
 
 std::shared_ptr<pix::Screen> open_display(int width, int height,
                                           bool full_screen, bool visible = true)
 {
-    if (m.screen != nullptr) { return m.screen; }
+    if (pix::Screen::instance != nullptr) { return pix::Screen::instance; }
     init();
     Display::Settings const settings{
         .screen = full_screen ? DisplayType::Full : DisplayType::Window,
@@ -81,25 +82,28 @@ std::shared_ptr<pix::Screen> open_display(int width, int height,
         .visible = visible};
 
     auto display = m.sys->init_screen(settings);
-    m.screen = std::make_shared<pix::Screen>(display);
+    auto screen = std::make_shared<pix::Screen>(display);
 
-    m.screen->vpscale = m.screen->get_scale();
+    screen->vpscale = screen->get_scale();
 
+    pix::Screen::instance = screen;
     m.sys->add_listener([](AnyEvent const& e) {
         if (std::holds_alternative<ResizeEvent>(e)) {
-            auto [w, h] = m.screen->get_size();
-            m.screen->resize(Vec2f(w, h), m.screen->get_scale());
+            auto [w, h] = pix::Screen::instance->get_size();
+            pix::Screen::instance->resize(Vec2f(w, h),
+                                          pix::Screen::instance->get_scale());
         }
         return System::Propagate::Pass;
     });
 
-    return m.screen;
+    return screen;
 }
 
 static bool allow_break = false;
 
 void set_allow_break(bool on)
 {
+    init();
     static int listener = m.sys->add_listener([](AnyEvent const& e) {
         if (allow_break) {
             if (std::holds_alternative<KeyEvent>(e)) {
@@ -208,7 +212,7 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
             "since you can only have one active display in pix.");
     mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false,
             "visible"_a = true, doc);
-    mod.def("get_display", [] { return m.screen; });
+    mod.def("get_display", [] { return pix::Screen::instance; });
     mod.def(
         "all_events", [] { return m.sys->all_events(); },
         "Return a list of all pending events.");
@@ -240,6 +244,9 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     mod.def(
         "run_every_frame", &every_frame,
         "Add a function that should be run every frame. If the function returns false it will stop being called.");
+    mod.def(
+        "quit_loop", [] { m.sys->quit_loop(); },
+        "Make run_loop() return False. Thread safe");
     mod.def(
         "run_loop", [] { return m.sys->run_loop(); },
         "Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way");

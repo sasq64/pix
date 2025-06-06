@@ -142,6 +142,7 @@ inline void add_canvas_functions(auto& cls)
     cls.def_readwrite("clip_top_left", &Context::clip_start);
     cls.def_readwrite("clip_size", &Context::clip_size);
     cls.def_readwrite("scale", &Context::target_scale);
+    cls.def_readwrite("backface_culling", &Context::backface_culling, "If true, backward facing polygons will not be rendered.");
     cls.def_readwrite(
         "offset", &Context::offset,
         "The offset into a the source canvas this canvas was created from, if any.");

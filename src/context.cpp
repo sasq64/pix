@@ -492,9 +492,13 @@ void Context::draw_polygon(Vec2f const* points, size_t count)
         data[(count-i-1)*2+1] = p.y;
     }
 
-    glEnable(GL_CULL_FACE);
+    if (backface_culling) {
+        glEnable(GL_CULL_FACE);
+    }
     draw_filled(data, gl::Primitive::TriangleFan);
-    glDisable(GL_CULL_FACE);
+    if (backface_culling) {
+        glDisable(GL_CULL_FACE);
+    }
 
 }
 

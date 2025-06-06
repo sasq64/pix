@@ -10,8 +10,7 @@
 struct Machine
 {
     std::shared_ptr<System> sys{};
-    std::shared_ptr<pix::Screen> screen{};
-    //std::shared_ptr<pix::Context> context{};
-    uint32_t frame_counter = 0;
+    //std::shared_ptr<Display> display{};
+    //uint32_t frame_counter = 0;
     static Machine& get_instance();
 };
