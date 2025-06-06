@@ -248,7 +248,11 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
         "quit_loop", [] { m.sys->quit_loop(); },
         "Make run_loop() return False. Thread safe");
     mod.def(
-        "run_loop", [] { return m.sys->run_loop(); },
+        "run_loop",
+        [] {
+            Tween::update_all();
+            return m.sys->run_loop();
+        },
         "Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way");
     mod.def("load_png", &pix::load_png, "file_name"_a,
             "Create an _Image_ from a png file on disk.");

@@ -410,6 +410,8 @@ class Float2:
         """
         Check if the `point` is inside the polygon formed by `points`.
         """
+    def iterate(self, arg0: typing.Iterator) -> None:
+        ...
     def mag(self) -> float:
         """
         Get magnitude (length) of vector

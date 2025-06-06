@@ -15,6 +15,49 @@ static inline Vec2f vec2_zero{0, 0};
 static inline Vec2i vec2i_one{1, 1};
 static inline Vec2i vec2i_zero{0, 0};
 
+struct Tween {
+
+    Tween(py::object obj_, py::iterator iter)
+    {
+        item = iter.begin();
+    }
+
+    bool update()
+    {
+        auto &target = obj.cast<Vec2f&>();
+        Vec2f &vitem = item->cast<Vec2f&>();
+        target = vitem;
+        ++item;
+        return item == item.sentinel();
+    }
+
+    py::object obj;
+    py::iterator item;
+
+    static inline std::vector<Tween> tweens;
+    static void update_all() {
+        auto it = tweens.begin();
+        while (it != tweens.end()) {
+            if(it->update()) {
+                it = tweens.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+};
+
+
+template <typename T>
+void add_iterator(Vec2<T>* ptr, py::iterator it) {
+    auto item = it.begin();
+    py::print("Type is:", item.get_type());
+    py::print("Type is:", (*item).get_type());
+    Vec2<T> &obj = item->cast<Vec2<T>&>();
+    ptr->x = obj.x;
+    ptr->y = obj.y;
+}
+
 template <typename Vec2>
 py::class_<Vec2> add_common(py::module_& mod, const char* name)
 {
@@ -71,6 +114,9 @@ inline void add_vec2_class(py::module_& mod)
     auto vd = add_common<Vec2f>(mod, "Float2");
 
     vd.def(py::init<std::pair<double, double>>())
+        .def("iterate", [](py::object self, py::iterator it) {
+            Tween::tweens.push_back(Tween{self, it});
+        })
         .def(
             "toi",
             [](Vec2f self) {

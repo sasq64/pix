@@ -10,19 +10,22 @@ from enum import Enum
 import pixpy as pix
 from pixpy import Float2
 
-INVINCIBLE = False
+INVINCIBLE = True
 BULLET_SIZE = 6
-SCORE_COLOR = 0xffff00ff
+SCORE_COLOR = 0xFF000FF
 SCORE_SIZE = 32
 
 LAUNCH_CHANGE_COUNT = 0
 last_change_count = 0
+
+
 def was_changed() -> bool:
     global last_change_count
     if LAUNCH_CHANGE_COUNT != last_change_count:
         last_change_count = LAUNCH_CHANGE_COUNT
         return True
     return False
+
 
 @dataclass
 class Sprite:
@@ -140,7 +143,6 @@ class Asteroids:
         "Array of digit images used to render numbers."
 
         self.game_over = self.font.make_image("GAME_OVER", 48)
-
 
     def render(self):
         """Render and update the game."""
