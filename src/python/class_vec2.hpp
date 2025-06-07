@@ -15,28 +15,47 @@ static inline Vec2f vec2_zero{0, 0};
 static inline Vec2i vec2i_one{1, 1};
 static inline Vec2i vec2i_zero{0, 0};
 
+// Tweens must go from 0 to 1 over n seconds
+// Save start_time,
 struct Tween
 {
+    Tween(py::object obj_) : obj{obj_} {}
 
-    Tween(py::object obj_, py::iterator iter_) : obj{obj_}, iter{iter_} {}
-
-    bool update()
+    bool update(double current_time)
     {
+        if (!started) {
+            start_time = current_time;
+            started = true;
+        }
         auto& target = obj.cast<Vec2f&>();
-        Vec2f& vitem = iter->cast<Vec2f&>();
-        target = vitem;
-        ++iter;
-        return iter == iter.sentinel();
+
+        if (current_time >= (start_time + duration)) {
+            target = end;
+            return true;
+        }
+
+        auto t = (current_time - start_time) / duration;
+        auto val = fn(t);
+        target = start + (end - start) * val;
+        return false;
     }
 
-    py::object obj;
-    py::iterator iter;
+    bool started = false;
 
-    static void update_all()
+    Vec2f start;
+    Vec2f end;
+
+    double start_time;
+    double duration;
+
+    py::object obj;
+    std::function<double(double)> fn;
+
+    static void update_all(double current_time)
     {
         auto it = tweens.begin();
         while (it != tweens.end()) {
-            if (it->update()) {
+            if (it->update(current_time)) {
                 it = tweens.erase(it);
             } else {
                 ++it;
@@ -47,7 +66,6 @@ struct Tween
 };
 
 inline std::vector<Tween> Tween::tweens;
-
 
 template <typename Vec2>
 py::class_<Vec2> add_common(py::module_& mod, const char* name)
@@ -106,12 +124,29 @@ inline void add_vec2_class(py::module_& mod)
     auto vd = add_common<Vec2f>(mod, "Float2");
 
     vd.def(py::init<std::pair<double, double>>())
-        .def(
-            "iterate",
-            [](py::object self, py::iterator it) {
-                Tween::tweens.push_back(Tween{self, it});
-            },
-            "Iterate Float2 over time. The passed iterator must yield `Float2` that overwrites this Float2. NOTE: This allows you to circumvent the readonly property of Float2s")
+        .def("tween_to",
+             [](py::object self, Vec2f const& to, float secs,
+                std::function<float(float)> const& ease) -> Vec2f& {
+                 Tween::tweens.push_back(Tween{self});
+                 auto it = &Tween::tweens.back();
+                 it->start = self.cast<Vec2f&>();
+                 it->duration = secs;
+                 it->end = to;
+                 it->fn = ease;
+                 return self.cast<Vec2f&>();
+             })
+        .def("tween_from",
+             [](py::object self, Vec2f const& from, float secs,
+                std::function<float(float)> const& ease) -> Vec2f& {
+                 auto& me = self.cast<Vec2f&>();
+                 Tween::tweens.push_back(Tween{self});
+                 auto it = &Tween::tweens.back();
+                 it->start = from;
+                 it->duration = secs;
+                 it->end = me;
+                 it->fn = ease;
+                 return self.cast<Vec2f&>();
+             })
         .def(
             "toi",
             [](Vec2f self) {

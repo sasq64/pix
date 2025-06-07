@@ -38,6 +38,14 @@ namespace py = pybind11;
 
 using namespace pybind11::literals; // NOLINT
 
+using clk = std::chrono::steady_clock;
+
+static inline constexpr double to_sec(clk::duration d)
+{
+    return static_cast<double>(
+               duration_cast<std::chrono::microseconds>(d).count()) /
+           1000'000.0;
+}
 namespace {
 Machine m;
 }
@@ -47,8 +55,11 @@ Machine& Machine::get_instance()
     return m;
 }
 
+static clk::time_point start_t;
+
 void init()
 {
+    start_t = clk::now();
     if (m.sys == nullptr) {
 #ifdef RASPBERRY_PI
         m.sys = create_pi_system();
@@ -214,7 +225,10 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false,
             "visible"_a = true, doc);
     mod.def("get_display", [] { return pix::Screen::instance; });
-    mod.def("update_tweens", &Tween::update_all, "Manually update tweens");
+    mod.def("update_tweens", [] { 
+        auto t = to_sec(clk::now() - start_t);
+        Tween::update_all(t);
+    }, "Manually update tweens");
     mod.def(
         "all_events", [] { return m.sys->all_events(); },
         "Return a list of all pending events.");
@@ -252,7 +266,8 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     mod.def(
         "run_loop",
         [] {
-            Tween::update_all();
+            auto t = to_sec(clk::now() - start_t);
+            Tween::update_all(t);
             return m.sys->run_loop();
         },
         "Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way");

@@ -5,7 +5,7 @@
             "name": "Run via launch.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/launch.py",
+            "program": "${workspaceFolder}/tools/launch.py",
             "args": ["${file}"],
             "console": "integratedTerminal"
         },

@@ -410,10 +410,6 @@ class Float2:
         """
         Check if the `point` is inside the polygon formed by `points`.
         """
-    def iterate(self, arg0: typing.Iterator) -> None:
-        """
-        Iterate Float2 over time. The passed iterator must yield `Float2` that overwrites this Float2. NOTE: This allows you to circumvent the readonly property of Float2s
-        """
     def mag(self) -> float:
         """
         Get magnitude (length) of vector
@@ -438,6 +434,10 @@ class Float2:
         """
         Convert a `Float2` to an `Int2`
         """
+    def tween_from(self, arg0: Union[Float2, Int2, Tuple[float, float]], arg1: float, arg2: typing.Callable[[float], float]) -> Float2:
+        ...
+    def tween_to(self, arg0: Union[Float2, Int2, Tuple[float, float]], arg1: float, arg2: typing.Callable[[float], float]) -> Float2:
+        ...
     @property
     def with_x0(self) -> Float2:
         ...
