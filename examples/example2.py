@@ -11,7 +11,7 @@ screen.draw_color = pix.color.YELLOW
 screen.line_width = 4.0
 
 p = pix.Float2(0, 0)
-p.iterate(iter([pix.Float2(x, 100) for x in range(1000)]))
+p.iterate(iter([pix.Float2(x, 100) for x in range(100)]))
 
 while pix.run_loop():
     screen.clear(pix.color.BLACK)

@@ -57,6 +57,7 @@ void init()
 #endif
         auto atexit = py::module_::import("atexit");
         atexit.attr("register")(py::cpp_function([] {
+            Tween::tweens.clear();
             if (pix::Screen::instance != nullptr &&
                 pix::Screen::instance->frame_counter() == 0) {
                 log("Running at exit\n");
@@ -213,6 +214,7 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false,
             "visible"_a = true, doc);
     mod.def("get_display", [] { return pix::Screen::instance; });
+    mod.def("update_tweens", &Tween::update_all, "Manually update tweens");
     mod.def(
         "all_events", [] { return m.sys->all_events(); },
         "Return a list of all pending events.");

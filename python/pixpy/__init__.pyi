@@ -8,7 +8,7 @@ import typing
 from . import color
 from . import event
 from . import key
-__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'quit_loop', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'was_pressed', 'was_released']
+__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'quit_loop', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'update_tweens', 'was_pressed', 'was_released']
 class Canvas:
     """
     A `Canvas` is used for rendering. It is implemented by both `Screen` and `Image`.
@@ -411,7 +411,9 @@ class Float2:
         Check if the `point` is inside the polygon formed by `points`.
         """
     def iterate(self, arg0: typing.Iterator) -> None:
-        ...
+        """
+        Iterate Float2 over time. The passed iterator must yield `Float2` that overwrites this Float2. NOTE: This allows you to circumvent the readonly property of Float2s
+        """
     def mag(self) -> float:
         """
         Get magnitude (length) of vector
@@ -833,6 +835,10 @@ def run_loop() -> bool:
 def save_png(image: Image, file_name: str) -> None:
     """
     Save an _Image_ to disk
+    """
+def update_tweens() -> None:
+    """
+    Manually update tweens
     """
 def was_pressed(key: int | str) -> bool:
     """

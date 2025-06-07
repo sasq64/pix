@@ -15,48 +15,39 @@ static inline Vec2f vec2_zero{0, 0};
 static inline Vec2i vec2i_one{1, 1};
 static inline Vec2i vec2i_zero{0, 0};
 
-struct Tween {
+struct Tween
+{
 
-    Tween(py::object obj_, py::iterator iter)
-    {
-        item = iter.begin();
-    }
+    Tween(py::object obj_, py::iterator iter_) : obj{obj_}, iter{iter_} {}
 
     bool update()
     {
-        auto &target = obj.cast<Vec2f&>();
-        Vec2f &vitem = item->cast<Vec2f&>();
+        auto& target = obj.cast<Vec2f&>();
+        Vec2f& vitem = iter->cast<Vec2f&>();
         target = vitem;
-        ++item;
-        return item == item.sentinel();
+        ++iter;
+        return iter == iter.sentinel();
     }
 
     py::object obj;
-    py::iterator item;
+    py::iterator iter;
 
-    static inline std::vector<Tween> tweens;
-    static void update_all() {
+    static void update_all()
+    {
         auto it = tweens.begin();
         while (it != tweens.end()) {
-            if(it->update()) {
+            if (it->update()) {
                 it = tweens.erase(it);
             } else {
                 ++it;
             }
         }
     }
+    static std::vector<Tween> tweens;
 };
 
+inline std::vector<Tween> Tween::tweens;
 
-template <typename T>
-void add_iterator(Vec2<T>* ptr, py::iterator it) {
-    auto item = it.begin();
-    py::print("Type is:", item.get_type());
-    py::print("Type is:", (*item).get_type());
-    Vec2<T> &obj = item->cast<Vec2<T>&>();
-    ptr->x = obj.x;
-    ptr->y = obj.y;
-}
 
 template <typename Vec2>
 py::class_<Vec2> add_common(py::module_& mod, const char* name)
@@ -70,8 +61,9 @@ py::class_<Vec2> add_common(py::module_& mod, const char* name)
             .def("__len__", &Vec2::len)
             .def("__hash__",
                  [](Vec2 const& v) { return (int)v.x + (int)(v.y * 65535); })
-            .def("clamp", &Vec2::clamp, py::arg("low"), py::arg("high"),
-                 "Separately clamp the x and y component between the corresponding components in the given arguments.")
+            .def(
+                "clamp", &Vec2::clamp, py::arg("low"), py::arg("high"),
+                "Separately clamp the x and y component between the corresponding components in the given arguments.")
             .def("sign", &Vec2::sign)
             .def_readonly("x", &Vec2::x)
             .def_readonly("y", &Vec2::y)
@@ -114,9 +106,12 @@ inline void add_vec2_class(py::module_& mod)
     auto vd = add_common<Vec2f>(mod, "Float2");
 
     vd.def(py::init<std::pair<double, double>>())
-        .def("iterate", [](py::object self, py::iterator it) {
-            Tween::tweens.push_back(Tween{self, it});
-        })
+        .def(
+            "iterate",
+            [](py::object self, py::iterator it) {
+                Tween::tweens.push_back(Tween{self, it});
+            },
+            "Iterate Float2 over time. The passed iterator must yield `Float2` that overwrites this Float2. NOTE: This allows you to circumvent the readonly property of Float2s")
         .def(
             "toi",
             [](Vec2f self) {
