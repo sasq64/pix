@@ -6,7 +6,7 @@ Float2 = pix.Float2
 
 screen = pix.open_display(size=(1280, 720))
 
-pos = Float2(-400, screen.size.y / 2).tween_to(screen.size / 2, 4.0, Ease.out_bounce)
+pos = Float2(-400, screen.size.y / 2).tween_to(screen.size / 2)
 
 font = pix.load_font("data/hyperspace_bold.ttf")
 hello_image = font.make_image("Hello World", size=64, color=pix.color.ORANGE)

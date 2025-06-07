@@ -313,6 +313,10 @@ class Float2:
     @typing.overload
     def __add__(self, arg0: float) -> Float2:
         ...
+    def __copy__(self) -> Float2:
+        ...
+    def __deepcopy__(self, arg0: dict) -> Float2:
+        ...
     def __eq__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> bool:
         ...
     @typing.overload
@@ -434,10 +438,14 @@ class Float2:
         """
         Convert a `Float2` to an `Int2`
         """
-    def tween_from(self, arg0: Union[Float2, Int2, Tuple[float, float]], arg1: float, arg2: typing.Callable[[float], float]) -> Float2:
-        ...
-    def tween_to(self, arg0: Union[Float2, Int2, Tuple[float, float]], arg1: float, arg2: typing.Callable[[float], float]) -> Float2:
-        ...
+    def tween_from(self, from: Union[Float2, Int2, Tuple[float, float]], secs: float = 1.0, ease: typing.Callable[[float], float] = ...) -> Float2:
+        """
+        Animate this Float2 from `from` to its current value in `secs` seconds.
+        """
+    def tween_to(self, to: Union[Float2, Int2, Tuple[float, float]], secs: float = 1.0, ease: typing.Callable[[float], float] = ...) -> Float2:
+        """
+        Animate this Float2 so it reaches `to` in `secs` seconds.
+        """
     @property
     def with_x0(self) -> Float2:
         ...
@@ -448,10 +456,16 @@ class Float2:
     def x(self) -> float:
         ...
     @property
+    def xx(self) -> Float2:
+        ...
+    @property
     def y(self) -> float:
         ...
     @property
     def yx(self) -> Float2:
+        ...
+    @property
+    def yy(self) -> Float2:
         ...
 class Font:
     """
@@ -548,6 +562,10 @@ class Int2:
         ...
     @typing.overload
     def __add__(self, arg0: float) -> Float2:
+        ...
+    def __copy__(self) -> Int2:
+        ...
+    def __deepcopy__(self, arg0: dict) -> Int2:
         ...
     def __eq__(self, arg0: Union[Int2, Tuple[int, int]]) -> bool:
         ...
@@ -658,10 +676,16 @@ class Int2:
     def x(self) -> int:
         ...
     @property
+    def xx(self) -> Int2:
+        ...
+    @property
     def y(self) -> int:
         ...
     @property
     def yx(self) -> Int2:
+        ...
+    @property
+    def yy(self) -> Int2:
         ...
 class Screen(Canvas):
     """

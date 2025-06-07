@@ -79,6 +79,8 @@ py::class_<Vec2> add_common(py::module_& mod, const char* name)
             .def("__len__", &Vec2::len)
             .def("__hash__",
                  [](Vec2 const& v) { return (int)v.x + (int)(v.y * 65535); })
+            .def("__copy__", [](const Vec2 &self) { return Vec2(self); })
+            .def("__deepcopy__", [](const Vec2 &self, py::dict) { return Vec2(self); })
             .def(
                 "clamp", &Vec2::clamp, py::arg("low"), py::arg("high"),
                 "Separately clamp the x and y component between the corresponding components in the given arguments.")
@@ -87,6 +89,10 @@ py::class_<Vec2> add_common(py::module_& mod, const char* name)
             .def_readonly("y", &Vec2::y)
             .def_property_readonly(
                 "yx", [](Vec2 self) { return Vec2{self.y, self.x}; })
+            .def_property_readonly(
+                "xx", [](Vec2 self) { return Vec2{self.x, self.x}; })
+            .def_property_readonly(
+                "yy", [](Vec2 self) { return Vec2{self.y, self.y}; })
             .def_property_readonly("with_y0",
                                    [](Vec2 self) { return Vec2{self.x, 0}; })
             .def_property_readonly("with_x0",
@@ -118,15 +124,24 @@ py::class_<Vec2> add_common(py::module_& mod, const char* name)
     return vd;
 }
 
+double linear(double x) {
+    return x;
+}
+
+std::function<double(double)> lf = &linear;
+
+
 inline void add_vec2_class(py::module_& mod)
 {
+    using namespace pybind11::literals;
+
     auto vi = add_common<Vec2i>(mod, "Int2");
     auto vd = add_common<Vec2f>(mod, "Float2");
 
     vd.def(py::init<std::pair<double, double>>())
         .def("tween_to",
              [](py::object self, Vec2f const& to, float secs,
-                std::function<float(float)> const& ease) -> Vec2f& {
+                std::function<double(double)> const& ease) -> Vec2f& {
                  Tween::tweens.push_back(Tween{self});
                  auto it = &Tween::tweens.back();
                  it->start = self.cast<Vec2f&>();
@@ -134,10 +149,11 @@ inline void add_vec2_class(py::module_& mod)
                  it->end = to;
                  it->fn = ease;
                  return self.cast<Vec2f&>();
-             })
+             }, "to"_a, "secs"_a = 1.0F, "ease"_a = lf,
+        "Animate this Float2 so it reaches `to` in `secs` seconds.")
         .def("tween_from",
              [](py::object self, Vec2f const& from, float secs,
-                std::function<float(float)> const& ease) -> Vec2f& {
+                std::function<double(double)> const& ease) -> Vec2f& {
                  auto& me = self.cast<Vec2f&>();
                  Tween::tweens.push_back(Tween{self});
                  auto it = &Tween::tweens.back();
@@ -146,7 +162,8 @@ inline void add_vec2_class(py::module_& mod)
                  it->end = me;
                  it->fn = ease;
                  return self.cast<Vec2f&>();
-             })
+             }, "from"_a, "secs"_a = 1.0F, "ease"_a = &lf,
+        "Animate this Float2 from `from` to its current value in `secs` seconds.")
         .def(
             "toi",
             [](Vec2f self) {

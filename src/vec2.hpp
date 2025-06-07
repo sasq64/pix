@@ -74,6 +74,9 @@ template <typename T> struct Vec2
 
     constexpr Vec2() = default;
 
+    constexpr Vec2(Vec2 const&) = default;
+    Vec2& operator=(Vec2 const&other) = default;
+
     constexpr Vec2(std::pair<T, T> const& p) // NOLINT
         : x{p.first}, y{p.second} {}
     constexpr Vec2(T _x, T _y) : x{_x}, y{_y} {}

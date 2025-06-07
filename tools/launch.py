@@ -4,7 +4,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import override, Any
+from typing import Final, override, Any
 
 import pixpy
 import pixpy as pix
@@ -12,7 +12,7 @@ from watchdog.events import DirModifiedEvent, FileModifiedEvent, FileSystemEvent
 from watchdog.observers import Observer
 
 
-def strip_ast_metadata(node: ast.AST | list[ast.AST]):
+def strip_ast_metadata(node: ast.AST | list[ast.AST]) -> ast.AST | list[ast.AST]:
     """Recursively remove lineno, col_offset, and other non-semantic fields."""
     if isinstance(node, ast.AST):
         fields = {}
@@ -30,6 +30,7 @@ def strip_ast_metadata(node: ast.AST | list[ast.AST]):
         return [strip_ast_metadata(elem) for elem in node]
     else:
         return node
+
 
 def is_global(node: ast.stmt) -> None | tuple[str, Any]:
     if isinstance(node, ast.Assign):
@@ -50,24 +51,27 @@ def is_global(node: ast.stmt) -> None | tuple[str, Any]:
 
 def strip_ast(mod: ast.Module) -> ast.Module:
     mod.body = [s for s in mod.body if not is_global(s)]
-    return strip_ast_metadata(mod)
+    _ = strip_ast_metadata(mod)
+    return mod
 
-
-                            
 
 def ast_equal(a0: ast.Module, a1: ast.Module) -> bool:
-    tree1 : ast.Module = strip_ast(a0)
-    tree2 : ast.Module = strip_ast(a1)
-    Path("tree1").write_text(ast.dump(tree1))
-    Path("tree2").write_text(ast.dump(tree2))
+    tree1: ast.Module = strip_ast(a0)
+    tree2: ast.Module = strip_ast(a1)
+    _ = Path("tree1").write_text(ast.dump(tree1))
+    _ = Path("tree2").write_text(ast.dump(tree2))
     return ast.dump(tree1) == ast.dump(tree2)
+
 
 class PySource(FileSystemEventHandler):
     @override
     def on_modified(self, event: DirModifiedEvent | FileModifiedEvent):
         print(f"Got event {event.src_path}")
         # Only react to changes in the specific script file
-        if Path(str(event.src_path)) == self.script_file and event.event_type == "modified":
+        if (
+            Path(str(event.src_path)) == self.script_file
+            and event.event_type == "modified"
+        ):
             t = time.time()
             if t - self.last_modified_time > 1:  # Avoid rapid fire on multiple events
                 print(f"{self.script_file.name} was changed")
@@ -98,27 +102,31 @@ class PySource(FileSystemEventHandler):
         if changed:
             self.change_count += 1
             print(f"Globals changed, count = {self.change_count}")
-            self.globals["LAUNCH_CHANGE_COUNT"] = self.change_count 
+            self.globals["LAUNCH_CHANGE_COUNT"] = self.change_count
 
     def __init__(self, script_file: Path):
-        self.change_count = 0
-        self.script_file = script_file
-        self.globals : dict[str, Any] = {}
-        self.ast : ast.Module = ast.parse(self.script_file.read_text())
-        self.do_restart = False
-        self.reloaded = False
+        self.change_count: int = 0
+        self.script_file: Final = script_file
+        self.globals: dict[str, Any] = {}
+        self.ast: ast.Module = ast.parse(self.script_file.read_text())
+        self.do_restart: bool = False
+        self.reloaded: bool = False
         self.last_modified_time: float = 0
-        self.observer = Observer()
-        self.watch = self.observer.schedule(
+        self.observer: Final = Observer()
+        self.watch: Final = self.observer.schedule(
             self, script_file.parent.as_posix(), recursive=False
         )
         self.observer.start()
-    
+
     def run(self):
+        script_dir = self.script_file.parent.absolute().as_posix()
+        if script_dir not in sys.path:
+            sys.path.insert(0, script_dir)
         while True:
             source = self.script_file.read_text()
             self.globals["__builtins__"] = builtins
             self.globals["__name__"] = "__main__"
+            self.globals["__file__"] = self.script_file.as_posix()
             try:
                 self.reloaded = False
                 self.do_restart = False
