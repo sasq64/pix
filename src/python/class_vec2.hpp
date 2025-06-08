@@ -124,11 +124,11 @@ py::class_<Vec2> add_common(py::module_& mod, const char* name)
     return vd;
 }
 
-double linear(double x) {
+static inline double linear(double x) {
     return x;
 }
 
-std::function<double(double)> lf = &linear;
+static inline std::function<double(double)> lf = &linear;
 
 
 inline void add_vec2_class(py::module_& mod)

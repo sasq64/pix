@@ -60,7 +60,7 @@ inline void add_canvas_functions(auto& cls)
             }
         },
         "points"_a, "convex"_a = false,
-        "Draw a filled polygon. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is split into triangles using the ear-clipping method.");
+        "Draw a filled polygon. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is triangluated.");
     cls.def("complex_polygon", &Context::draw_complex_polygon, "polygons"_a,
             "Draw a complex filled polygon that can consist of holes.");
     cls.def(

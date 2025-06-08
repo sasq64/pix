@@ -1,6 +1,6 @@
 #include "context.hpp"
-#include "image_view.hpp"
 #include "colors.hpp"
+#include "image_view.hpp"
 
 #include <tesselator.h>
 
@@ -139,7 +139,7 @@ void Context::lines(std::vector<Vec2f> const& points)
 
     std::vector<float> result;
     result.reserve(points.size() * 2);
-    for(auto&& p : points) {
+    for (auto&& p : points) {
         auto&& p2 = to_screen(p);
         result.push_back(p2.x);
         result.push_back(p2.y);
@@ -171,7 +171,8 @@ void Context::blit(pix::ImageView const& tex, Vec2f pos, Vec2f size)
     draw_textured(vdata, gl::Primitive::TriangleFan);
 }
 
-void Context::draw(pix::ImageView const& tex, Vec2f center, Vec2f size, float rot)
+void Context::draw(pix::ImageView const& tex, Vec2f center, Vec2f size,
+                   float rot)
 {
     tex.bind();
     if (size.x == 0) {
@@ -183,23 +184,34 @@ void Context::draw(pix::ImageView const& tex, Vec2f center, Vec2f size, float ro
     draw_textured(vdata, gl::Primitive::TriangleFan);
 }
 
-Context::Context(Context const& other) :
-    fg{other.fg},
-    colored{
-        ProgramCache::get_instance()
-            .get_program<ProgramCache::Colored, ProgramCache::NoTransform>()},
-    textured{ProgramCache::get_instance()
-                 .get_program<ProgramCache::Textured>()}, // NOLINT
-    filled{ProgramCache::get_instance().get_program<>()} // NOLINT
+Context::Context(Context const& other)
+    : fg{other.fg},
+      colored{
+          ProgramCache::get_instance()
+              .get_program<ProgramCache::Colored, ProgramCache::NoTransform>()},
+      textured{ProgramCache::get_instance()
+                   .get_program<ProgramCache::Textured>()}, // NOLINT
+      filled{ProgramCache::get_instance().get_program<>()} // NOLINT
 {
-   target = other.target;
-   offset = other.offset;
-   view_size = other.view_size;
-   target_size = other.target_size;
+    target = other.target;
+    view_size = other.view_size;
+    offset = other.offset;
+    target_size = other.target_size;
+    target_scale = other.target_scale;
+    clip_start = other.clip_start;
+    clip_size = other.clip_size;
+    vpscale = other.vpscale;
+
+    backface_culling = other.backface_culling;
+    line_width = other.line_width;
+    point_size = other.point_size;
+    blend_source = other.blend_source;
+    blend_dest = other.blend_dest;
 }
 
 Context::Context(Vec2f _offset, Vec2f _view_size, Vec2f _target_size, GLuint fb)
-    : target{fb}, view_size{_view_size}, offset{_offset}, target_size{_target_size}, fg{color::white},
+    : target{fb}, view_size{_view_size}, offset{_offset},
+      target_size{_target_size}, fg{color::white},
       colored{
           ProgramCache::get_instance()
               .get_program<ProgramCache::Colored, ProgramCache::NoTransform>()},
@@ -212,10 +224,10 @@ Context::Context(Vec2f _offset, Vec2f _view_size, Vec2f _target_size, GLuint fb)
 }
 
 Context::Context(float w, float h, GLuint fb)
-    : Context(Vec2f{0, 0}, Vec2f{w, h}, Vec2f{w,h}, fb)
+    : Context(Vec2f{0, 0}, Vec2f{w, h}, Vec2f{w, h}, fb)
 {
     static constexpr std::array<float, 16> mat{1, 0, 0, 0, 0, 1, 0, 0,
-                                           0, 0, 1, 0, 0, 0, 0, 1};
+                                               0, 0, 1, 0, 0, 0, 0, 1};
     const gl::Color color = 0xffffffff;
     filled.setUniform("frag_color", color);
     filled.setUniform("in_transform", mat);
@@ -234,15 +246,16 @@ void Context::draw_filled(const CO& container, gl::Primitive primitive)
     pos.enable();
     gl::ArrayBuffer<GL_STREAM_DRAW> vbo{container};
     vbo.bind();
-    gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float,
-                          0 * sizeof(GLfloat), 0);
+    gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float, 0 * sizeof(GLfloat),
+                     0);
     int len = static_cast<int>(container.size()) / 2;
     gl::drawArrays(primitive, 0, len);
     pos.disable();
 }
 
 template <typename CO, typename T>
-void Context::draw_indexed(const CO& container, std::vector<T> indices, gl::Primitive primitive)
+void Context::draw_indexed(const CO& container, std::vector<T> indices,
+                           gl::Primitive primitive)
 {
     set_target();
 
@@ -254,16 +267,17 @@ void Context::draw_indexed(const CO& container, std::vector<T> indices, gl::Prim
     gl::ElementBuffer<GL_STREAM_DRAW> elements{indices};
     vbo.bind();
     elements.bind();
-    gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float,
-                     0 * sizeof(GLfloat), 0);
+    gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float, 0 * sizeof(GLfloat),
+                     0);
     int len = static_cast<int>(container.size()) / 2;
-    //gl::drawArrays(primitive, 0, len);
+    // gl::drawArrays(primitive, 0, len);
     gl::drawElements(primitive, indices.size(), gl::Type::UnsignedShort, 0);
     pos.disable();
 }
 
 template <typename F, typename I>
-void Context::draw_indexed(F const* coords, size_t c_count, I const* indices, size_t i_count, gl::Primitive primitive)
+void Context::draw_indexed(F const* coords, size_t c_count, I const* indices,
+                           size_t i_count, gl::Primitive primitive)
 {
     set_target();
 
@@ -276,9 +290,11 @@ void Context::draw_indexed(F const* coords, size_t c_count, I const* indices, si
     vbo.bind();
     elements.bind();
     if constexpr (sizeof(F) == 4) {
-        gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float, 0 * sizeof(GLfloat), 0);
+        gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float,
+                         0 * sizeof(GLfloat), 0);
     } else {
-        gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Double, 0 * sizeof(GLdouble), 0);
+        gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Double,
+                         0 * sizeof(GLdouble), 0);
     }
     if constexpr (sizeof(I) == 2) {
         gl::drawElements(primitive, i_count, gl::Type::UnsignedShort, 0);
@@ -287,7 +303,6 @@ void Context::draw_indexed(F const* coords, size_t c_count, I const* indices, si
     }
     pos.disable();
 }
-
 
 bool intersects(Vec2f v11, Vec2f v12, Vec2f v21, Vec2f v22)
 {
@@ -335,12 +350,11 @@ bool intersects(Vec2f v11, Vec2f v12, Vec2f v21, Vec2f v22)
     // If we get here, only two possibilities are left. Either the two
     // vectors intersect in exactly one point or they are collinear, which
     // means they intersect in any number of points from zero to infinite.
-    //if ((a1 * b2) - (a2 * b1) == 0.0f) return COLLINEAR;
+    // if ((a1 * b2) - (a2 * b1) == 0.0f) return COLLINEAR;
 
     // If they are not collinear, they must intersect in exactly one point.
     return true;
 }
- 
 
 double cross(Vec2f a, Vec2f b)
 {
@@ -359,7 +373,8 @@ bool same_side(Vec2f const& p1, Vec2f const& p2, Vec2f const& a, Vec2f const& b)
 
 bool in_triangle(Vec2f const& p, Vec2f const& a, Vec2f const& b, Vec2f const& c)
 {
-    return same_side(p, a, b, c) && same_side(p, b, a, c) && same_side(p, c, a, b);
+    return same_side(p, a, b, c) && same_side(p, b, a, c) &&
+           same_side(p, c, a, b);
 }
 
 bool is_convex(Vec2f a, Vec2f b, Vec2f c)
@@ -378,7 +393,7 @@ bool is_ear(Vec2f a, Vec2f b, Vec2f c, Vec2f const* vertices, size_t count)
         return false; // The triangle is not convex
     }
 
-    for (size_t i=0; i<count; i++) {
+    for (size_t i = 0; i < count; i++) {
         auto p = vertices[i];
         if (p != a && p != b && p != c && in_triangle(p, a, b, c)) {
             return false; // Found a point inside the triangle
@@ -388,23 +403,25 @@ bool is_ear(Vec2f a, Vec2f b, Vec2f c, Vec2f const* vertices, size_t count)
     return true; // No points inside the triangle and it is convex
 }
 
-void Context::draw_complex_polygon(std::vector<std::vector<Vec2f>> const& polygons)
+void Context::draw_complex_polygon(
+    std::vector<std::vector<Vec2f>> const& polygons)
 {
     auto* tess = tessNewTess(nullptr);
     for (auto const& vec : polygons) {
         tessAddContour(tess, 2, vec.data(), 16, static_cast<int>(vec.size()));
     }
 
-    tessTesselate(tess, TessWindingRule::TESS_WINDING_ODD, TessElementType::TESS_POLYGONS, 3, 2, nullptr);
+    tessTesselate(tess, TessWindingRule::TESS_WINDING_ODD,
+                  TessElementType::TESS_POLYGONS, 3, 2, nullptr);
     auto* verts = tessGetVertices(tess);
     auto* elems = tessGetElements(tess);
-    float f[8*1024];
+    float f[8 * 1024];
     const auto ec = tessGetElementCount(tess) * 3;
     const auto vc = tessGetVertexCount(tess);
-    for (int i=0; i<vc; i++) {
-        auto const v = to_screen(verts[i*2], verts[i*2+1]);
-        f[i*2] = v.x;
-        f[i*2+1] = v.y;
+    for (int i = 0; i < vc; i++) {
+        auto const v = to_screen(verts[i * 2], verts[i * 2 + 1]);
+        f[i * 2] = v.x;
+        f[i * 2 + 1] = v.y;
     }
     draw_indexed(f, vc * 2, elems, ec, gl::Primitive::Triangles);
     tessDeleteTess(tess);
@@ -415,17 +432,16 @@ void Context::draw_inconvex_polygon(Vec2f const* points, size_t count)
     std::vector<uint16_t> triangles;
     std::vector<uint16_t> indexes;
     indexes.resize(count);
-    for(size_t i=0; i<count; i++) {
+    for (size_t i = 0; i < count; i++) {
         indexes[i] = i;
     }
     std::vector<float> data;
     int removed = 0;
     double sum = 0;
 
-    for(unsigned i=0; i<count-1; i++)
-    {
-        auto &&q = points[i];
-        auto &&p = points[i+1];
+    for (unsigned i = 0; i < count - 1; i++) {
+        auto&& q = points[i];
+        auto&& p = points[i + 1];
         sum += (p.x - q.x) * (p.y + q.y);
     }
     {
@@ -436,7 +452,7 @@ void Context::draw_inconvex_polygon(Vec2f const* points, size_t count)
 
     if (sum > 0) { return; }
 
-    for(unsigned i=0; i<count; i++) {
+    for (unsigned i = 0; i < count; i++) {
 
         auto&& p = to_screen(points[i]);
         data.push_back(p.x);
@@ -468,12 +484,12 @@ void Context::draw_inconvex_polygon(Vec2f const* points, size_t count)
             triangles.push_back(indexes[1]);
             triangles.push_back(indexes[2]);
             indexes.erase(indexes.begin());
-            //fprintf(stderr, "BROKEN POLYGON\n");
-            //for (size_t j = 0; j < indexes.size(); ++j) {
-            //    auto&& p = points[indexes[j]];
-            //    fprintf(stderr, "X: %.3f Y: %.3f\n", p.x, p.y);
-            //}
-            //break;
+            // fprintf(stderr, "BROKEN POLYGON\n");
+            // for (size_t j = 0; j < indexes.size(); ++j) {
+            //     auto&& p = points[indexes[j]];
+            //     fprintf(stderr, "X: %.3f Y: %.3f\n", p.x, p.y);
+            // }
+            // break;
         }
     }
     triangles.push_back(indexes[0]);
@@ -485,21 +501,16 @@ void Context::draw_inconvex_polygon(Vec2f const* points, size_t count)
 void Context::draw_polygon(Vec2f const* points, size_t count)
 {
     std::vector<float> data;
-    data.resize(count*2);
-    for(unsigned i=0; i<count; i++) {
+    data.resize(count * 2);
+    for (unsigned i = 0; i < count; i++) {
         auto&& p = to_screen(points[i]);
-        data[(count-i-1)*2] = p.x;
-        data[(count-i-1)*2+1] = p.y;
+        data[(count - i - 1) * 2] = p.x;
+        data[(count - i - 1) * 2 + 1] = p.y;
     }
 
-    if (backface_culling) {
-        glEnable(GL_CULL_FACE);
-    }
+    if (backface_culling) { glEnable(GL_CULL_FACE); }
     draw_filled(data, gl::Primitive::TriangleFan);
-    if (backface_culling) {
-        glDisable(GL_CULL_FACE);
-    }
-
+    if (backface_culling) { glDisable(GL_CULL_FACE); }
 }
 
 void Context::set_target() const
@@ -532,10 +543,10 @@ void Context::draw_textured(const CO& container, gl::Primitive primitive)
     gl::ArrayBuffer<GL_STREAM_DRAW> vbo{container};
     vbo.bind();
     int len = static_cast<int>(container.size()) / 2;
-    gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float,
-                          0 * sizeof(GLfloat), 0);
-    gl::vertexAttrib(uv, gl::Size<2>{}, gl::Type::Float,
-                          0 * sizeof(GLfloat), len * 4);
+    gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float, 0 * sizeof(GLfloat),
+                     0);
+    gl::vertexAttrib(uv, gl::Size<2>{}, gl::Type::Float, 0 * sizeof(GLfloat),
+                     len * 4);
 
     gl::drawArrays(primitive, 0, len / 2);
     pos.disable();
@@ -579,10 +590,10 @@ void Context::draw_points()
     cola.enable();
     gl::ArrayBuffer<GL_STREAM_DRAW> vbo{point_cache};
     vbo.bind();
-    gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float,
-                          6 * sizeof(GLfloat), 0);
-    gl::vertexAttrib(cola, gl::Size<4>{}, gl::Type::Float,
-                          6 * sizeof(GLfloat), 8);
+    gl::vertexAttrib(pos, gl::Size<2>{}, gl::Type::Float, 6 * sizeof(GLfloat),
+                     0);
+    gl::vertexAttrib(cola, gl::Size<4>{}, gl::Type::Float, 6 * sizeof(GLfloat),
+                     8);
     int len = static_cast<int>(point_cache.size()) / 6;
     gl::drawArrays(gl::Primitive::Points, 0, len);
     pos.disable();
@@ -620,11 +631,10 @@ pix::ImageView Context::to_image() const
     auto const width = static_cast<int>(view_size.x);
     auto const height = static_cast<int>(view_size.y);
     auto temp = std::unique_ptr<uint32_t[]>(new uint32_t[width * height]);
-    int x = offset.x ;
+    int x = offset.x;
     int y = offset.y;
     // TODO: Read correct rectangle
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE,
-                 temp.get());
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, temp.get());
     auto tex = std::make_shared<gl::Texture>(width, height, temp.get());
     return pix::ImageView{gl::TexRef{tex}};
 }
@@ -641,12 +651,11 @@ void Context::flush_pixels()
         auto tex = std::make_shared<gl::Texture>(width, height, pixels.get());
         auto oldfg = fg;
         fg = 0xffffffff;
-        blit(pix::ImageView{gl::TexRef{tex}}, {0,0}, view_size);
+        blit(pix::ImageView{gl::TexRef{tex}}, {0, 0}, view_size);
         fg = oldfg;
         dirty = false;
         pixels = nullptr;
     }
 }
-
 
 } // namespace pix
