@@ -88,7 +88,7 @@ class Canvas:
         """
     def polygon(self, points: list[Float2], convex: bool = False) -> None:
         """
-        Draw a filled polygon. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is split into triangles using the ear-clipping method.
+        Draw a filled polygon. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is triangluated.
         """
     def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
@@ -113,7 +113,7 @@ class Canvas:
     @property
     def blend_mode(self) -> int:
         """
-        Set the blend mode. Normally one of the constants `pix.BLEND_ADD`, `pix.BLEND_MULTIPLY` or `pix.BLEND_NORMAL`.
+        Set the blend mode. Normally one of the constants `BLEND_ADD`, `BLEND_MULTIPLY` or `BLEND_NORMAL`.
         """
     @blend_mode.setter
     def blend_mode(self, arg1: int) -> None:
@@ -765,12 +765,12 @@ class TileSet:
         Create an empty tileset with the given tile size.
         """
     @typing.overload
-    def get_image_for(self, arg0: int) -> Image:
+    def get_image_for(self, tile: int) -> Image:
         """
         Get the image for a specific tile. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room.for the new tile in the tile texture.
         """
     @typing.overload
-    def get_image_for(self, arg0: str) -> Image:
+    def get_image_for(self, character: str) -> Image:
         """
         Get the image for a specific character. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.
         """
@@ -779,12 +779,12 @@ class TileSet:
         Get the entire tileset image. Typically used with `save_png()` to check generated tileset.
         """
     @typing.overload
-    def render_text(self, screen: ..., text: str, pos: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
+    def render_text(self, screen: Screen, text: str, pos: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]] = ...) -> None:
         """
         Render characters from the TileSet at given `pos` and given `size` (defaults to tile_size).
         """
     @typing.overload
-    def render_text(self, screen: ..., text: str, points: list[Float2]) -> None:
+    def render_text(self, screen: Screen, text: str, points: list[Float2]) -> None:
         """
         Render characters from the TileSet, each character using the next position from `points`, using the default tile size.
         """

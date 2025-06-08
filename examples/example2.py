@@ -18,9 +18,12 @@ screen.line_width = 4.0
 # t = tween(Float2(-300, 300), Float2(500, 300), 100, Ease.out_sine)
 # pos = pix.Float2(0, 0)
 # pos.iterate(t)
-
+canvas = screen.copy()
+canvas.clip_size = canvas.size.toi() - (50,50)
+canvas.clip_top_left = (20, 20)
 while pix.run_loop():
-    screen.clear(pix.color.BLACK)
-    screen.draw(image=hello_image, center=pos, rot=pos.x / 100)
-    screen.circle(center=pos, radius=pos.x / 4)
+    screen.clear(pix.color.RED)
+    canvas.clear(pix.color.BLUE)
+    canvas.draw(image=hello_image, center=pos, rot=pos.x / 100)
+    canvas.circle(center=pos, radius=pos.x / 3)
     screen.swap()

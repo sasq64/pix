@@ -204,13 +204,14 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
 
     add_canvas_functions(ctx);
     add_font_class(mod);
-    add_tileset_class(mod);
 
     add_console_functions(con_class);
 
     add_event_mod(mod.def_submodule("event"));
 
     auto screen = add_screen_class(mod, ctx);
+
+    add_tileset_class(mod);
 
     const char* doc;
 

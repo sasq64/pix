@@ -86,7 +86,7 @@ inline void add_tileset_class(py::module_ const& mod)
             "get_tileset_image", &get_texture,
             "Get the entire tileset image. Typically used with `save_png()` to check generated tileset.")
         .def(
-            "get_image_for", &get_image_for,
+            "get_image_for", &get_image_for, "tile"_a,
             "Get the image for a specific tile. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room."
             "for the new tile in the tile texture.")
         .def(
@@ -97,7 +97,7 @@ inline void add_tileset_class(py::module_ const& mod)
             "render_text", &render_chars2, "screen"_a, "text"_a, "points"_a,
             "Render characters from the TileSet, each character using the next position from `points`, using the default tile size.")
         .def(
-            "get_image_for", &TileSet::get_texture_for_char,
+            "get_image_for", &TileSet::get_texture_for_char, "character"_a,
             "Get the image for a specific character. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.");
     ts.doc() =
         "A tileset is a texture split up into tiles for rendering. It is used by the `Console` class but can also be used directly.";

@@ -16,7 +16,7 @@ class WorkFile:
         return self
 
     def __exit__(self, typ, value, tb):
-        print(typ, value, tb)
+        # print(typ, value, tb)
         self.save()
 
     def save(self):
@@ -104,10 +104,10 @@ def main(_):
         start = wf.find("class Int2")
         if start is not None:
             for op in ops:
-                print(op)
+                # print(op)
                 a = wf.find(f".*__{op}__.*Float2", start)
                 b = wf.find(f".*__{op}__.*Int2", start)
-                print(a, b)
+                # print(a, b)
                 if a is not None and b is not None and b == a + 2:
                     wf.swap_line(a, b)
 

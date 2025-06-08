@@ -15,7 +15,6 @@ namespace py = pybind11;
 inline auto add_canvas_class(py::module_ const& mod)
 {
     using namespace pybind11::literals;
-    using namespace pybind11::literals;
     using Context = pix::Context;
 
     auto cls = py::class_<Context, std::shared_ptr<Context>>(mod, "Canvas")
@@ -27,7 +26,6 @@ inline auto add_canvas_class(py::module_ const& mod)
 
 inline void add_canvas_functions(auto& cls)
 {
-    using namespace pybind11::literals;
     using namespace pybind11::literals;
     using Context = pix::Context;
     cls.def("circle", &Context::circle, "center"_a, "radius"_a,
@@ -134,7 +132,7 @@ inline void add_canvas_functions(auto& cls)
     cls.def_property(
         "blend_mode", [](Context const& self) { return self.fg.to_rgba(); },
         [](Context& self, uint32_t mode) { self.set_blend_mode(mode); },
-        "Set the blend mode. Normally one of the constants `pix.BLEND_ADD`, `pix.BLEND_MULTIPLY` or `pix.BLEND_NORMAL`.");
+        "Set the blend mode. Normally one of the constants `BLEND_ADD`, `BLEND_MULTIPLY` or `BLEND_NORMAL`.");
     cls.def_readwrite("point_size", &Context::point_size,
                       "Set the point size in fractional pixels.");
     cls.def_readwrite("line_width", &Context::line_width,
