@@ -57,8 +57,8 @@ int main() {
 
     auto display = sys->init_screen({
         .screen = DisplayType::Window,
-        .display_width = cols * 8 * 2,
-        .display_height = rows * 8 * 2
+        .display_width = 960,
+        .display_height = 720,
     });
 
 
@@ -76,8 +76,20 @@ int main() {
         }
     }
 
-    auto bg = gl::TexRef(realw, realh);
-    bg.tex->update(pixels.data());
+    auto bg_ = gl::TexRef(100, 100);
+    bg_.tex->update(pixels.data());
+    pix::ImageView bg{bg_};
+    bg.set_color(gl::Color(0xff0000ff));
+    bg.filled_circle({40, 40}, 20);
+
+    auto bg2 = bg.crop(10, 10, 80, 80);
+    //bg2.clip_start = {10, 10};
+    //bg2.clip_size = {40, 40};
+    bg2.set_color(gl::Color(0xffffffff));
+    bg2.clear({0x808080ff});
+    bg2.filled_circle({40, 40}, 10);
+
+
 
     auto font = std::make_shared<TileSet>(FreetypeFont::unscii);
     auto console = std::make_shared<PixConsole>(cols, rows, font);
@@ -93,12 +105,17 @@ int main() {
     }
 
     screen->set_fps(0);
+    //auto screen2 = screen->crop(50, 50, 500, 300);
+     auto splits = screen->split(2, 2);
+     for(auto& split : splits) {
+         auto [sx, sy] = split->view_size;
+         split = split->crop(4, 4, sx - 8, sy - 8);
+     }
     while (true) {
         auto pos = Vec2(0, 0);
         if (!sys->run_loop()) { break; }
         //context-set_target();
         screen->clear(0x000000);
-        //context->blit(bg,  {0,0}, Vec2f{bg.tex->size()});
         //console->render();
         std::vector<Vec2f> points{
             {100, 100},
@@ -106,19 +123,23 @@ int main() {
             {700, 500},
             {200, 400}
         };
-        screen->set_color(gl::Color(0xff0000ff));
-        std::vector<std::vector<Vec2f>> multi { points, star }; //, points };
-        screen->draw_complex_polygon(multi);
+        for (auto& screen2 : splits) {
+            screen2->clear(0x00ff00);
+            screen2->set_color(gl::Color(0xff0000ff));
+            std::vector<std::vector<Vec2f>> multi { points, star }; //, points };
+            screen2->draw_complex_polygon(multi);
 
-        screen->set_color(gl::Color(0xffff00ff));
-        //for (int i = 0; i < 400; i++) {
-            for (auto p : star) {
-                screen->line(p);
-            }
-            //pos += {4, 0};
-        //}
-        screen->line(star[0]);
-        //context->filled_rect({10, 10}, {100,100});
+            screen2->set_color(gl::Color(0xffff00ff));
+            //for (int i = 0; i < 400; i++) {
+                for (auto p : star) {
+                    screen2->line(p);
+                }
+                //pos += {4, 0};
+            //}
+            screen2->line(star[0]);
+            //context->filled_rect({10, 10}, {100,100});
+            screen2->blit(bg, {20,20}, Vec2f{bg.size()});
+        }
         screen->swap();
     }
 

@@ -58,8 +58,8 @@ inline void add_canvas_functions(auto& cls)
             }
         },
         "points"_a, "convex"_a = false,
-        "Draw a filled polygon. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is triangluated.");
-    cls.def("complex_polygon", &Context::draw_complex_polygon, "polygons"_a,
+        "Draw a filled polygon by stringing together the given points. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is split into triangles using the ear-clipping method.");
+    cls.def("complex_polygon", &Context::draw_complex_polygon, "contours"_a,
             "Draw a complex filled polygon that can consist of holes.");
     cls.def(
         "plot",
@@ -137,8 +137,8 @@ inline void add_canvas_functions(auto& cls)
                       "Set the point size in fractional pixels.");
     cls.def_readwrite("line_width", &Context::line_width,
                       "Set the line with in fractional pixels.");
-    cls.def_readwrite("clip_top_left", &Context::clip_start);
-    cls.def_readwrite("clip_size", &Context::clip_size);
+    //cls.def_readwrite("clip_top_left", &Context::clip_start);
+    //cls.def_readwrite("clip_size", &Context::clip_size);
     cls.def_readwrite("scale", &Context::target_scale);
     cls.def_readwrite("backface_culling", &Context::backface_culling, "If true, backward facing polygons will not be rendered.");
     cls.def_readwrite(

@@ -13,8 +13,6 @@ class Canvas:
     """
     A `Canvas` is used for rendering. It is implemented by both `Screen` and `Image`.
     """
-    clip_size: Union[Int2, Tuple[int, int]]
-    clip_top_left: Union[Int2, Tuple[int, int]]
     scale: Union[Float2, Int2, Tuple[float, float]]
     def circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
@@ -24,7 +22,7 @@ class Canvas:
         """
         Clear the canvas using given color.
         """
-    def complex_polygon(self, polygons: list[list[Float2]]) -> None:
+    def complex_polygon(self, contours: list[list[Float2]]) -> None:
         """
         Draw a complex filled polygon that can consist of holes.
         """
@@ -88,7 +86,7 @@ class Canvas:
         """
     def polygon(self, points: list[Float2], convex: bool = False) -> None:
         """
-        Draw a filled polygon. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is triangluated.
+        Draw a filled polygon by stringing together the given points. If convex is `true` the polygon is rendered as a simple triangle fan, otherwise the polygon is split into triangles using the ear-clipping method.
         """
     def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
@@ -446,6 +444,10 @@ class Float2:
         """
         Animate this Float2 so it reaches `to` in `secs` seconds.
         """
+    def tween_velocity(self, speed: Union[Float2, Int2, Tuple[float, float]], duration: float = 0.0) -> Float2:
+        """
+        Move Vec2f with velocity `speed`.
+        """
     @property
     def with_x0(self) -> Float2:
         ...
@@ -691,8 +693,16 @@ class Screen(Canvas):
     """
     The main window. Currently there can be only one instance of this class.
     """
+    def crop(self, top_left: Union[Float2, Int2, Tuple[float, float]] | None = None, size: Union[Float2, Int2, Tuple[float, float]] | None = None) -> Screen:
+        """
+        Crop the screen. Returns a screen reference that can be used to render to that part of the screen.
+        """
     def set_as_target(self) -> None:
         ...
+    def split(self, size: Union[Float2, Int2, Tuple[float, float]]) -> list[Screen]:
+        """
+        Split the screen into exactly size.x * size.y screen references that can be used as a render target for that part of the screen.
+        """
     def swap(self) -> None:
         """
         Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This is normally the last thing you do in your render loop.

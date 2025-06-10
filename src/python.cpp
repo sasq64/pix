@@ -69,6 +69,7 @@ void init()
         auto atexit = py::module_::import("atexit");
         atexit.attr("register")(py::cpp_function([] {
             Tween::tweens.clear();
+            Adder::adders.clear();
             if (pix::Screen::instance != nullptr &&
                 pix::Screen::instance->frame_counter() == 0) {
                 log("Running at exit\n");
@@ -229,6 +230,7 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     mod.def("update_tweens", [] { 
         auto t = to_sec(clk::now() - start_t);
         Tween::update_all(t);
+        Adder::update_all(t);
     }, "Manually update tweens");
     mod.def(
         "all_events", [] { return m.sys->all_events(); },
@@ -269,6 +271,7 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
         [] {
             auto t = to_sec(clk::now() - start_t);
             Tween::update_all(t);
+            Adder::update_all(t);
             return m.sys->run_loop();
         },
         "Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way");

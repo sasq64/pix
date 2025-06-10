@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-
+from random import random
+import math
+import tween
 import pixpy as pix
 
 ALIGN_LEFT = 0
@@ -124,9 +126,8 @@ while pix.run_loop():
     m = 14
     for cmd in commands:
         screen.draw(cmd.image, top_left=cmd.pos)
-        if wipe:
-            cmd.pos += (m, 0)
-            m = -m
     if pix.was_pressed(pix.key.ENTER):
-        wipe = True
+        for cmd in commands:
+            v = pix.Float2.from_angle(random() * math.pi * 2)
+            _ = cmd.pos.tween_to(v * 1000, 5.0, tween.Ease.linear)
     screen.swap()

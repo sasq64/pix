@@ -35,8 +35,10 @@ struct Texture
     void set_filter(bool min, bool max)
     {
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, min ? GL_LINEAR : GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, max ? GL_LINEAR : GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                        min ? GL_LINEAR : GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                        max ? GL_LINEAR : GL_NEAREST);
     }
 
     template <typename T, size_t N>
@@ -155,9 +157,7 @@ struct Texture
 
     void set_target()
     {
-        if(!alloc_framebuffer()) {
-            glBindFramebuffer(GL_FRAMEBUFFER, fb_id);
-        }
+        if (!alloc_framebuffer()) { glBindFramebuffer(GL_FRAMEBUFFER, fb_id); }
         setViewport({width, height});
     }
 
@@ -196,9 +196,8 @@ struct Texture
         return data;
     }
 
-    template <typename T>
-    void update(T const* ptr, GLint source_format = -1,
-                GLenum type = GL_UNSIGNED_BYTE) const
+    template <typename T> void update(T const* ptr, GLint source_format = -1,
+                                      GLenum type = GL_UNSIGNED_BYTE) const
     {
         if (source_format < 0) {
             constexpr static std::array translate{0, GL_ALPHA, 0, GL_RGB,
@@ -210,9 +209,9 @@ struct Texture
                         type, ptr);
     }
 
-    template <typename T>
-    void update(int x, int y, int w, int h, T const* ptr,
-                GLint source_format = -1, GLenum type = GL_UNSIGNED_BYTE) const
+    template <typename T> void update(int x, int y, int w, int h, T const* ptr,
+                                      GLint source_format = -1,
+                                      GLenum type = GL_UNSIGNED_BYTE) const
     {
         if (source_format < 0) {
             constexpr static std::array translate{0, GL_ALPHA, 0, GL_RGB,
@@ -251,10 +250,7 @@ public:
     {
     }
 
-    void set_texture_filter(bool min, bool max)
-    {
-        tex->set_filter(min, max);
-    }
+    void set_texture_filter(bool min, bool max) { tex->set_filter(min, max); }
 
     const auto& uvs() const { return _uvs; }
 
@@ -299,10 +295,8 @@ public:
         auto uv = program.getAttribute("in_uv");
         pos.enable();
         uv.enable();
-        gl::vertexAttrib(pos, 2, gl::Type::Float, 0 * sizeof(GLfloat),
-                              0);
-        gl::vertexAttrib(uv, 2, gl::Type::Float, 0 * sizeof(GLfloat),
-                              8 * 4);
+        gl::vertexAttrib(pos, 2, gl::Type::Float, 0 * sizeof(GLfloat), 0);
+        gl::vertexAttrib(uv, 2, gl::Type::Float, 0 * sizeof(GLfloat), 8 * 4);
         gl::drawArrays(gl::Primitive::TriangleFan, 0, 4);
         pos.disable();
         uv.disable();
@@ -389,4 +383,4 @@ public:
     }
 };
 
-} // namespace gl_wrap
+} // namespace gl

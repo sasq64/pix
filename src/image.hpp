@@ -1,7 +1,6 @@
 #pragma once
 
 #include "gl/gl.hpp"
-#include "gl/texture.hpp"
 #include "image_view.hpp"
 
 #include <algorithm>
@@ -18,7 +17,10 @@ public:
     explicit pix_exception(std::string m = "pix exception") : msg(std::move(m))
     {
     }
-    [[nodiscard]] const char* what() const noexcept override { return msg.c_str(); }
+    [[nodiscard]] const char* what() const noexcept override
+    {
+        return msg.c_str();
+    }
 
 private:
     std::string msg;
@@ -28,9 +30,9 @@ struct Image
 {
     Image() = default;
     Image(int w, int h)
-        : width(w),
-          height(h), sptr{new std::byte[static_cast<size_t>(w) * h * 4]},
-          ptr{sptr.get()}, format{GL_RGBA}
+        : width(w), height(h),
+          sptr{new std::byte[static_cast<size_t>(w) * h * 4]}, ptr{sptr.get()},
+          format{GL_RGBA}
     {
     }
     Image(int w, int h, std::byte* p, unsigned f = 0)

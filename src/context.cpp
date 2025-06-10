@@ -198,8 +198,8 @@ Context::Context(Context const& other)
     offset = other.offset;
     target_size = other.target_size;
     target_scale = other.target_scale;
-    clip_start = other.clip_start;
-    clip_size = other.clip_size;
+    // clip_start = other.clip_start;
+    // clip_size = other.clip_size;
     vpscale = other.vpscale;
 
     backface_culling = other.backface_culling;
@@ -515,14 +515,15 @@ void Context::draw_polygon(Vec2f const* points, size_t count)
 
 void Context::set_target() const
 {
+    // printf("%f,%f / %f,%f / %f : %d\n", view_size.x, view_size.y,
+    // target_size.x, target_size.y, vpscale, target);
     glBindFramebuffer(GL_FRAMEBUFFER, target);
     gl::setViewport({target_size.x * vpscale, target_size.y * vpscale});
-    if (clip_size.x != 0) {
+    if (offset.x != 0 || view_size != target_size) {
         glEnable(GL_SCISSOR_TEST);
-        glScissor(clip_start.x,
-                  static_cast<int>(target_size.y) -
-                      (clip_start.y + clip_size.y),
-                  clip_size.x, clip_size.y);
+        glScissor(offset.x * vpscale,
+                  (target_size.y - offset.y - view_size.y) * vpscale,
+                  view_size.x * vpscale, view_size.y * vpscale);
     } else {
         glDisable(GL_SCISSOR_TEST);
     }

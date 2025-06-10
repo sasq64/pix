@@ -30,6 +30,7 @@ public:
     double height() const { return tex.height(); }
     double y() const { return tex.y(); }
     double x() const { return tex.x(); }
+    auto size() const { return Vec2f{tex.width(), tex.height()}; }
 
     ImageView crop(double x, double y, double w, double h) const
     {

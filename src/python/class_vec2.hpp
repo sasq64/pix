@@ -5,7 +5,7 @@
 #include <pybind11/detail/common.h>
 #include <pybind11/pybind11.h>
 
-#include <tuple>
+#include <utility>
 
 namespace py = pybind11;
 
@@ -15,14 +15,71 @@ static inline Vec2f vec2_zero{0, 0};
 static inline Vec2i vec2i_one{1, 1};
 static inline Vec2i vec2i_zero{0, 0};
 
-// Tweens must go from 0 to 1 over n seconds
-// Save start_time,
+struct Adder
+{
+    Adder(py::object obj_) : obj{obj_} {}
+
+    bool update(double delta_time)
+    {
+        if (Py_REFCNT(obj.ptr()) <= 1) {
+            // If python side no longer refences this Vec2, we
+            // should also drop it
+            return true;
+        }
+        auto& target = obj.cast<Vec2f&>();
+        target = target + (velocity * delta_time);
+        if (duration > 0) {
+            duration -= delta_time;
+            if (duration <= 0) { return true; }
+        }
+
+        return false;
+    }
+    py::object obj;
+    Vec2f velocity;
+    double duration = 0;
+    std::function<void(Vec2f&)> end_callback;
+
+    static inline double last_time = 0;
+
+    static void update_all(double current_time)
+    {
+        if (last_time == 0) {
+            last_time = current_time;
+            return;
+        }
+        auto delta_time = current_time - last_time;
+        last_time = current_time;
+
+        auto it = adders.begin();
+        while (it != adders.end()) {
+            if (it->update(delta_time)) {
+                if (it->end_callback) {
+                    auto& target = it->obj.cast<Vec2f&>();
+                    it->end_callback(target);
+                }
+                it = adders.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+    static std::vector<Adder> adders;
+};
+
+inline std::vector<Adder> Adder::adders;
+
 struct Tween
 {
     Tween(py::object obj_) : obj{obj_} {}
 
     bool update(double current_time)
     {
+        if (Py_REFCNT(obj.ptr()) <= 1) {
+            // If python side no longer refences this Vec2, we
+            // should also drop it
+            return true;
+        }
         if (!started) {
             start_time = current_time;
             started = true;
@@ -50,12 +107,17 @@ struct Tween
 
     py::object obj;
     std::function<double(double)> fn;
+    std::function<void(Vec2f&)> end_callback;
 
     static void update_all(double current_time)
     {
         auto it = tweens.begin();
         while (it != tweens.end()) {
             if (it->update(current_time)) {
+                if (it->end_callback) {
+                    auto& target = it->obj.cast<Vec2f&>();
+                    it->end_callback(target);
+                }
                 it = tweens.erase(it);
             } else {
                 ++it;
@@ -79,8 +141,9 @@ py::class_<Vec2> add_common(py::module_& mod, const char* name)
             .def("__len__", &Vec2::len)
             .def("__hash__",
                  [](Vec2 const& v) { return (int)v.x + (int)(v.y * 65535); })
-            .def("__copy__", [](const Vec2 &self) { return Vec2(self); })
-            .def("__deepcopy__", [](const Vec2 &self, py::dict) { return Vec2(self); })
+            .def("__copy__", [](const Vec2& self) { return Vec2(self); })
+            .def("__deepcopy__",
+                 [](const Vec2& self, py::dict) { return Vec2(self); })
             .def(
                 "clamp", &Vec2::clamp, py::arg("low"), py::arg("high"),
                 "Separately clamp the x and y component between the corresponding components in the given arguments.")
@@ -124,12 +187,12 @@ py::class_<Vec2> add_common(py::module_& mod, const char* name)
     return vd;
 }
 
-static inline double linear(double x) {
+static inline double linear(double x)
+{
     return x;
 }
 
 static inline std::function<double(double)> lf = &linear;
-
 
 inline void add_vec2_class(py::module_& mod)
 {
@@ -139,31 +202,45 @@ inline void add_vec2_class(py::module_& mod)
     auto vd = add_common<Vec2f>(mod, "Float2");
 
     vd.def(py::init<std::pair<double, double>>())
-        .def("tween_to",
-             [](py::object self, Vec2f const& to, float secs,
-                std::function<double(double)> const& ease) -> Vec2f& {
-                 Tween::tweens.push_back(Tween{self});
-                 auto it = &Tween::tweens.back();
-                 it->start = self.cast<Vec2f&>();
-                 it->duration = secs;
-                 it->end = to;
-                 it->fn = ease;
-                 return self.cast<Vec2f&>();
-             }, "to"_a, "secs"_a = 1.0F, "ease"_a = lf,
-        "Animate this Float2 so it reaches `to` in `secs` seconds.")
-        .def("tween_from",
-             [](py::object self, Vec2f const& from, float secs,
-                std::function<double(double)> const& ease) -> Vec2f& {
-                 auto& me = self.cast<Vec2f&>();
-                 Tween::tweens.push_back(Tween{self});
-                 auto it = &Tween::tweens.back();
-                 it->start = from;
-                 it->duration = secs;
-                 it->end = me;
-                 it->fn = ease;
-                 return self.cast<Vec2f&>();
-             }, "from"_a, "secs"_a = 1.0F, "ease"_a = &lf,
-        "Animate this Float2 from `from` to its current value in `secs` seconds.")
+        .def(
+            "tween_to",
+            [](py::object self, Vec2f const& to, float secs,
+               std::function<double(double)> const& ease) -> Vec2f& {
+                Tween::tweens.push_back(Tween{self});
+                auto it = &Tween::tweens.back();
+                it->start = self.cast<Vec2f&>();
+                it->duration = secs;
+                it->end = to;
+                it->fn = ease;
+                return self.cast<Vec2f&>();
+            },
+            "to"_a, "secs"_a = 1.0F, "ease"_a = lf,
+            "Animate this Float2 so it reaches `to` in `secs` seconds.")
+        .def(
+            "tween_from",
+            [](py::object self, Vec2f const& from, float secs,
+               std::function<double(double)> const& ease) -> Vec2f& {
+                auto& me = self.cast<Vec2f&>();
+                Tween::tweens.push_back(Tween{self});
+                auto it = &Tween::tweens.back();
+                it->start = from;
+                it->duration = secs;
+                it->end = me;
+                it->fn = ease;
+                return self.cast<Vec2f&>();
+            },
+            "from"_a, "secs"_a = 1.0F, "ease"_a = &lf,
+            "Animate this Float2 from `from` to its current value in `secs` seconds.")
+        .def(
+            "tween_velocity",
+            [](py::object self, Vec2f const& speed, double duration) -> Vec2f& {
+                auto& me = self.cast<Vec2f&>();
+                Adder::adders.push_back(Adder{self});
+                auto it = &Adder::adders.back();
+                it->velocity = speed;
+                return self.cast<Vec2f&>();
+            },
+            "speed"_a, "duration"_a = 0.0, "Move Vec2f with velocity `speed`.")
         .def(
             "toi",
             [](Vec2f self) {
