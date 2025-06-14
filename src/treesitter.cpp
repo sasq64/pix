@@ -90,7 +90,7 @@ void TreeSitter::walk_tree(TSNode node, int d, uint64_t pattern,
         mask >>= 16;
     }
     printf("%s%s -- ", &spaces[strlen(spaces) - d * 2], ts_node_type(node));
-    printf("%llx -> COLOR %d\n", pattern, color);
+    //printf("%llx -> COLOR %d\n", pattern, color);
     if (color >= 0) {
         TSPoint start = ts_node_start_point(node);
         TSPoint end = ts_node_end_point(node);
@@ -186,7 +186,7 @@ void TreeSitter::set_format(
             }
         }
         puts("");
-        printf("%s -> %llx\n", pattern.c_str(), id);
+        //printf("%s -> %llx\n", pattern.c_str(), id);
         patterns[id] = color;
     }
 }

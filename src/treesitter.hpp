@@ -1,5 +1,7 @@
+#include <cstdint>
 #include <string>
 #include <tuple>
+#include <vector>
 #include <unordered_map>
 
 struct TSParser;
