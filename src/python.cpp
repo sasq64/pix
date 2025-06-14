@@ -8,6 +8,7 @@
 #include "python/mod_color.hpp"
 #include "python/mod_event.hpp"
 #include "python/mod_key.hpp"
+#include "python/mod_treesitter.hpp"
 
 #include "gl/texture.hpp"
 
@@ -86,7 +87,13 @@ void init()
 std::shared_ptr<pix::Screen> open_display(int width, int height,
                                           bool full_screen, bool visible = true)
 {
-    if (pix::Screen::instance != nullptr) { return pix::Screen::instance; }
+    if (pix::Screen::instance != nullptr) { 
+
+        auto s = pix::Screen::instance;
+        s->offset = {0,0};
+        s->view_size = s->target_size;
+        return s; 
+    }
     init();
     Display::Settings const settings{
         .screen = full_screen ? DisplayType::Full : DisplayType::Window,
@@ -184,6 +191,8 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
 
     add_key_module(mod.def_submodule("key"));
     add_color_module(mod.def_submodule("color"));
+
+    add_treesitter_module(mod.def_submodule("treesitter"));
 
     mod.attr("BLEND_NORMAL") = (GL_SRC_ALPHA << 16) | GL_ONE_MINUS_SRC_ALPHA;
     mod.attr("BLEND_ADD") = (GL_SRC_ALPHA << 16) | GL_ONE;

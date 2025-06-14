@@ -7,7 +7,7 @@ authors = [
 ]
 license = "MIT"
 readme = "docs/index.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 
 [project.urls]
 repository = "https://github.com/sasq64/pix"

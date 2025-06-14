@@ -67,8 +67,8 @@ class CubeDemo:
     def __init__(self, screen: pix.Screen):
 
         self.screen: Final = screen
-        self.speed: tuple[float, float, float] = (0.8, 0.2, 0.05)
-        self.rgb: tuple[float, float, float] = (0, 0, 1)
+        self.speed: tuple[float, float, float] = (2.8, 0.2, 0.05)
+        self.rgb: tuple[float, float, float] = (0.5, 0.2, 1)
 
         # Create starfield
         sz = screen.size / 3

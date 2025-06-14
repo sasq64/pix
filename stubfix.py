@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+from typing import Union
 
 
 class WorkFile:
@@ -31,7 +32,7 @@ class WorkFile:
             if new_line != line:
                 self.lines[i] = new_line
 
-    def add_after(self, pattern, line: str | list[str]):
+    def add_after(self, pattern, line: Union[str, list[str]]):
         if isinstance(line, list):
             self.add_all_after(pattern, line)
         i = self.find(pattern)
@@ -69,7 +70,7 @@ class WorkFile:
         for line in self.lines:
             print(line.rstrip())
 
-    def find(self, pattern, start=0) -> int | None:
+    def find(self, pattern, start=0) -> Union[int, None]:
         for i, line in enumerate(self.lines):
             if i >= start and re.match(pattern, line):
                 return i

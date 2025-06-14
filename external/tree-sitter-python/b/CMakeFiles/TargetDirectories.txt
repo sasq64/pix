@@ -1,0 +1,8 @@
+/Users/sasq/projects/pix/external/tree-sitter-python/b/CMakeFiles/tree-sitter-python.dir
+/Users/sasq/projects/pix/external/tree-sitter-python/b/CMakeFiles/ts-test.dir
+/Users/sasq/projects/pix/external/tree-sitter-python/b/CMakeFiles/edit_cache.dir
+/Users/sasq/projects/pix/external/tree-sitter-python/b/CMakeFiles/rebuild_cache.dir
+/Users/sasq/projects/pix/external/tree-sitter-python/b/CMakeFiles/list_install_components.dir
+/Users/sasq/projects/pix/external/tree-sitter-python/b/CMakeFiles/install.dir
+/Users/sasq/projects/pix/external/tree-sitter-python/b/CMakeFiles/install/local.dir
+/Users/sasq/projects/pix/external/tree-sitter-python/b/CMakeFiles/install/strip.dir

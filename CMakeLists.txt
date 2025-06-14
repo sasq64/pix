@@ -163,6 +163,22 @@ add_library(tess2 STATIC ${TESS_FILES})
 target_include_directories(tess2 PUBLIC external/libtess2/Include)
 
 
+set(TREESITTER external/tree-sitter)
+set(TREESITTER_PY external/tree-sitter-python)
+set(TS_FLAGS -O3 -Wall -Wextra -Wshadow -Wpedantic -Werror=incompatible-pointer-types -std=c11 -fPIC -fvisibility=hidden -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE)
+set(TS_INCLUDES ${TREESITTER}/lib/src ${TREESITTER}/lib/include)
+
+set(TS ${TREESITTER}/lib/src)
+set(TSP ${TREESITTER_PY}/src)
+add_library(treesitter STATIC
+    ${TS}/alloc.c ${TS}/lexer.c ${TS}/parser.c ${TS}/subtree.c ${TS}/wasm_store.c
+    ${TS}/get_changed_ranges.c ${TS}/query.c ${TS}/tree_cursor.c
+    ${TS}/language.c ${TS}/node.c ${TS}/stack.c ${TS}/tree.c
+    ${TSP}/parser.c ${TSP}/scanner.c
+)
+target_compile_options(treesitter PRIVATE ${TS_FLAGS})
+target_include_directories(treesitter PUBLIC ${TS_INCLUDES})
+
 set(PIX src/)
 add_library(pix STATIC
     ${SYSTEM}
@@ -182,14 +198,14 @@ target_link_libraries(pix PRIVATE Warnings PUBLIC tess2
 
 add_library(pix::pix ALIAS pix)
 
-add_executable(pixtest src/test.cpp)
-target_link_libraries(pixtest PRIVATE pix::pix)
+add_executable(pixtest src/test.cpp src/treesitter.cpp)
+target_link_libraries(pixtest PRIVATE treesitter pix::pix)
 
 add_subdirectory(external/pybind11)
 
 if (PYTHON_MODULE)
-    pybind11_add_module(_pixpy src/python.cpp)
-    target_link_libraries(_pixpy PUBLIC Warnings pix Extra)
+    pybind11_add_module(_pixpy src/python.cpp src/treesitter.cpp)
+    target_link_libraries(_pixpy PUBLIC treesitter Warnings pix Extra)
     target_compile_definitions(_pixpy PRIVATE PYTHON_MODULE)
     install(TARGETS _pixpy DESTINATION pixpy)
 else ()

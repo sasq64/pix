@@ -5,7 +5,7 @@ from cube_stars import CubeDemo
 
 screen = pix.open_display(size=(1280, 720))
 
-splits = screen.split(size=(8, 6))
+splits = screen.split(size=(3, 2))
 cubes: list[CubeDemo] = []
 for split in splits:
     demo = CubeDemo(split)

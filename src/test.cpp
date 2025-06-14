@@ -17,6 +17,7 @@
 
 namespace fs = std::filesystem;
 
+
 template<typename Result = std::string, typename Stream>
 static Result read_all(Stream &in) {
     Result contents;
@@ -42,6 +43,10 @@ auto star = std::vector<Vec2f>{
 };
 
 int main() {
+
+    //init_treesitter();
+    return 0;
+
     //constexpr std::array colors{color::blue, color::red, color::yellow};
     constexpr std::array colors{0x800000ffU, 0xff0000ffU, 0x00ff00ffU};
 
