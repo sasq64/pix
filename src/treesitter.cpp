@@ -213,7 +213,7 @@ void TreeSitter::set_format(
             }
         }
         puts("");
-        printf("%s -> %llx\n", pattern.c_str(), id);
+        //printf("%s -> %llx\n", pattern.c_str(), id);
         patterns[id] = color;
     }
 }
