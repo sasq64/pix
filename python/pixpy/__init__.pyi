@@ -799,6 +799,9 @@ class TileSet:
         """
         Render characters from the TileSet, each character using the next position from `points`, using the default tile size.
         """
+    @property
+    def tile_size(self) -> Int2:
+        ...
 def add_color(color0: int, color1: int) -> int:
     ...
 def all_events() -> list[event.NoEvent | event.Key | event.Move | event.Click | event.Text | event.Resize | event.Quit]:

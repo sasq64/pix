@@ -4,6 +4,7 @@ import pixpy as pix
 from dataclasses import dataclass
 from pixpy import Float2
 
+
 @dataclass
 class Ball:
     """Represents a ball on the screen"""
@@ -43,7 +44,9 @@ while pix.run_loop():
     for ball in balls:
         screen.draw_color = ball.color
         screen.draw(
-            image=ball_img, center=ball.pos, size=ball_img.size * (math.sin(z) + 2.0) * 0.25
+            image=ball_img,
+            center=ball.pos,
+            size=ball_img.size * (math.sin(z) + 2.0) * 0.25,
         )
         z += 0.1
         ball.pos += ball.velocity

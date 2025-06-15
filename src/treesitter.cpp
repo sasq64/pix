@@ -68,12 +68,9 @@ void make_map()
     }
 }
 */
-void TreeSitter::walk_tree(TSNode node, int d, uint64_t pattern,
+void TreeSitter::walk_tree(TSNode node, uint64_t pattern,
                            std::vector<Hilight>& result)
 {
-    static const char* spaces =
-        "                                                                         ";
-
     auto n = ts_node_child_count(node);
 
     auto sym = ts_node_symbol(node);
@@ -89,25 +86,55 @@ void TreeSitter::walk_tree(TSNode node, int d, uint64_t pattern,
         }
         mask >>= 16;
     }
-    printf("%s%s -- ", &spaces[strlen(spaces) - d * 2], ts_node_type(node));
-    printf("%llx -> COLOR %d\n", pattern, color);
+    // printf("%s%s -- ", &spaces[strlen(spaces) - d * 2], ts_node_type(node));
+    // printf("%llx -> COLOR %d\n", pattern, color);
     if (color >= 0) {
         TSPoint start = ts_node_start_point(node);
         TSPoint end = ts_node_end_point(node);
-        printf("%d,%d\n", start.column, start.row);
+        // printf("%d,%d\n", start.column, start.row);
         result.emplace_back(start.column, start.row, end.column, end.row,
                             color);
+        return;
     }
     for (uint32_t i = 0; i < n; i++) {
-        walk_tree(ts_node_child(node, i), d + 1, pattern, result);
+        walk_tree(ts_node_child(node, i),  pattern, result);
     }
+}
+
+void TreeSitter::dump_nodes(TSNode node, size_t d, std::string& result)
+{
+    static const char* spaces =
+        "                                                                    ";
+
+    auto sym = ts_node_symbol(node);
+    TSPoint start = ts_node_start_point(node);
+    TSPoint end = ts_node_end_point(node);
+    char temp[2048];
+    if (d * 2 >= strlen(spaces)) { d = strlen(spaces) / 2; }
+
+    snprintf(temp, sizeof(temp), "%s%s (%d,%d -> %d, %d)\n",
+             &spaces[strlen(spaces) - d * 2], ts_node_type(node), start.row,
+             start.column, end.row, end.column);
+    result += temp;
+
+    auto n = ts_node_child_count(node);
+    for (uint32_t i = 0; i < n; i++) {
+        dump_nodes(ts_node_child(node, i), d + 1, result);
+    }
+}
+
+std::string TreeSitter::dump_tree()
+{
+    std::string result;
+    dump_nodes(ts_tree_root_node(tree), 0, result);
+    return result;
 }
 
 std::vector<Hilight> TreeSitter::get_highlights()
 {
     std::vector<Hilight> result;
     auto root_node = ts_tree_root_node(tree);
-    walk_tree(root_node, 0, 0, result);
+    walk_tree(root_node, 0, result);
     return result;
 }
 

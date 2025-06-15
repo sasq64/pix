@@ -18,5 +18,7 @@ inline void add_treesitter_module(py::module_ const& mod)
     auto ts = py::class_<TreeSitter, std::shared_ptr<TreeSitter>>(mod, "TreeSitter")
             .def(py::init<>(), "Create an empty treesitter object.")
             .def("set_source", &TreeSitter::set_source_utf8)
+            .def("set_format", &TreeSitter::set_format)
+            .def("dump_tree", &TreeSitter::dump_tree)
             .def("get_highlights", &TreeSitter::get_highlights);
 }

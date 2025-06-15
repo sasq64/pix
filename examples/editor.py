@@ -111,6 +111,15 @@ class TextEdit:
                 break
             offset += ll
 
+    def highlight_lines(self, line0: int, col0: int, line1: int, col1: int, color: int):
+        for ln in range(line0, line1+1):
+            line = self.lines[ln]
+            ll = len(line) + 1
+            c0 = col0 if ln == line0 else 0
+            c1 = col1 if ln == line1 - 1 else ll
+            #print(f"HIGHTLIGHT {ln} with {color}")
+            self.hl_line(line, color, c0, c1)
+
     def get_location(self):
         return self.xpos, self.ypos
 
@@ -121,7 +130,7 @@ class TextEdit:
         lines = text.split("\n")
         self.lines = [[]]
         for line in lines:
-            self.lines.append([(ord(c), 0) for c in line])
+            self.lines.append([(ord(c), 1) for c in line])
         self.ypos = 0
         self.xpos = 0
         self.line = self.lines[0]

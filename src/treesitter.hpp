@@ -15,13 +15,14 @@ class TreeSitter
     std::unordered_map<std::string, uint32_t> symbols;
     std::unordered_map<uint64_t, int> patterns;
 
-    void set_format(std::vector<std::pair<std::string, int>> const& format);
-    void walk_tree(TSNode node, int d, uint64_t pattern,
+    void walk_tree(TSNode node, uint64_t pattern,
                    std::vector<Hilight>& result);
 
+    void dump_nodes(TSNode node, size_t d, std::string& result);
 public:
     TreeSitter();
     void set_source_utf8(std::string const& source);
-
+    void set_format(std::vector<std::pair<std::string, int>> const& format);
     std::vector<Hilight> get_highlights();
+    std::string dump_tree();
 };

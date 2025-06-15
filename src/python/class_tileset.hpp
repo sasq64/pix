@@ -75,11 +75,12 @@ inline void add_tileset_class(py::module_ const& mod)
 {
     using namespace pybind11::literals;
     auto ts = py::class_<TileSet, std::shared_ptr<TileSet>>(mod, "TileSet");
-    ts.def(py::init<>(&make_tileset), "font_file"_a, "size"_a,
-           "Create a TileSet from a ttf font with the given size. The tile size will be derived from the font size.")
-        .def(py::init<>(&make_tileset3), "font"_a,
-             "tile_size"_a = Vec2i{-1, -1},
-             "Create a TileSet from an existing font. The tile size will be derived from the font size.")
+    ts.def(
+          py::init<>(&make_tileset), "font_file"_a, "size"_a,
+          "Create a TileSet from a ttf font with the given size. The tile size will be derived from the font size.")
+        .def(
+            py::init<>(&make_tileset3), "font"_a, "tile_size"_a = Vec2i{-1, -1},
+            "Create a TileSet from an existing font. The tile size will be derived from the font size.")
         .def(py::init<>(&make_tileset2), "tile_size"_a,
              "Create an empty tileset with the given tile size.")
         .def(
@@ -98,7 +99,10 @@ inline void add_tileset_class(py::module_ const& mod)
             "Render characters from the TileSet, each character using the next position from `points`, using the default tile size.")
         .def(
             "get_image_for", &TileSet::get_texture_for_char, "character"_a,
-            "Get the image for a specific character. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.");
+            "Get the image for a specific character. Use `copy_to()` on the image to redefine that tile with new graphics. Will allocate a new tile if necessary. Will throw an exception if there is no room for the new tile in the tile texture.")
+        .def_property_readonly("tile_size", [](TileSet const& ts) {
+            return Vec2i(ts.char_width, ts.char_height);
+        });
     ts.doc() =
         "A tileset is a texture split up into tiles for rendering. It is used by the `Console` class but can also be used directly.";
 }

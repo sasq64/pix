@@ -1,25 +1,20 @@
+import builtins
 import os.path
-import sys
 
 # import traceback
 from pathlib import Path
 from typing import Final
 
-import jedi  # type: ignore
 import pixpy as pix
-import tree_sitter
-import tree_sitter_python as tspython
 from editor import TextEdit
-from jedi.api import Completion  # type: ignore
-from repl import Repl
-from utils.list_box import ListBox
+
 
 fwd = Path(os.path.dirname(os.path.abspath(__file__)))
 hack_font = (fwd / "data" / "Hack.ttf").as_posix()
 
 
 class PixIDE:
-    def __init__(self):
+    def __init__(self, screen: pix.Screen):
 
         self.colors: dict[str, int] = {
             "default": 1,
@@ -31,18 +26,21 @@ class PixIDE:
             "else": 3,
             "import": 3,
             "class": 3,
+            "string_start": 8,
             "string_content": 8,
+            "string_end": 8,
             "call.identifier": 2,
-            "decorator.identifier": 4,
+            "decorator": 4,
             "keyword_argument.identifier": 7,
             "call.attribute.identifier": 2,
-            "function_definition.identifier": 6,
+            "function_definition.parameters.identifier": 6,
             "typed_parameter.type": 7,
             "type.identifier": 7,
             "integer": 8,
             "float": 8,
             "comment": 6,
-            #'identifier': 4
+            "identifier": 1,
+            "ERROR": 8,
         }
 
         self.palette: Final = [
@@ -55,51 +53,51 @@ class PixIDE:
             0x86DE74,  # green string
             0x75BFFF,  # light blue
             0x6B89FF,  # dark blue
+            0xFF2020,  # red
         ]
 
-        self.font_size: Final = 14
+        self.font_size: Final = 24
         font = pix.load_font(hack_font, self.font_size)
         ts = pix.TileSet(font)
         self.ar_ok: Final = font.make_image("▶", 30, pix.color.GREEN)
         self.ar_error: Final = font.make_image("▶", 30, pix.color.RED)
 
+        print(ts.tile_size)
+        con_size = screen.size.toi() / ts.tile_size
+
         self.comp_enabled: bool = False
-        self.con: Final = pix.Console(120, 40, ts)
+        self.con: Final = pix.Console(con_size.x, con_size.y - 1, ts)
         print(self.con.tile_size)
 
         self.title: Final = pix.Console(
-            90, 1, font_file=hack_font, font_size=self.font_size
+            con_size.x, 1, font_file=hack_font, font_size=self.font_size
         )
         print(self.title.tile_size)
         self.title.set_color(pix.color.WHITE, 0xE17092FF)
         self.title.clear()
         self.title.write("example.py")
-        self.tree: tree_sitter.Tree | None = None
 
         self.files: Final = sorted(
-            [
-                p
-                for p in Path("../examples").iterdir()
-                if p.is_file()
-                if p.suffix == ".py"
-            ]
+            [p for p in Path("examples").iterdir() if p.is_file() if p.suffix == ".py"]
         )
 
         self.auto_run: bool = False
-        language = tree_sitter.Language(tspython.language())
-        self.parser: Final = tree_sitter.Parser(language)
+        self.treesitter: Final = pix.treesitter.TreeSitter()
+        f = [(a, b) for a, b in self.colors.items()]
+        self.treesitter.set_format(f)
 
         self.current_file: Path
         self.edit: Final = TextEdit(self.con)
         self.edit.set_color(self.palette[1], self.palette[0])
         self.edit.set_palette(self.palette)
         self.load(self.files[1])
-
+        self.highlight()
+        print(self.treesitter.dump_tree())
         # self.tree = self.parser.parse(self.edit.get_text().encode())
         # self.highlight(self.tree.root_node)
-        self.tree = self.parser.parse(self.edit.get_utf16(), encoding="utf16")
-        self.highlight(self.tree.root_node, self.tree.root_node.type)
-        self.result: list[Completion] = []
+        # self.tree = self.parser.parse(self.edit.get_utf16(), encoding="utf16")
+        # elf.highlight(self.tree.root_node, self.tree.root_node.type)
+        # self.result: list[Completion] = []
 
     def load(self, path: Path):
         if os.path.isfile(path):
@@ -112,36 +110,11 @@ class PixIDE:
                     text = f.read()
                     self.edit.set_text(text)
 
-    def update_completion(self):
-        script = jedi.Script(self.edit.get_text(), path=self.current_file)
-        x, y = self.edit.get_location()
-        self.result = script.complete(line=y + 1, column=x)
-        self.comp.set_lines(list([str(r.name) for r in self.result]))  # type: ignore
-        self.comp_enabled = True
-
-    def highlight(self, node: tree_sitter.Node, name: str):
-
-        # if node.type in ('function_definition', 'string', 'identifier'): #, 'comment'):
-
-        if node.child_count == 0:
-            # print(f"## {node.start_byte} to {node.end_byte}: {name}")
-
-            color = -1
-            for nam, col in self.colors.items():
-                if name.endswith(nam):
-                    color = col
-                    break
+    def highlight(self):
+        self.treesitter.set_source(self.edit.get_text())
+        for col0, row0, col1, row1, color in self.treesitter.get_highlights():
             if color >= 0:
-                self.edit.highlight(node.start_byte // 2, node.end_byte // 2, color)
-            else:
-                self.edit.highlight(node.start_byte // 2, node.end_byte // 2, 1)
-
-        # highlights.append((node.start_byte, node.end_byte, node.type))
-        for child in node.children:
-            if child.type == "call":
-                self.highlight(child, child.type)
-            else:
-                self.highlight(child, name + "." + child.type)
+                self.edit.highlight_lines(row0, col0, row1, col1, color)
 
     def render(self, screen: pix.Screen):
         ctrl = pix.is_pressed(pix.key.RCTRL) or pix.is_pressed(pix.key.LCTRL)
@@ -157,7 +130,7 @@ class PixIDE:
                 if e.key == pix.key.TAB:
                     x, _ = self.edit.get_location()
                     if x > 0 and self.edit.get_char(x - 1) != 0x20:
-                        self.update_completion()
+                        # self.update_completion()
                         continue
                 elif e.key == pix.key.F5:
                     if ctrl:
@@ -172,13 +145,13 @@ class PixIDE:
                 elif (
                     e.key == pix.key.UP or e.key == pix.key.DOWN
                 ) and self.comp_enabled:
-                    self.comp.move(-1 if e.key == pix.key.UP else 1)
+                    # self.comp.move(-1 if e.key == pix.key.UP else 1)
                     continue
                 elif e.key == pix.key.ENTER and self.comp_enabled:
                     self.comp_enabled = False
-                    res = self.result[self.comp.selected]
-                    i = res.get_completion_prefix_length()
-                    self.edit.insert(res.name[i:])
+                    # res = self.result[self.comp.selected]
+                    # i = res.get_completion_prefix_length()
+                    # self.edit.insert(res.name[i:])
                     continue
                 elif e.key == pix.key.BACKSPACE and self.comp_enabled:
                     should_update = True
@@ -192,22 +165,23 @@ class PixIDE:
         self.edit.update(keep)
         if should_update:
             x, _ = self.edit.get_location()
-            if x > 0 and self.edit.get_char(x - 1) != 0x20:
-                self.update_completion()
+            # if x > 0 and self.edit.get_char(x - 1) != 0x20:
+            # self.update_completion()
 
         if self.edit.dirty:
             print("DIRTY")
-            text = self.edit.get_utf16()
+            self.highlight()
+            # text = self.edit.get_utf16()
             # print(text.decode("utf-16"))
-            self.tree = self.parser.parse(text, encoding="utf16")
-            self.highlight(self.tree.root_node, self.tree.root_node.type)
+            # self.tree = self.parser.parse(text, encoding="utf16")
+            # self.highlight(self.tree.root_node, self.tree.root_node.type)
         self.edit.render()
         # self.con.set_color(pix.color.WHITE, pix.color.RED)
         # self.con.colorize_section(0,11,100)
         # self.con.set_color(pix.color.WHITE, pix.color.LIGHT_BLUE)
         screen.clear(pix.color.DARK_GREY)
         size = screen.size - (0, self.con.tile_size.y)
-        screen.draw(self.con, top_left=(0, self.con.tile_size.y), size=size)
+        screen.draw(self.con, top_left=(0, self.con.tile_size.y), size=self.con.size)
         screen.draw(self.title, size=self.title.size)
         if self.auto_run:
             source = self.edit.get_text()
@@ -273,30 +247,9 @@ def run(source: str):
 def main():
     global screen
     screen = pix.open_display(
-        width=120 * 13, height=40 * 24, full_screen=False, visible=True
+        width=1280, height=720, full_screen=False, visible=True
     )
-    font_size = 24
-    font = pix.load_font(hack_font, font_size)
-    ts = pix.TileSet(font)
-
-    # con = pix.Console(90, 39, ts)
-    # con.set_color(pix.color.ORANGE, pix.color.BLACK)
-    # con.clear()
-    # con.write("HELLO")
-
-    # repl = Repl(con)
-    # while pix.run_loop():
-    #     screen.clear()
-    #     repl.update(pix.all_events())
-    #     # repl.render(screen)
-    #     screen.draw(repl.con, size=repl.con.size)
-    #     screen.swap()
-    #
-    # sys.exit(0)
-
-    ide = PixIDE()
-    # screen.size = ide.con.size
-    # screen.visible = True
+    ide = PixIDE(screen)
 
     print("RUN")
     while pix.run_loop():
