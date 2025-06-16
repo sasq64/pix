@@ -123,6 +123,7 @@ public:
 
     void resize(Vec2f size, float scale)
     {
+        view_size = size;
         target_size = size;
         vpscale = scale;
     }

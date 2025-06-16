@@ -10,7 +10,7 @@ from editor import TextEdit
 
 
 fwd = Path(os.path.dirname(os.path.abspath(__file__)))
-hack_font = (fwd / "data" / "Hack.ttf").as_posix()
+hack_font = (fwd / "data" / "HackNerdFont-Regular.ttf").as_posix()
 
 
 class PixIDE:
@@ -56,26 +56,25 @@ class PixIDE:
             0xFF2020,  # red
         ]
 
-        self.font_size: Final = 24
-        font = pix.load_font(hack_font, self.font_size)
-        ts = pix.TileSet(font)
-        self.ar_ok: Final = font.make_image("▶", 30, pix.color.GREEN)
-        self.ar_error: Final = font.make_image("▶", 30, pix.color.RED)
+        self.screen: Final = screen
+        self.font_size: int = 24
+        self.font: pix.Font = pix.load_font(hack_font, self.font_size)
+        self.ts: pix.TileSet = pix.TileSet(self.font)
+        self.ar_ok: Final = self.font.make_image("▶", 30, pix.color.GREEN)
+        self.ar_error: Final = self.font.make_image("▶", 30, pix.color.RED)
 
-        print(ts.tile_size)
-        con_size = screen.size.toi() / ts.tile_size
+        con_size = screen.size.toi() / self.ts.tile_size
 
         self.comp_enabled: bool = False
-        self.con: Final = pix.Console(con_size.x, con_size.y - 1, ts)
+        self.con: pix.Console = pix.Console(con_size.x, con_size.y - 1, self.ts)
         print(self.con.tile_size)
 
-        self.title: Final = pix.Console(
+        self.title: pix.Console = pix.Console(
             con_size.x, 1, font_file=hack_font, font_size=self.font_size
         )
         print(self.title.tile_size)
         self.title.set_color(pix.color.WHITE, 0xE17092FF)
-        self.title.clear()
-        self.title.write("example.py")
+        self.set_title("example.py")
 
         self.files: Final = sorted(
             [p for p in Path("examples").iterdir() if p.is_file() if p.suffix == ".py"]
@@ -93,18 +92,29 @@ class PixIDE:
         self.load(self.files[1])
         self.highlight()
         print(self.treesitter.dump_tree())
-        # self.tree = self.parser.parse(self.edit.get_text().encode())
-        # self.highlight(self.tree.root_node)
-        # self.tree = self.parser.parse(self.edit.get_utf16(), encoding="utf16")
-        # elf.highlight(self.tree.root_node, self.tree.root_node.type)
-        # self.result: list[Completion] = []
+
+    def resize(self):
+        self.ts = pix.TileSet(self.font)
+        con_size = self.screen.target_size.toi() / self.ts.tile_size
+        print(f"CON SIZE {con_size.x} {con_size.y}")
+        self.con = pix.Console(con_size.x, con_size.y - 1, self.ts)
+        self.title = pix.Console(
+            con_size.x, 1, font_file=hack_font, font_size=self.font_size
+        )
+        self.edit.set_console(self.con)
+
+    def set_title(self, name: str):
+        self.title.clear()
+        self.title.cursor_pos = (0, 0)
+        self.title.write(f"\ue73c {name}")
+        self.title.cursor_pos = (self.title.grid_size.x - 10, 0)
+        col, line = self.con.cursor_pos
+        self.title.write(f"\ue0a1 {line} \ue0a3 {col}")
 
     def load(self, path: Path):
         if os.path.isfile(path):
             self.current_file = path
-            self.title.clear()
-            self.title.cursor_pos = (0, 0)
-            self.title.write(path.name)
+            self.set_title(path.name)
             with open(path) as f:
                 if f.readable():
                     text = f.read()
@@ -116,12 +126,16 @@ class PixIDE:
             if color >= 0:
                 self.edit.highlight_lines(row0, col0, row1, col1, color)
 
-    def render(self, screen: pix.Screen):
+    def render(self):
+        screen = self.screen
         ctrl = pix.is_pressed(pix.key.RCTRL) or pix.is_pressed(pix.key.LCTRL)
         events = pix.all_events()
         keep: list[pix.event.AnyEvent] = []
         should_update = False
         for e in events:
+            if isinstance(e, pix.event.Resize):
+                print("RESIZE")
+                self.resize()
             if isinstance(e, pix.event.Key):
                 if ctrl and e.key >= 0x30 and e.key <= 0x39:
                     i = e.key - 0x30
@@ -171,10 +185,6 @@ class PixIDE:
         if self.edit.dirty:
             print("DIRTY")
             self.highlight()
-            # text = self.edit.get_utf16()
-            # print(text.decode("utf-16"))
-            # self.tree = self.parser.parse(text, encoding="utf16")
-            # self.highlight(self.tree.root_node, self.tree.root_node.type)
         self.edit.render()
         # self.con.set_color(pix.color.WHITE, pix.color.RED)
         # self.con.colorize_section(0,11,100)
@@ -199,8 +209,8 @@ class PixIDE:
                 screen.draw(self.ar_error, top_left=(screen.size.x - 24, -8))
                 pass
 
-        if self.comp_enabled:
-            self.comp.render(screen)
+        # if self.comp_enabled:
+        # self.comp.render(screen)
 
 
 def info_box(text: str):
@@ -246,14 +256,12 @@ def run(source: str):
 
 def main():
     global screen
-    screen = pix.open_display(
-        width=1280, height=720, full_screen=False, visible=True
-    )
+    screen = pix.open_display(width=640, height=720, full_screen=False)
     ide = PixIDE(screen)
 
     print("RUN")
     while pix.run_loop():
-        ide.render(screen)
+        ide.render()
         screen.swap()
 
 

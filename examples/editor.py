@@ -1,5 +1,5 @@
 from array import array
-from typing import List, cast
+from typing import Final, cast
 
 import pixpy as pix
 
@@ -27,28 +27,29 @@ class TextEdit:
     """
 
     def __init__(self, con: pix.Console):
-        self.lines: List[List[Char]] = [[]]
-        self.line = self.lines[0]
+        self.lines: list[list[Char]] = [[]]
+        self.line: list[Char] = self.lines[0]
         self.scroll_pos: int = 0
         self.xpos: int = 0
         self.ypos: int = 0
-        self.yank: List[Char] = []
+        self.keepx: int = -1
+        self.yank: list[Char] = []
 
-        self.cols, self.rows = con.grid_size
-        self.con = con
-        self.dirty = True
+        self.cols: int = con.grid_size.x
+        self.rows: int = con.grid_size.y
+        self.con: pix.Console = con
+        self.dirty: bool = True
         self.con.cursor_on = True
         self.con.wrapping = False
-        # self.con.cursor_pos = pix.Int2(0, 0)
-        self.fg = pix.color.GREEN
-        self.bg = 0x202330
+
+        self.fg: int = pix.color.GREEN
+        self.bg: int = 0x202330
         self.palette: list[tuple[int, int]] = [(0, 0)] * 128
         self.palette[0] = (0x787C99, self.bg)
         self.palette[1] = (0xEECE6A, self.bg)
         self.palette[2] = (0x5159ED, self.bg)
-        self.hl_pos = 0
 
-        self.moves = {
+        self.moves: Final = {
             pix.key.LEFT: lambda: (self.xpos - 1, self.ypos),
             pix.key.RIGHT: lambda: (self.xpos + 1, self.ypos),
             CMD | pix.key.RIGHT: lambda: (self.next_word(), self.ypos),
@@ -64,10 +65,23 @@ class TextEdit:
         }
         "Key bindings for keys that move the cursor."
 
+    def set_console(self, console: pix.Console):
+        self.con = console
+        self.con.cursor_on = True
+        self.con.wrapping = False
+        self.fg = pix.color.GREEN
+        # self.bg = 0x202330
+        self.cols = self.con.grid_size.x
+        self.rows = self.con.grid_size.y
+        self.wrap_cursor()
+        self.dirty = True
+
     def console(self):
         return self.con
 
     def goto_line(self, y: int):
+        """Goto line, try to keep X-position. Return `False` if cursor did not move"""
+
         if y < 0:
             y = 0
         elif y >= len(self.lines):
@@ -76,7 +90,14 @@ class TextEdit:
             return False
         self.ypos = y
         self.line = self.lines[y]
-        self.xpos = clamp(self.xpos, 0, len(self.line) + 1)
+        print(f"KEEP {self.keepx}")
+        if self.keepx >= 0:
+            self.xpos = self.keepx
+        new_xpos = clamp(self.xpos, 0, len(self.line) + 1)
+        if new_xpos != self.xpos:
+            self.keepx = self.xpos
+        self.xpos = new_xpos
+        print(f"SETKEEP {self.keepx}")
         return True
 
     def get_text(self):
@@ -112,12 +133,12 @@ class TextEdit:
             offset += ll
 
     def highlight_lines(self, line0: int, col0: int, line1: int, col1: int, color: int):
-        for ln in range(line0, line1+1):
+        for ln in range(line0, line1 + 1):
             line = self.lines[ln]
             ll = len(line) + 1
             c0 = col0 if ln == line0 else 0
             c1 = col1 if ln == line1 - 1 else ll
-            #print(f"HIGHTLIGHT {ln} with {color}")
+            # print(f"HIGHTLIGHT {ln} with {color}")
             self.hl_line(line, color, c0, c1)
 
     def get_location(self):
@@ -160,12 +181,17 @@ class TextEdit:
     def handle_key(self, key: int, mods: int):
         k = key | CMD if mods & 8 != 0 else key
         if k in self.moves:
+            # Cursor movement action
             (x, y) = self.moves[k]()
-            self.xpos = x
+            if self.xpos != x:
+                self.keepx = -1
+                self.xpos = x
             if self.ypos != y:
-                self.goto_line(y)
+                _ = self.goto_line(y)
             self.wrap_cursor()
+            return
         elif mods & 2 != 0:
+            # Ctrl command
             if key == ord("k"):
                 self.line[self.xpos :] = []
             elif key == ord("d"):
@@ -197,7 +223,7 @@ class TextEdit:
             rest = self.line[self.xpos :]
             self.lines[self.ypos] = [] if self.xpos == 0 else self.line[: self.xpos]
             self.lines.insert(self.ypos + 1, rest)
-            self.goto_line(self.ypos + 1)
+            _ = self.goto_line(self.ypos + 1)
             self.xpos = 0
             if self.ypos > 0:
                 # Simple auto indent
@@ -219,10 +245,13 @@ class TextEdit:
                 ll = len(self.lines[y - 1])
                 self.lines[y - 1] = self.lines[y - 1] + self.line
                 del self.lines[y]
-                self.goto_line(y - 1)
+                _ = self.goto_line(y - 1)
                 self.xpos = ll
+        print("CLEAR KEEP")
+        self.keepx = -1
 
     def wrap_cursor(self):
+        """Check if cursor is out of bounds and move it to a correct position"""
         if self.xpos < 0:
             # Wrap to end of previous line
             if self.goto_line(self.ypos - 1):
@@ -245,18 +274,23 @@ class TextEdit:
             self.scroll_pos = self.ypos - y
 
     def click(self, x: int, y: int):
+        self.keepx = -1
         p = Int2(x, y) // self.con.tile_size
         self.xpos = p.x
         if self.ypos != p.y:
-            self.goto_line(p.y)
+            _ = self.goto_line(p.y)
+        if self.xpos > len(self.line):
+            self.xpos = len(self.line)
         self.con.cursor_pos = Int2(self.xpos, self.ypos)
+        print("CLICKED")
 
-    def update(self, events: List[pix.event.AnyEvent]):
+    def update(self, events: list[pix.event.AnyEvent]):
         for e in events:
             if isinstance(e, pix.event.Text):
                 self.line.insert(self.xpos, (ord(e.text), 0))
                 self.xpos += len(e.text)
                 self.dirty = True
+                self.keepx = -1
             elif isinstance(e, pix.event.Key):
                 self.handle_key(e.key, e.mods)
                 self.dirty = True
@@ -286,15 +320,13 @@ class TextEdit:
                     break
                 self.con.cursor_pos = Int2(0, y)
                 for x, (t, c) in enumerate(self.lines[i]):
+                    if x >= self.cols:
+                        self.con.put(
+                            (x - 1, y), ord("$"), pix.color.LIGHT_RED, pix.color.BLACK
+                        )
+                        break
                     fg, bg = self.palette[c]
                     self.con.put((x, y), t, fg, bg)
-                # self.con.write(self.lines[i])
-                # self.con.set_color(self.fg, self.bg)
-
-            # self.con.cursor_pos = Int2(0, self.rows-1)
-            # self.con.set_color(pix.color.WHITE, pix.color.BLUE)
-            # self.con.write(f" LINE {self.ypos + 1} COL {self.xpos + 1} " + " " * (self.cols - 14))
-            # self.con.set_color(self.fg, self.bg)
 
             # If current line is visible, move the cursor to the edit position
             if self.ypos >= self.scroll_pos:
@@ -303,7 +335,7 @@ class TextEdit:
 
 def main():
     screen = pix.open_display(width=60 * 16, height=50 * 16)
-    sz = screen.size // (8 * 2, 16 * 2)
+    sz = screen.size.toi() // (8 * 2, 16 * 2)
     con = pix.Console(sz.x, sz.y, font_file="data/Hack.ttf", font_size=24)
     edit = TextEdit(con)
     while pix.run_loop():
