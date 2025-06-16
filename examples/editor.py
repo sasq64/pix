@@ -19,6 +19,7 @@ def clamp[T: float | int](v: T, lo: T, hi: T) -> T:
 
 
 Char = tuple[int, int]
+"""A `Char` holds a character and a color index"""
 
 
 class TextEdit:
@@ -76,8 +77,8 @@ class TextEdit:
         self.wrap_cursor()
         self.dirty = True
 
-    def console(self):
-        return self.con
+    # def console(self):
+    #    return self.con
 
     def goto_line(self, y: int):
         """Goto line, try to keep X-position. Return `False` if cursor did not move"""
@@ -116,12 +117,16 @@ class TextEdit:
         return code_units.tobytes()
 
     def hl_line(self, line: list[Char], color: int, start: int, end: int):
+        """Set color of a section of the given line"""
+
         if end > len(line):
             end = len(line)
         for j in range(start, end):
             line[j] = (line[j][0], color)
 
     def highlight(self, start: int, end: int, color: int):
+        """Set the color of a given section of the entire text"""
+
         offset = 0  # Start of current line
         for _, line in enumerate(self.lines):
             ll = len(line) + 1
@@ -133,12 +138,14 @@ class TextEdit:
             offset += ll
 
     def highlight_lines(self, line0: int, col0: int, line1: int, col1: int, color: int):
+        """Set the color of a section of text, given lines & columns"""
+
         for ln in range(line0, line1 + 1):
             line = self.lines[ln]
             ll = len(line) + 1
             c0 = col0 if ln == line0 else 0
-            c1 = col1 if ln == line1 - 1 else ll
-            # print(f"HIGHTLIGHT {ln} with {color}")
+            c1 = col1 if ln == line1 else ll
+            # print(f"HIGHTLIGHT {ln} ({c0}-{c1}) with {color}")
             self.hl_line(line, color, c0, c1)
 
     def get_location(self):

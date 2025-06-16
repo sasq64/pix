@@ -74,6 +74,9 @@ void TreeSitter::walk_tree(TSNode node, uint64_t pattern,
     auto n = ts_node_child_count(node);
 
     auto sym = ts_node_symbol(node);
+    if (ts_node_is_error(node)) {
+        sym = 0;
+    }
     pattern = (pattern << 16) | (uint64_t)sym;
 
     uint64_t mask = 0xffff'ffff'ffff;

@@ -26,9 +26,9 @@ class PixIDE:
             "else": 3,
             "import": 3,
             "class": 3,
-            "string_start": 8,
-            "string_content": 8,
-            "string_end": 8,
+            "string": 8,
+            # "string_content": 8,
+            # "string_end": 8,
             "call.identifier": 2,
             "decorator": 4,
             "keyword_argument.identifier": 7,
@@ -40,7 +40,7 @@ class PixIDE:
             "float": 8,
             "comment": 6,
             "identifier": 1,
-            "ERROR": 8,
+            "ERROR": 9,
         }
 
         self.palette: Final = [
@@ -57,7 +57,7 @@ class PixIDE:
         ]
 
         self.screen: Final = screen
-        self.font_size: int = 24
+        self.font_size: int = 20
         self.font: pix.Font = pix.load_font(hack_font, self.font_size)
         self.ts: pix.TileSet = pix.TileSet(self.font)
         self.ar_ok: Final = self.font.make_image("▶", 30, pix.color.GREEN)
@@ -91,10 +91,10 @@ class PixIDE:
         self.edit.set_palette(self.palette)
         self.load(self.files[1])
         self.highlight()
-        print(self.treesitter.dump_tree())
 
     def resize(self):
-        self.ts = pix.TileSet(self.font)
+        # self.ts = pix.TileSet(self.font)
+        # self.font_size: int = 20
         con_size = self.screen.target_size.toi() / self.ts.tile_size
         print(f"CON SIZE {con_size.x} {con_size.y}")
         self.con = pix.Console(con_size.x, con_size.y - 1, self.ts)
@@ -119,6 +119,8 @@ class PixIDE:
                 if f.readable():
                     text = f.read()
                     self.edit.set_text(text)
+        self.treesitter.set_source(self.edit.get_text())
+        print(self.treesitter.dump_tree())
 
     def highlight(self):
         self.treesitter.set_source(self.edit.get_text())
@@ -199,7 +201,14 @@ class PixIDE:
             screen.draw_color = (self.palette[1] << 8) | 0xFF
             try:
                 pix.allow_break(True)
-                exec(source, {__builtins__: builtins})
+                exec(
+                    source,
+                    {
+                        __builtins__: builtins,
+                        __name__: "__main__",
+                        __file__: self.current_file.as_posix(),
+                    },
+                )
                 pix.allow_break(False)
                 events = pix.all_events()
                 if fc != screen.frame_counter:
@@ -232,7 +241,10 @@ def run(source: str):
     fc = screen.frame_counter
     try:
         pix.allow_break(True)
-        exec(source, {__builtins__: builtins, __name__: "__main__"})
+        exec(
+            source,
+            {__builtins__: builtins, __name__: "__main__"},
+        )
         pix.allow_break(False)
         if fc != screen.frame_counter:
             events = pix.all_events()
