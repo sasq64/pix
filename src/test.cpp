@@ -1,7 +1,9 @@
+#include "full_console.hpp"
 #include "gl/texture.hpp"
 
 #include "context.hpp"
 #include "pixel_console.hpp"
+#include "tile_set.hpp"
 #include "font.hpp"
 #include "image.hpp"
 #include "machine.hpp"
@@ -55,7 +57,7 @@ int main() {
         auto col = color::blend_colors(colors, d);
     }
 
-    auto sys = create_glfw_system();
+    auto sys = std::shared_ptr(create_glfw_system());
 
     int cols = 60;
     int rows = 45;
@@ -73,6 +75,12 @@ int main() {
     auto [realw, realh] = screen->get_size();
     //auto context = std::make_shared<pix::Context>(realw, realh, 0);
     screen->vpscale = screen->get_scale();
+
+
+    auto ts = std::make_shared<TileSet>(std::pair{48,48});
+    auto consolex = std::make_shared<PixConsole>(40, 1, ts);
+    auto full_con = std::make_shared<FullConsole>(consolex, sys);
+
 
     std::vector<uint32_t> pixels(realw * realh);
     for (auto y = 0; y < realh; y++) {
@@ -95,6 +103,10 @@ int main() {
     bg2.filled_circle({40, 40}, 10);
 
 
+    auto font2 = std::make_shared<FreetypeFont>("examples/data/HackNerdFont-Regular.ttf", 20);
+
+    font2->set_pixel_size(30);
+    //printf("%d %d", font2->get_size().first, font2->get_size().second);
 
     auto font = std::make_shared<TileSet>(FreetypeFont::unscii);
     auto console = std::make_shared<PixConsole>(cols, rows, font);
@@ -128,23 +140,24 @@ int main() {
             {700, 500},
             {200, 400}
         };
-        for (auto& screen2 : splits) {
-            screen2->clear(0x00ff00);
-            screen2->set_color(gl::Color(0xff0000ff));
-            std::vector<std::vector<Vec2f>> multi { points, star }; //, points };
-            screen2->draw_complex_polygon(multi);
-
-            screen2->set_color(gl::Color(0xffff00ff));
-            //for (int i = 0; i < 400; i++) {
-                for (auto p : star) {
-                    screen2->line(p);
-                }
-                //pos += {4, 0};
-            //}
-            screen2->line(star[0]);
-            //context->filled_rect({10, 10}, {100,100});
-            screen2->blit(bg, {20,20}, Vec2f{bg.size()});
-        }
+        // for (auto& screen2 : splits) {
+        //     screen2->clear(0x00ff00);
+        //     screen2->set_color(gl::Color(0xff0000ff));
+        //     std::vector<std::vector<Vec2f>> multi { points, star }; //, points };
+        //     screen2->draw_complex_polygon(multi);
+        //
+        //     screen2->set_color(gl::Color(0xffff00ff));
+        //     //for (int i = 0; i < 400; i++) {
+        //         for (auto p : star) {
+        //             screen2->line(p);
+        //         }
+        //         //pos += {4, 0};
+        //     //}
+        //     screen2->line(star[0]);
+        //     //context->filled_rect({10, 10}, {100,100});
+        //     screen2->blit(bg, {20,20}, Vec2f{bg.size()});
+        // }
+        full_con->render(screen, {0,0}, full_con->get_size());
         screen->swap();
     }
 

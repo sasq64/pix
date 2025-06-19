@@ -28,7 +28,7 @@ class FreetypeFont
     static inline FT_Library library = nullptr;
     FT_Face face = nullptr;
     bool mono = false;
-    std::pair<int, int> size;
+    //std::pair<int, int> size;
 
 public:
     static std::shared_ptr<FreetypeFont> unscii;
@@ -38,7 +38,7 @@ public:
     FreetypeFont& operator=(FreetypeFont const&) = delete;
     FreetypeFont(const unsigned char* data, size_t data_size, int size);
 
-    std::pair<int, int> get_size() const { return size; }
+    //std::pair<int, int> get_size() const { return size; }
     std::pair<int, int> get_size(char32_t c) const;
     void set_pixel_size(int h);
     template <typename T>

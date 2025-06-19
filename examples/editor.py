@@ -46,7 +46,7 @@ class TextEdit:
         self.fg: int = pix.color.GREEN
         self.bg: int = 0x202330
         self.palette: list[tuple[int, int]] = [(0, 0)] * 128
-        self.palette[0] = (0x787C99, self.bg)
+        self.palette[0] = (self.bg, self.bg)
         self.palette[1] = (0xEECE6A, self.bg)
         self.palette[2] = (0x5159ED, self.bg)
 
@@ -181,7 +181,7 @@ class TextEdit:
         return x
 
     def insert(self, text: str):
-        self.line[self.xpos : self.xpos] = list([(ord(t), 0) for t in text])
+        self.line[self.xpos : self.xpos] = list([(ord(t), 1) for t in text])
         self.xpos += len(text)
         self.dirty = True
 
@@ -294,7 +294,7 @@ class TextEdit:
     def update(self, events: list[pix.event.AnyEvent]):
         for e in events:
             if isinstance(e, pix.event.Text):
-                self.line.insert(self.xpos, (ord(e.text), 0))
+                self.line.insert(self.xpos, (ord(e.text), 1))
                 self.xpos += len(e.text)
                 self.dirty = True
                 self.keepx = -1
@@ -309,6 +309,7 @@ class TextEdit:
         self.bg = bg
 
     def set_palette(self, colors: list[int]):
+        """Set palette. 0 = default bg, 1 = default text"""
         self.bg = (colors[0] << 8) | 0xFF
         self.fg = (colors[1] << 8) | 0xFF
         for i, c in enumerate(colors):

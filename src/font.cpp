@@ -10,13 +10,6 @@ std::shared_ptr<FreetypeFont> FreetypeFont::unscii{
 void FreetypeFont::set_pixel_size(int h)
 {
     FT_Set_Pixel_Sizes(face, 0, h);
-
-    if (FT_Load_Char(face, 0x2588, FT_LOAD_NO_BITMAP) != 0) {
-        FT_Load_Char(face, '%', FT_LOAD_NO_BITMAP);
-    }
-
-    auto const m = face->glyph->metrics;
-    size = {m.width >> 6, m.height >> 6};
 }
 
 template <typename T>

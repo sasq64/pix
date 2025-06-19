@@ -79,9 +79,14 @@ inline auto add_screen_class(py::module_ const& mod, auto ctx_class)
         .def(
             "swap",
             [](std::shared_ptr<pix::Screen> const& screen) {
-                auto& m = Machine::get_instance();
-                // m.frame_counter++;
                 screen->flush();
+                auto& m = Machine::get_instance();
+                auto& callbacks = m.sys->callbacks;
+                auto it = callbacks.begin();
+                while (it != callbacks.end()) {
+                    const auto keep_running = (*it)();
+                    it = keep_running ? it+1 : callbacks.erase(it);
+                }
                 screen->swap();
             },
             "Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This is normally the last thing you do in your render loop.");

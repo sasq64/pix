@@ -134,7 +134,8 @@ public:
     enum class Propagate
     {
         Stop,
-        Pass
+        Pass,
+        Remove
     };
 
     std::vector<std::function<bool()>> callbacks;
@@ -230,11 +231,6 @@ public:
                 do_quit_loop = true;
                 break;
             }
-        }
-        auto it = callbacks.begin();
-        while (it != callbacks.end()) {
-            const auto keep_running = (*it)();
-            it = keep_running ? it+1 : callbacks.erase(it);
         }
         if (do_quit_loop) {
             do_quit_loop = false;

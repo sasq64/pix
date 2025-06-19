@@ -42,7 +42,7 @@ public:
 
     [[nodiscard]] std::pair<float, float> get_uvscale() const;
     void add_char(char32_t c);
-    [[nodiscard]] std::pair<int, int> get_size() const;
+    //[[nodiscard]] std::pair<int, int> get_size() const;
 
     void render_chars(pix::Context& context, std::string const& tiles, Vec2f pos, Vec2f size);
     void render_chars(pix::Context& context, std::string const& tiles,

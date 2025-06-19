@@ -9,7 +9,7 @@ from . import color
 from . import event
 from . import key
 from . import treesitter
-__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'quit_loop', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'treesitter', 'update_tweens', 'was_pressed', 'was_released']
+__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'add_event_listener', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'quit_loop', 'remove_event_listener', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'treesitter', 'update_tweens', 'was_pressed', 'was_released']
 class Canvas:
     """
     A `Canvas` is used for rendering. It is implemented by both `Screen` and `Image`.
@@ -804,6 +804,10 @@ class TileSet:
         ...
 def add_color(color0: int, color1: int) -> int:
     ...
+def add_event_listener(arg0: typing.Callable[[event.NoEvent | event.Key | event.Move | event.Click | event.Text | event.Resize | event.Quit], bool], arg1: int) -> int:
+    """
+    Add a function that can intercept events.
+    """
 def all_events() -> list[event.NoEvent | event.Key | event.Move | event.Click | event.Text | event.Resize | event.Quit]:
     """
     Return a list of all pending events.
@@ -857,6 +861,10 @@ def open_display(size: Union[Int2, Tuple[int, int]], full_screen: bool = False, 
 def quit_loop() -> None:
     """
     Make run_loop() return False. Thread safe
+    """
+def remove_event_listener(arg0: int) -> None:
+    """
+    Remove event listener
     """
 def rgba(red: float, green: float, blue: float, alpha: float) -> int:
     """

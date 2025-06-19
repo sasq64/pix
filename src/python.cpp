@@ -180,6 +180,16 @@ void every_frame(std::function<bool()> const& fn)
     m.sys->callbacks.push_back(fn);
 }
 
+int add_event_listener(std::function<bool(AnyEvent)> const& fn, uint32_t filter)
+{
+    return m.sys->add_listener([fn](AnyEvent const& e) {
+        if (fn(e)) {
+            return System::Propagate::Pass;
+        }
+        return System::Propagate::Stop;
+    });
+}
+
 #ifdef PYTHON_MODULE
 PYBIND11_MODULE(_pixpy, mod)
 {
@@ -269,6 +279,12 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     mod.def(
         "get_pointer", [] { return Vec2f{m.sys->get_pointer()}; },
         "Get the xy coordinate of the mouse pointer (in screen space).");
+    mod.def(
+        "add_event_listener", &add_event_listener,
+        "Add a function that can intercept events.");
+    mod.def(
+        "remove_event_listener", [](int i) { m.sys->remove_listener(i); },
+        "Remove event listener");
     mod.def(
         "run_every_frame", &every_frame,
         "Add a function that should be run every frame. If the function returns false it will stop being called.");
