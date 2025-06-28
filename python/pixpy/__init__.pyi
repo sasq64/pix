@@ -9,7 +9,7 @@ from . import color
 from . import event
 from . import key
 from . import treesitter
-__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'add_event_listener', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'quit_loop', 'remove_event_listener', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'treesitter', 'update_tweens', 'was_pressed', 'was_released']
+__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'add_event_listener', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'post_event', 'quit_loop', 'remove_event_listener', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'treesitter', 'update_tweens', 'was_pressed', 'was_released']
 class Canvas:
     """
     A `Canvas` is used for rendering. It is implemented by both `Screen` and `Image`.
@@ -162,7 +162,7 @@ class Console:
     A console is a 2D grid of tiles that can be rendered.
     """
     @typing.overload
-    def __init__(self, cols: int, rows: int, font_file: str = '', tile_size: Union[Float2, Int2, Tuple[float, float]] = ..., font_size: int = 16) -> None:
+    def __init__(self, cols: int, rows: int, font_file: Union[os.PathLike[str], str] | None = None, tile_size: Union[Float2, Int2, Tuple[float, float]] = ..., font_size: int = -1) -> None:
         """
         Create a new Console holding `cols`*`rows` tiles.
 
@@ -761,12 +761,12 @@ class TileSet:
     A tileset is a texture split up into tiles for rendering. It is used by the `Console` class but can also be used directly.
     """
     @typing.overload
-    def __init__(self, font_file: str, size: int) -> None:
+    def __init__(self, font_file: str, size: int = -1, tile_size: Union[Int2, Tuple[int, int]] = ...) -> None:
         """
         Create a TileSet from a ttf font with the given size. The tile size will be derived from the font size.
         """
     @typing.overload
-    def __init__(self, font: Font, tile_size: Union[Int2, Tuple[int, int]] = ...) -> None:
+    def __init__(self, font: Font, size: int = -1, tile_size: Union[Int2, Tuple[int, int]] = ...) -> None:
         """
         Create a TileSet from an existing font. The tile size will be derived from the font size.
         """
@@ -804,13 +804,13 @@ class TileSet:
         ...
 def add_color(color0: int, color1: int) -> int:
     ...
-def add_event_listener(arg0: typing.Callable[[event.NoEvent | event.Key | event.Move | event.Click | event.Text | event.Resize | event.Quit], bool], arg1: int) -> int:
+def add_event_listener(func: typing.Callable[[typing.Any], bool], filter: int) -> int:
     """
-    Add a function that can intercept events.
+    Add a function that can intercept events. The function should return _False_ if the event should not be propagated. Returns `id`.
     """
-def all_events() -> list[event.NoEvent | event.Key | event.Move | event.Click | event.Text | event.Resize | event.Quit]:
+def all_events() -> list[typing.Any]:
     """
-    Return a list of all pending events.
+    Return the list of all pending events, and clear them.
     """
 def allow_break(on: bool) -> None:
     """
@@ -838,11 +838,11 @@ def is_pressed(key: int | str) -> bool:
     """
     Returns _True_ if the keyboard or mouse key is held down.
     """
-def load_font(name: str, size: int = 0) -> Font:
+def load_font(name: Union[os.PathLike[str], str], size: int = 0) -> Font:
     """
     Load a TTF font.
     """
-def load_png(file_name: str) -> Image:
+def load_png(file_name: Union[os.PathLike[str], str]) -> Image:
     """
     Create an _Image_ from a png file on disk.
     """
@@ -858,19 +858,23 @@ def open_display(size: Union[Int2, Tuple[int, int]], full_screen: bool = False, 
     Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.
     Subsequent calls to this method returns the same screen instance, since you can only have one active display in pix.
     """
+def post_event(event: typing.Any) -> None:
+    """
+    Post an event to pixpy, that will be returned by the next call to `all_events()`.
+    """
 def quit_loop() -> None:
     """
-    Make run_loop() return False. Thread safe
+    Make run_loop() return False. Thread safe.
     """
-def remove_event_listener(arg0: int) -> None:
+def remove_event_listener(id: int) -> None:
     """
-    Remove event listener
+    Remove event listener via its `id`.
     """
 def rgba(red: float, green: float, blue: float, alpha: float) -> int:
     """
     Combine four color float components into a 32-bit color.
     """
-def run_every_frame(arg0: typing.Callable[[], bool]) -> None:
+def run_every_frame(func: typing.Callable[[], bool]) -> None:
     """
     Add a function that should be run every frame. If the function returns false it will stop being called.
     """
@@ -878,7 +882,7 @@ def run_loop() -> bool:
     """
     Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way
     """
-def save_png(image: Image, file_name: str) -> None:
+def save_png(image: Image, file_name: Union[os.PathLike[str], str]) -> None:
     """
     Save an _Image_ to disk
     """

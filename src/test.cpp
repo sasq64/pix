@@ -5,8 +5,8 @@
 #include "pixel_console.hpp"
 #include "tile_set.hpp"
 #include "font.hpp"
+#include "screen.hpp"
 #include "image.hpp"
-#include "machine.hpp"
 #include "system.hpp"
 #include "vec2.hpp"
 #include "colors.hpp"
@@ -71,6 +71,13 @@ int main() {
 
     auto screen = std::make_shared<pix::Screen>(display);
 
+    //auto tsp = std::make_shared<TileSet>(FreetypeFont::unscii);
+
+    auto font2 = std::make_shared<FreetypeFont>("examples/data/HackNerdFont-Regular.ttf");
+
+    auto ts4 = std::make_shared<TileSet>(font2, 20);
+
+
 
     auto [realw, realh] = screen->get_size();
     //auto context = std::make_shared<pix::Context>(realw, realh, 0);
@@ -103,12 +110,10 @@ int main() {
     bg2.filled_circle({40, 40}, 10);
 
 
-    auto font2 = std::make_shared<FreetypeFont>("examples/data/HackNerdFont-Regular.ttf", 20);
-
-    font2->set_pixel_size(30);
+    //font2->set_pixel_size(30);
     //printf("%d %d", font2->get_size().first, font2->get_size().second);
 
-    auto font = std::make_shared<TileSet>(FreetypeFont::unscii);
+    auto font = std::make_shared<TileSet>(FreetypeFont::unscii, 16);
     auto console = std::make_shared<PixConsole>(cols, rows, font);
 
     for (auto y = 0; y < rows; y++) {

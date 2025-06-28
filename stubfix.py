@@ -94,7 +94,7 @@ def main(_):
         wf.replace_all(r"class Image:", "class Image(Canvas):")
         wf.replace_all(r": Float2", ": Union[Float2, Int2, Tuple[float, float]]")
         wf.replace_all(r": Int2", ": Union[Int2, Tuple[int, int]]")
-        wf.replace_all(r": os.PathLike", ": str")
+        wf.replace_all(r": os.PathLike", ": Union[os.PathLike[str], str]")
         wf.replace_all(
             r"Optional\[Float2\]", "Optional[Union[Float2, Int2, Tuple[float, float]]]"
         )
@@ -124,7 +124,7 @@ def main(_):
             wf.add_line(
                 len(wf),
                 "AnyEvent = typing.Union"
-                + "[NoEvent, Key, Move, Click, Text, Resize, Quit]",
+                + "[NoEvent, Key, Move, Click, Text, Resize, Quit, User]",
             )
 
 

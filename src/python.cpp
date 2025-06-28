@@ -71,6 +71,9 @@ void init()
         atexit.attr("register")(py::cpp_function([] {
             Tween::tweens.clear();
             Adder::adders.clear();
+            m.events.clear();
+            m.listeners.clear();
+            m.counter = 0;
             if (pix::Screen::instance != nullptr &&
                 pix::Screen::instance->frame_counter() == 0) {
                 log("Running at exit\n");
@@ -87,12 +90,12 @@ void init()
 std::shared_ptr<pix::Screen> open_display(int width, int height,
                                           bool full_screen, bool visible = true)
 {
-    if (pix::Screen::instance != nullptr) { 
+    if (pix::Screen::instance != nullptr) {
 
         auto s = pix::Screen::instance;
-        s->offset = {0,0};
+        s->offset = {0, 0};
         s->view_size = s->target_size;
-        return s; 
+        return s;
     }
     init();
     Display::Settings const settings{
@@ -180,14 +183,17 @@ void every_frame(std::function<bool()> const& fn)
     m.sys->callbacks.push_back(fn);
 }
 
-int add_event_listener(std::function<bool(AnyEvent)> const& fn, uint32_t filter)
+int add_event_listener(std::function<bool(py::object)> const& fn,
+                       uint32_t filter)
 {
-    return m.sys->add_listener([fn](AnyEvent const& e) {
-        if (fn(e)) {
-            return System::Propagate::Pass;
-        }
-        return System::Propagate::Stop;
-    });
+
+    m.listeners[m.counter++] = fn;
+    return m.counter - 1;
+    //
+    // return m.sys->add_listener([fn](AnyEvent const& e) {
+    //     if (fn(e)) { return System::Propagate::Pass; }
+    //     return System::Propagate::Stop;
+    // });
 }
 
 #ifdef PYTHON_MODULE
@@ -246,14 +252,41 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false,
             "visible"_a = true, doc);
     mod.def("get_display", [] { return pix::Screen::instance; });
-    mod.def("update_tweens", [] { 
-        auto t = to_sec(clk::now() - start_t);
-        Tween::update_all(t);
-        Adder::update_all(t);
-    }, "Manually update tweens");
     mod.def(
-        "all_events", [] { return m.sys->all_events(); },
-        "Return a list of all pending events.");
+        "update_tweens",
+        [] {
+            auto t = to_sec(clk::now() - start_t);
+            Tween::update_all(t);
+            Adder::update_all(t);
+        },
+        "Manually update tweens");
+    mod.def(
+        "all_events",
+        [] {
+            if (m.in_pix) {
+                throw pix::pix_exception("Recursive call to run_loop()");
+            }
+            m.in_pix++;
+            auto result = m.events;
+            m.events.clear();
+            auto& sys = m.sys;
+            while (true) {
+                auto e = sys->next_event();
+                if (std::holds_alternative<NoEvent>(e)) { break; }
+                result.push_back(py::cast(e));
+            }
+            m.in_pix--;
+            return result;
+        },
+        "Return the list of all pending events, and clear them.");
+    mod.def(
+        "post_event",
+        [](py::object e) {
+            printf("Post event\n");
+            m.events.push_back(e);
+        },
+        "event"_a,
+        "Post an event to pixpy, that will be returned by the next call to `all_events()`.");
     mod.def(
         "is_pressed",
         [](std::variant<int, char32_t> key) {
@@ -280,24 +313,50 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
         "get_pointer", [] { return Vec2f{m.sys->get_pointer()}; },
         "Get the xy coordinate of the mouse pointer (in screen space).");
     mod.def(
-        "add_event_listener", &add_event_listener,
-        "Add a function that can intercept events.");
+        "add_event_listener", &add_event_listener, "func"_a, "filter"_a,
+        "Add a function that can intercept events. The function should return _False_ if the event should not be propagated. Returns `id`.");
     mod.def(
-        "remove_event_listener", [](int i) { m.sys->remove_listener(i); },
-        "Remove event listener");
+        "remove_event_listener",
+        [](int i) {
+            m.listeners.erase(i);
+            // m.sys->remove_listener(i);
+        },
+        "id"_a, "Remove event listener via its `id`.");
     mod.def(
-        "run_every_frame", &every_frame,
+        "run_every_frame", &every_frame, "func"_a,
         "Add a function that should be run every frame. If the function returns false it will stop being called.");
     mod.def(
         "quit_loop", [] { m.sys->quit_loop(); },
-        "Make run_loop() return False. Thread safe");
+        "Make run_loop() return False. Thread safe.");
     mod.def(
         "run_loop",
         [] {
+            if (m.in_pix) {
+                throw pix::pix_exception("Recursive call to run_loop()");
+            }
+            m.in_pix++;
             auto t = to_sec(clk::now() - start_t);
             Tween::update_all(t);
             Adder::update_all(t);
-            return m.sys->run_loop();
+            auto rc = m.sys->run_loop();
+            for (auto& e : m.sys->posted_events) {
+                for (auto& l : m.listeners) {
+                    auto propagate = l.second(py::cast(e));
+                    if (!propagate) { break; }
+                }
+            }
+            if (!m.events.empty()) {
+                printf("Have %zu python events\n", m.events.size());
+            }
+            for (auto& e : m.events) {
+                for (auto& l : m.listeners) {
+                    auto propagate = l.second(e);
+                    if (!propagate) { break; }
+                }
+            }
+            m.events.clear();
+            m.in_pix--;
+            return rc;
         },
         "Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way");
     mod.def("load_png", &pix::load_png, "file_name"_a,

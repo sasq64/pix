@@ -1,14 +1,16 @@
 import inspect
 import os
+import sys
 import re
 from curses.ascii import isdigit
+from typing import get_type_hints
 
 import pixpy
 
 
 def generate_module(module: type, mod_name: str):
 
-    props: dict[str, str] = {}
+    props: dict[str, tuple[str, str]] = {}
     methods: dict[str, list[tuple[str, str]]] = {}
     constructors: dict[str, list[tuple[str, str]]] = {}
     constants: dict[str, int] = {}
@@ -20,8 +22,16 @@ def generate_module(module: type, mod_name: str):
             pass
         elif isinstance(obj, property):
             doc_comment = inspect.getdoc(obj)
+            fget = obj.fget
+            t = ""
+            if fget is not None:
+                # print(f"{fget.__doc__}\n", file=sys.stderr)
+                p = fget.__doc__.split(" -> ")
+                if len(p) > 1:
+                    t = p[1].rstrip("\n").replace("pixpy._pixpy.", "")
+                    print(f"{name}: {t}\n", file=sys.stderr)
             if doc_comment:
-                props[name] = doc_comment.strip()
+                props[name] = (doc_comment.strip(), t)
             # print(f"### {name}\n{doc_comment.strip()}")
         elif callable(obj):
             doc_comment = inspect.getdoc(obj)
@@ -81,8 +91,9 @@ def generate_module(module: type, mod_name: str):
             # print(f"{name} {obj} {type(obj)}")
     if len(props) > 0:
         print("\n### Properties\n")
-        for prop, doc in props.items():
-            print(f"\n#### {mod_name}.{prop}\n\n{doc}")
+        for prop, d in props.items():
+            doc, typ = d
+            print(f"\n#### {mod_name}.{prop}\n`{typ}`\n\n{doc}")
     if len(constructors) > 0:
         print("\n### Constructors\n")
         ire = r"__init__\(self[^,]*,\s+(.*)\) ->"
@@ -101,6 +112,13 @@ def generate_module(module: type, mod_name: str):
                     .replace("4294967295", "color.WHITE")
                     .replace("color: int = 255", "color: int = color.BLACK")
                 )
+                match = re.search(r"Union\[\s*([^\[\]]+?)\s*\]", fn)
+                if match:
+                    inner = match.group(1)
+                    parts = [part.strip() for part in inner.split(",")]
+                    p = " | ".join(parts)
+                    fn = fn[: match.start(0)] + p + fn[match.end(0) :]
+
                 fn = re.sub(r"self: \w+,\s*", "", fn)
                 fn = re.sub(r"0\.0+", "0.0", fn)
                 fn = re.sub(r"Float2\(0\.0+,\s*0.0+\)", "Float2.ZERO", fn)

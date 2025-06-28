@@ -16,11 +16,12 @@ void TileSet::add_char(char32_t c)
     auto pos = alloc_char(c);
 
     // Render character into texture
-    auto [fw, fh] = font_ptr->get_size('%');
-    auto [cw, ch] = font_ptr->get_size(c);
+    auto [fw, fh] = font_ptr->get_size(0x2588);
+    // printf("%d %d\n", fw, fh);
+    // auto [cw, ch] = font_ptr->get_size(c);
     std::vector<uint32_t> temp(char_width * char_height * 2);
-    auto ox = (char_width - fw) / 2;
-    auto oy = (char_height - fh) / 2;
+    auto ox = 0; // (char_width - fw) / 2;
+    auto oy = 0; // (char_height - fh) / 2;
     auto offs = ox + oy * char_width;
 
     font_ptr->render_char(c, temp.data() + offs, 0xffffff00, char_width,
@@ -57,18 +58,19 @@ char32_t TileSet::get_char_from_uv(uint32_t uv)
     return reverse_chars[uv];
 }
 
-TileSet::TileSet(std::string const& font_file, int size,
-                 std::pair<int, int> tsize)
-    : font_ptr{std::make_shared<FreetypeFont>(font_file.c_str(), size)},
-      char_array{0xffffffff}, char_width{tsize.first}, char_height{tsize.second}
-{
-    init();
-}
+// TileSet::TileSet(std::string const& font_file, int size,
+//                  std::pair<int, int> tsize)
+//     : font_ptr{},
+//       pixel_size{size}, char_array{0xffffffff}, char_width{tsize.first},
+//       char_height{tsize.second}
+// {
+//     init();
+// }
 
-TileSet::TileSet(std::shared_ptr<FreetypeFont> freetype_font,
+TileSet::TileSet(std::shared_ptr<FreetypeFont> freetype_font, int size,
                  std::pair<int, int> tsize)
-    : font_ptr{std::move(freetype_font)}, char_array{0xffffffff},
-      char_width{tsize.first}, char_height{tsize.second}
+    : font_ptr{std::move(freetype_font)}, pixel_size{size},
+      char_array{0xffffffff}, char_width{tsize.first}, char_height{tsize.second}
 {
     init();
 }
@@ -85,8 +87,32 @@ void TileSet::init()
     std::vector<uint32_t> data;
     data.resize(texture_width * texture_height);
     if (char_width <= 0) {
-        std::tie(char_width, char_height) = font_ptr->get_size('%');
+        if (pixel_size < 0) { throw font_exception("Must specify size"); }
+        font_ptr->set_pixel_size(pixel_size);
+        std::tie(char_width, char_height) = font_ptr->get_size(0x2588);
+        if (char_width <= 0 || char_height <= 0) {
+            std::tie(char_width, char_height) = font_ptr->get_size('%');
+        }
     }
+    if (pixel_size == -1) {
+        int s = char_height * 2;
+        // Start with large size, loop until it fits
+        while (true) {
+            font_ptr->set_pixel_size(s);
+            auto [w, h] = font_ptr->get_size(0x2588);
+            if (w <= 0 || h <= 0) {
+                std::tie(w, h) = font_ptr->get_size('%');
+            }
+            // printf("%d => %d,%d (vs %d,%d)\n", s, w, h, char_width,
+            //       char_height);
+            if (w <= char_width && h <= char_height) {
+                pixel_size = s;
+                break;
+            }
+            s--;
+        }
+    }
+    font_ptr->set_pixel_size(pixel_size);
 
     std::ranges::fill(data, 0);
 
@@ -94,6 +120,7 @@ void TileSet::init()
         std::make_shared<gl::Texture>(texture_width, texture_height, data);
     std::ranges::fill(char_array, 0xffffffff);
     if (font_ptr) {
+        font_ptr->set_pixel_size(pixel_size);
         for (char32_t c = 0x20; c <= 0x7f; c++) {
             add_char(c);
         }
@@ -111,6 +138,7 @@ std::pair<float, float> TileSet::get_uvscale() const
 
 uint32_t TileSet::get_offset(char32_t c)
 {
+    font_ptr->set_pixel_size(pixel_size);
     if (c <= 0xffff) {
         auto res = char_array[c];
         if (res == 0xffffffff) {

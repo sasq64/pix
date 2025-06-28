@@ -15,9 +15,9 @@
 ### Basic
 
 - [ ] Show Line/Column
-- [ ] Show Run/Stop button
+- [x] Show Run/Stop button @done(06/20/25 22:27)
 - [ ] Show Examples button
-- [ ] Render Titlebar on top of running program
+- [x] Render Titlebar on top of running program @done(06/20/25 22:27)
 - [ ] Scroll current line when too long
 - [ ] Right-side scrollbar
 - [ ] Select/Cut/Copy/Paste with mouse

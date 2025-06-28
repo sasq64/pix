@@ -1,6 +1,9 @@
 from dataclasses import dataclass
+import os
+from pathlib import Path
 from random import random
 import math
+from utils.wrap import wrap_text
 import tween
 import pixpy as pix
 
@@ -8,6 +11,8 @@ ALIGN_LEFT = 0
 ALIGN_CENTER = 1
 ALIGN_RIGHT = 2
 
+
+data_dir = Path(os.path.dirname(os.path.abspath(__file__))) / "data"
 
 @dataclass
 class Format:
@@ -24,54 +29,6 @@ class DrawCommand:
 
 
 formats: list[Format] = [Format()] * 10
-
-
-def wrap_text(text: str, font: pix.Font, size: int, width: float) -> list[str]:
-    lines: list[str] = []
-
-    text = text.strip()
-    start = 0
-    length = len(text)
-
-    print(f"len {length}")
-    while start < length:
-        # Binary search for max character count fitting in width
-        low = 1
-        high = length - start
-        best = 1
-
-        if font.text_size(text[start:], size).x <= width:
-            lines.append(text[start:])
-            break
-
-        while low <= high:
-            mid = (low + high) // 2
-            candidate = text[start : start + mid]
-            if font.text_size(candidate, size).x <= width:
-                best = mid
-                low = mid + 1
-            else:
-                high = mid - 1
-
-        print(f"break '{text}' at {high} = {text[start:start+high]}")
-
-        # Try to break at a space for better word boundaries
-        line_end = start + best
-        space_pos = text.rfind(" ", start, line_end)
-        if space_pos != -1 and space_pos > start:
-            line_end = space_pos
-
-        line = text[start:line_end].rstrip()
-        lines.append(line)
-
-        # Move start index past the line (and skip leading spaces)
-        start = line_end
-        while start < length and text[start] == " ":
-            start += 1
-
-    print(f"{lines}")
-    return lines
-
 
 def parse_md(md: str, width: float) -> list[DrawCommand]:
     y = 0
@@ -108,8 +65,8 @@ Designed for learning and 2D game development.
 
 """
 
-font = pix.load_font("data/lazenby.ttf")
-hack = pix.load_font("data/Hack.ttf")
+font = pix.load_font(data_dir / "lazenby.ttf")
+hack = pix.load_font(data_dir / "Hack.ttf")
 
 formats[0] = Format(font=hack, size=24, color=pix.color.BLACK, align=ALIGN_CENTER)
 formats[2] = Format(font=font, size=80, color=pix.color.RED, align=ALIGN_CENTER)

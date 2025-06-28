@@ -33,11 +33,12 @@ class FreetypeFont
 public:
     static std::shared_ptr<FreetypeFont> unscii;
 
-    FreetypeFont(const char* name, int size);
+    FreetypeFont(const char* name, int size = 0);
     FreetypeFont(FreetypeFont const&&) = delete;
     FreetypeFont& operator=(FreetypeFont const&) = delete;
-    FreetypeFont(const unsigned char* data, size_t data_size, int size);
+    FreetypeFont(const unsigned char* data, size_t data_size, int size = 0);
 
+    std::pair<int, int> get_mono_size() const;
     //std::pair<int, int> get_size() const { return size; }
     std::pair<int, int> get_size(char32_t c) const;
     void set_pixel_size(int h);

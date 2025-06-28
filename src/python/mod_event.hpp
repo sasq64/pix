@@ -15,6 +15,7 @@ inline void add_event_mod(py::module_ const &mod) {
     using namespace std::string_literals;
     // Events
 
+    (void) py::class_<UserEvent>(mod, "User");
     (void) py::class_<NoEvent>(mod, "NoEvent");
     py::class_<QuitEvent>(mod, "Quit").doc() = "Event sent when window/app wants to close.";
     py::class_<ResizeEvent>(mod, "Resize")

@@ -6,6 +6,7 @@
 
 #include "utf8.h"
 
+#include <optional>
 #include <pybind11/detail/common.h>
 #include <pybind11/pybind11.h>
 
@@ -17,19 +18,25 @@
 namespace py = pybind11;
 namespace fs = std::filesystem;
 
-inline std::shared_ptr<FullConsole> make_console(int32_t cols, int32_t rows,
-                                                 std::string const& font_file,
-                                                 Vec2f const& tile_size,
-                                                 int font_size)
+inline std::shared_ptr<FullConsole>
+make_console(int32_t cols, int32_t rows,
+             std::optional<fs::path> const& font_file, Vec2f const& tile_size,
+             int font_size)
 {
-    fs::path p{font_file};
+    bool have_font = font_file.has_value();
 
     auto ts = std::pair<int, int>{tile_size.x, tile_size.y};
-    auto font = font_file.empty()
-                    ? std::make_shared<TileSet>(FreetypeFont::unscii, ts)
-                    : std::make_shared<TileSet>(p.string(), font_size, ts);
+    if (!have_font && ts.first < 0) {
+        ts = {8, 16};
+        font_size = 16;
+    }
 
-    auto con = std::make_shared<PixConsole>(cols, rows, font);
+    auto font = !have_font ? FreetypeFont::unscii
+                           : std::make_shared<FreetypeFont>(font_file->c_str(),
+                                                            font_size);
+
+    auto tile_set = std::make_shared<TileSet>(font, font_size, ts);
+    auto con = std::make_shared<PixConsole>(cols, rows, tile_set);
     auto fcon = std::make_shared<FullConsole>(con, Machine::get_instance().sys);
 
     return fcon;
@@ -54,8 +61,8 @@ inline void add_console_functions(auto& cls)
 {
     using namespace pybind11::literals;
     cls.def(
-           py::init<>(&make_console), "cols"_a, "rows"_a, "font_file"_a = "",
-           "tile_size"_a = Vec2i{-1, -1}, "font_size"_a = 16,
+        py::init<>(&make_console), "cols"_a, "rows"_a, "font_file"_a = std::nullopt,
+           "tile_size"_a = Vec2i{-1, -1}, "font_size"_a = -1,
            "Create a new Console holding `cols`*`rows` tiles.\n\n`font_file` is the file name of a TTF font to use as backing. If no font is given, the built in _Unscii_ font will be used.\n\n`tile_size` sets the size in pixels of each tile. If not given, it will be derived from the size of a character in the font with the provided `font_size`.")
         .def(
             py::init<>(&make_console2), "cols"_a, "rows"_a, "tile_set"_a,

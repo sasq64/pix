@@ -17,16 +17,19 @@
 namespace py = pybind11;
 
 inline std::shared_ptr<TileSet> make_tileset(std::string const& font_file,
-                                             int size)
+                                             int size, Vec2i tile_size)
 {
-    return std::make_shared<TileSet>(font_file, size);
+    auto font = std::make_shared<FreetypeFont>(font_file.c_str(), size);
+    auto ts = std::pair<int, int>{tile_size.x, tile_size.y};
+    return std::make_shared<TileSet>(font, size, ts);
 }
 
 inline std::shared_ptr<TileSet>
-make_tileset3(std::shared_ptr<FreetypeFont> const& font, Vec2i tile_size)
+make_tileset3(std::shared_ptr<FreetypeFont> const& font, int size,
+              Vec2i tile_size)
 {
     auto ts = std::pair<int, int>{tile_size.x, tile_size.y};
-    return std::make_shared<TileSet>(font, ts);
+    return std::make_shared<TileSet>(font, size, ts);
 }
 
 inline std::shared_ptr<TileSet> make_tileset2(Vec2f size)
@@ -76,10 +79,12 @@ inline void add_tileset_class(py::module_ const& mod)
     using namespace pybind11::literals;
     auto ts = py::class_<TileSet, std::shared_ptr<TileSet>>(mod, "TileSet");
     ts.def(
-          py::init<>(&make_tileset), "font_file"_a, "size"_a,
+          py::init<>(&make_tileset), "font_file"_a, "size"_a = -1,
+          "tile_size"_a = Vec2i{-1, -1},
           "Create a TileSet from a ttf font with the given size. The tile size will be derived from the font size.")
         .def(
-            py::init<>(&make_tileset3), "font"_a, "tile_size"_a = Vec2i{-1, -1},
+            py::init<>(&make_tileset3), "font"_a, "size"_a = -1,
+            "tile_size"_a = Vec2i{-1, -1},
             "Create a TileSet from an existing font. The tile size will be derived from the font size.")
         .def(py::init<>(&make_tileset2), "tile_size"_a,
              "Create an empty tileset with the given tile size.")

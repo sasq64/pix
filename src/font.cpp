@@ -16,7 +16,6 @@ template <typename T>
 void FreetypeFont::copy_char(T* target, uint32_t color, FT_Bitmap b, int xoffs,
                              int yoffs, int stride, int width, int height)
 {
-
     for (unsigned y = 0; y < b.rows; y++) {
         for (unsigned x = 0; x < b.width; x++) {
             auto const* row = &b.buffer[b.pitch * y];
@@ -59,6 +58,12 @@ std::pair<int, int> FreetypeFont::render_text(std::string_view txt, T* target,
         pen_x += slot->advance.x >> 6;
     }
     return {pen_x, delta - low};
+}
+std::pair<int, int> FreetypeFont::get_mono_size() const
+{
+    int char_width = face->max_advance_width >> 6;
+    int char_height = face->size->metrics.height >> 6;
+    return {char_width, char_height};
 }
 
 std::pair<int, int> FreetypeFont::text_size(std::string_view txt)
@@ -107,6 +112,16 @@ FreetypeFont::FreetypeFont(const unsigned char* data, size_t data_size,
                                  0, &face);
     if (rc != 0) { throw font_exception("Could not load font from memory"); }
 
+    if (face->face_flags & FT_FACE_FLAG_FIXED_SIZES) {
+        // It's a bitmap or hybrid font with fixed sizes
+        puts("FIXED SIZE!");
+        for (int i = 0; i < face->num_fixed_sizes; ++i) {
+            printf("Size %d: %hd x %hd\n", i,
+                   face->available_sizes[i].width,
+                   face->available_sizes[i].height);
+        }
+        FT_Select_Size(face, 0); // Usually index 0 is 8x8
+    }
     if (size >= 0) { set_pixel_size(size); }
 }
 

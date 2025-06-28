@@ -1,5 +1,6 @@
 #pragma once
 
+#include "image.hpp"
 #include "keycodes.h"
 
 #include <atomic>
@@ -49,6 +50,11 @@ template <typename... Ts> struct Overload : Ts... // NOLINT
 };
 template <class... Ts> Overload(Ts...) -> Overload<Ts...>;
 
+struct UserEvent {
+    uint32_t code;
+    float value;
+};
+
 struct KeyEvent
 {
     uint32_t key;
@@ -90,7 +96,7 @@ struct TextEvent
 };
 
 using AnyEvent = std::variant<NoEvent, KeyEvent, MoveEvent, ClickEvent,
-                              TextEvent, ResizeEvent, QuitEvent>;
+                              TextEvent, ResizeEvent, QuitEvent, UserEvent>;
 
 class Display
 {
@@ -146,7 +152,7 @@ private:
     std::atomic<bool> do_quit_loop{};
 
 protected:
-    virtual std::deque<AnyEvent> internal_all_events() { return {}; }
+    virtual std::deque<AnyEvent> consume_all_events() { return {}; }
 
 public:
     virtual ~System() = default;
@@ -214,7 +220,8 @@ public:
     // Return false if app should quit
     bool run_loop()
     {
-        for (auto&& event : internal_all_events()) {
+        posted_events.clear();
+        for (auto&& event : consume_all_events()) {
             bool propagate = true;
             for (auto&& [_, listener] : listeners) {
                 auto prop = listener(event);

@@ -419,7 +419,7 @@ public:
         return released.contains(code);
     }
 
-    std::deque<AnyEvent> internal_all_events() override
+    std::deque<AnyEvent> consume_all_events() override
     {
         if (!swapped) {
             std::this_thread::sleep_for(std::chrono::milliseconds(5));

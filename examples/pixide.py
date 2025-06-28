@@ -8,37 +8,12 @@ from typing import Final
 
 import pixpy as pix
 from editor import TextEdit
+from utils.wrap import wrap_lines
+from utils.tool_bar import ToolBar, ToolbarEvent
+from utils.nerd import Nerd
 
-
-fwd = Path(os.path.dirname(os.path.abspath(__file__)))
-hack_font = (fwd / "data" / "HackNerdFont-Regular.ttf").as_posix()
-
-
-class ToolBar:
-    def __init__(
-        self,
-        ts: pix.TileSet | None = None,
-        pos: pix.Float2 = pix.Float2.ZERO,
-        canvas: pix.Canvas | None = None,
-    ):
-        self.canvas: pix.Canvas = canvas or pix.get_display()
-        self.tile_set: Final = ts or pix.TileSet(tile_size=(48, 48))
-        self.pos: pix.Float2 = pos
-        cols = 40  # int(self.canvas.size.x / self.tile_set.tile_size.x)
-        self.add_pos: pix.Int2 = pix.Int2(0, 0)
-        print(f"COLS {cols}")
-        self.console: Final = pix.Console(rows=1, cols=cols, tile_set=self.tile_set)
-        print(f"SIZE {self.console.grid_size}")
-        pass
-
-    def add_button(self, tno: int, color: int):
-        self.console.put(self.add_pos, tno, color)
-        print(f"{self.console.grid_size}")
-        self.add_pos += (1, 0)
-
-    def render(self):
-        self.canvas.draw(self.console, self.pos, size=self.console.size)
-
+fwd = Path(os.path.abspath(__file__)).parent
+hack_font = fwd / "data" / "HackNerdFont-Regular.ttf"
 
 def run(source: str, file_name: str):
     fc = screen.frame_counter
@@ -72,6 +47,8 @@ def run(source: str, file_name: str):
             if isinstance(e, pix.event.Key):
                 leave = True
 
+class NerdIcon:
+    pass
 
 class PixIDE:
     def __init__(self, screen: pix.Screen):
@@ -115,27 +92,30 @@ class PixIDE:
             0xFF2020,  # red
         ]
 
+        self.do_run: bool = False
         self.screen: Final = screen
-        self.font_size: int = 20
-        self.font: pix.Font = pix.load_font(hack_font, self.font_size)
-        self.ts: pix.TileSet = pix.TileSet(self.font)
+        self.font_size: int = 24
+        self.font: pix.Font = pix.load_font(hack_font)
+        self.ts: pix.TileSet = pix.TileSet(self.font, size=self.font_size)
 
         con_size = screen.size.toi() / self.ts.tile_size
 
         self.comp_enabled: bool = False
         self.con: pix.Console = pix.Console(con_size.x, con_size.y - 1, self.ts)
-        print(self.con.tile_size)
         con_size = (screen.size.toi() - 40 * 4) / self.ts.tile_size
         self.title: pix.Console = pix.Console(con_size.x, 1, self.ts)
 
+        self.title_bg: int = 0x205020
+        self.running: bool = False
         tool_ts = pix.TileSet(self.font, tile_size=(50, 50))
-        self.tool_bar: Final = ToolBar(ts=tool_ts)
-        self.tool_bar.add_button(0xF144, pix.color.LIGHT_GREEN)
-        self.tool_bar.add_button(0xF059, pix.color.LIGHT_BLUE)
-        self.tool_bar.add_button(0xF28D, pix.color.LIGHT_RED)
+        self.tool_bar: Final = (
+            ToolBar(tile_set=tool_ts, bg_color=self.title_bg)
+            .add_button(Nerd.nf_fa_play_circle, pix.color.LIGHT_GREEN)
+            .add_button(Nerd.nf_fa_question_circle, pix.color.LIGHT_BLUE)
+        )
+        pix.add_event_listener(self.handle_toolbar, 0)
 
-        print(self.title.tile_size)
-        self.title.set_color(pix.color.WHITE, 0xE17092FF)
+        self.title.set_color(pix.color.WHITE, self.title_bg)
         self.set_title("example.py")
 
         self.files: Final = sorted(
@@ -154,18 +134,24 @@ class PixIDE:
         self.highlight()
 
         pix.run_every_frame(self.draw_title)
-        _ = pix.add_event_listener(self.title_events, 0)
 
-    def title_events(self, event: pix.event.AnyEvent):
-        if isinstance(event, pix.event.Click):
-            if event.y < self.title.size.y:
-                print("CLICK TITLE")
-                return False
+    def handle_toolbar(self, event: object):
+        if isinstance(event, ToolbarEvent):
+            button = event.button
+            print(f"PRESSED {button}")
+            if button == 0:
+                if self.running:
+                    pix.quit_loop()
+                    self.tool_bar.set_button(0, Nerd.nf_fa_play_circle, pix.color.LIGHT_GREEN)
+                else:
+                    self.tool_bar.set_button(0, Nerd.nf_fa_stop_circle, pix.color.LIGHT_RED)
+                    self.do_run = True
+            return False
         return True
 
     def draw_title(self):
         self.tool_bar.render()
-        # screen.draw(self.title, top_left=(40 * 4, 8), size=self.title.size)
+        screen.draw(self.title, top_left=(40 * 4, 8), size=self.title.size)
         return True
 
     def resize(self):
@@ -175,19 +161,14 @@ class PixIDE:
         print(f"CON SIZE {con_size.x} {con_size.y}")
         self.con = pix.Console(con_size.x, con_size.y - 1, self.ts)
         self.title = pix.Console(
-            con_size.x, 1, font_file=hack_font, font_size=self.font_size
+            con_size.x, 1, font_file=hack_font.as_posix(), font_size=self.font_size
         )
         self.set_title(self.current_file.name)
         self.edit.set_console(self.con)
 
     def set_title(self, name: str):
-        self.title.set_color(pix.color.WHITE, pix.color.DARK_GREY)
+        self.title.set_color(pix.color.WHITE, self.title_bg)
         self.title.clear()
-        x = 0  # self.title.grid_size.x - 20
-        self.title.put((x, 0), 0xF144, pix.color.LIGHT_GREEN)
-        self.title.put((x + 1, 0), 0xF059, pix.color.LIGHT_BLUE)
-        self.title.put((x + 2, 0), 0xF28D, pix.color.LIGHT_RED)
-
         self.title.cursor_pos = (10, 0)
         self.title.write(f"\ue73c {name}")
         self.title.cursor_pos = (self.title.grid_size.x - 10, 0)
@@ -212,6 +193,15 @@ class PixIDE:
                 color = 1
             self.edit.highlight_lines(row0, col0, row1, col1, color)
 
+    def run(self):
+        text = self.edit.get_text()
+        with open(Path.home() / ".pixwork.py", "w") as f:
+            _ = f.write(text)
+        screen.draw_color = (self.palette[1] << 8) | 0xFF
+        self.running = True
+        run(self.edit.get_text(), self.current_file.as_posix())
+        self.running = False
+
     def render(self):
         screen = self.screen
         ctrl = pix.is_pressed(pix.key.RCTRL) or pix.is_pressed(pix.key.LCTRL)
@@ -222,7 +212,7 @@ class PixIDE:
             if isinstance(e, pix.event.Resize):
                 print("RESIZE")
                 self.resize()
-            if isinstance(e, pix.event.Key):
+            elif isinstance(e, pix.event.Key):
                 if ctrl and e.key >= 0x30 and e.key <= 0x39:
                     i = e.key - 0x30
                     self.load(self.files[i])
@@ -233,14 +223,7 @@ class PixIDE:
                         # self.update_completion()
                         continue
                 elif e.key == pix.key.F5:
-                    if ctrl:
-                        pass
-                    else:
-                        text = self.edit.get_text()
-                        with open(Path.home() / ".pixwork.py", "w") as f:
-                            _ = f.write(text)
-                        screen.draw_color = (self.palette[1] << 8) | 0xFF
-                        run(self.edit.get_text(), self.current_file.as_posix())
+                    self.run()
                     continue
                 elif (
                     e.key == pix.key.UP or e.key == pix.key.DOWN
@@ -276,35 +259,14 @@ class PixIDE:
         # self.con.colorize_section(0,11,100)
         # self.con.set_color(pix.color.WHITE, pix.color.LIGHT_BLUE)
         screen.clear(pix.color.DARK_GREY)
-        size = screen.size - (0, self.con.tile_size.y)
-        screen.draw(self.con, top_left=(0, self.con.tile_size.y), size=self.con.size)
+        tbh = self.tool_bar.console.size.y
+        #size = screen.size - (0, tbh)
+        screen.draw(self.con, top_left=(0, tbh), size=self.con.size)
         # if self.comp_enabled:
         # self.comp.render(screen)
-
-
-def wrap_lines(lines: list[str], max_len: int, break_chars: str = " ") -> list[str]:
-    result: list[str] = []
-    for line in lines:
-        start = 0
-        while start < len(line):
-            # Try to find a break point
-            end = min(start + max_len, len(line))
-            if end == len(line):
-                result.append(line[start:end])
-                break
-            # Scan backwards for break char
-            break_pos = -1
-            for i in range(end - 1, start - 1, -1):
-                if line[i] in break_chars:
-                    break_pos = i + 1  # include the break character
-                    break
-            if break_pos == -1 or break_pos == start:
-                # no break char found, or stuck — force break
-                break_pos = end
-            result.append(line[start:break_pos].rstrip())
-            start = break_pos
-    return result
-
+        if self.do_run:
+            self.do_run = False
+            self.run()
 
 def info_box(text: str):
     lines = text.split("\n")
@@ -319,6 +281,15 @@ def info_box(text: str):
     screen.draw_color = 0x000040FF
     screen.filled_rect(top_left=xy, size=psz)
     screen.draw(con, top_left=xy + (4, 4))
+
+class InfoBox:
+    def __init__(self, canvas: pix.Canvas, text: str):
+        self.text = text
+        self.canvas = canvas
+
+    def render(self):
+        self.canvas.filled_rect(top_left=self.pos, size=self.size)
+        self.canvas.draw(con, top_left=xy + (4, 4))
 
 
 def main():

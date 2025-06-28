@@ -2,7 +2,7 @@ from __future__ import annotations
 import pixpy._pixpy
 import typing
 import pixpy
-__all__ = ['AnyEvent', 'Click', 'Key', 'Move', 'NoEvent', 'Quit', 'Resize', 'Text']
+__all__ = ['AnyEvent', 'Click', 'Key', 'Move', 'NoEvent', 'Quit', 'Resize', 'Text', 'User']
 class Click:
     """
     Event sent when screen was clicked.
@@ -83,4 +83,6 @@ class Text:
     @property
     def text(self) -> str:
         ...
-AnyEvent = typing.Union[NoEvent, Key, Move, Click, Text, Resize, Quit]
+class User:
+    pass
+AnyEvent = typing.Union[NoEvent, Key, Move, Click, Text, Resize, Quit, User]
