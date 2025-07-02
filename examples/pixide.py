@@ -15,6 +15,7 @@ from utils.nerd import Nerd
 fwd = Path(os.path.abspath(__file__)).parent
 hack_font = fwd / "data" / "HackNerdFont-Regular.ttf"
 
+
 def run(source: str, file_name: str):
     fc = screen.frame_counter
     try:
@@ -22,6 +23,7 @@ def run(source: str, file_name: str):
         exec(
             source,
             {
+                "__module__": "runcode",
                 "__builtins__": builtins,
                 "__name__": "__main__",
                 "__file__": file_name,
@@ -38,7 +40,13 @@ def run(source: str, file_name: str):
     except Exception as e:
         screen.swap()
         info = traceback.format_exc()
-        info_box(info)
+        tbe = traceback.TracebackException.from_exception(e)
+        s = tbe.stack[-1]
+        for frame in tbe.stack:
+            print(f"{frame.filename}:{frame.lineno} in {frame.name}")
+            print(f"    {frame.line}")
+
+        info_box(s.lineno, s.colno, info)
     screen.swap()
     leave = False
     while pix.run_loop() and not leave:
@@ -47,8 +55,10 @@ def run(source: str, file_name: str):
             if isinstance(e, pix.event.Key):
                 leave = True
 
+
 class NerdIcon:
     pass
+
 
 class PixIDE:
     def __init__(self, screen: pix.Screen):
@@ -135,6 +145,20 @@ class PixIDE:
 
         pix.run_every_frame(self.draw_title)
 
+    def error_box(self, line: int, col: int, text: str):
+        lines = text.split("\n")
+        lines = wrap_lines(lines, 60, " .")
+        maxl = len(max(lines, key=lambda i: len(i)))
+
+        sz = pix.Int2(maxl, len(lines))
+        con = pix.Console(cols=sz.x, rows=sz.y + 1)
+        con.write(text)
+        psz = sz * (8, 16) + (8, 8)
+        xy = screen.size - psz
+        screen.draw_color = 0x000040FF
+        screen.filled_rect(top_left=xy, size=psz)
+        screen.draw(con, top_left=xy + (4, 4))
+
     def handle_toolbar(self, event: object):
         if isinstance(event, ToolbarEvent):
             button = event.button
@@ -142,9 +166,13 @@ class PixIDE:
             if button == 0:
                 if self.running:
                     pix.quit_loop()
-                    self.tool_bar.set_button(0, Nerd.nf_fa_play_circle, pix.color.LIGHT_GREEN)
+                    self.tool_bar.set_button(
+                        0, Nerd.nf_fa_play_circle, pix.color.LIGHT_GREEN
+                    )
                 else:
-                    self.tool_bar.set_button(0, Nerd.nf_fa_stop_circle, pix.color.LIGHT_RED)
+                    self.tool_bar.set_button(
+                        0, Nerd.nf_fa_stop_circle, pix.color.LIGHT_RED
+                    )
                     self.do_run = True
             return False
         return True
@@ -241,7 +269,8 @@ class PixIDE:
             elif self.comp_enabled and isinstance(e, pix.event.Text):
                 should_update = True
             elif isinstance(e, pix.event.Click):
-                self.edit.click(int(e.x), int(e.y) - self.con.tile_size.y)
+                tbh = self.tool_bar.console.size.y
+                self.edit.click(int(e.x), int(e.y) - tbh)
                 continue
             keep.append(e)
         # self.comp.set_pos(self.con.cursor_pos * self.con.tile_size)
@@ -260,7 +289,7 @@ class PixIDE:
         # self.con.set_color(pix.color.WHITE, pix.color.LIGHT_BLUE)
         screen.clear(pix.color.DARK_GREY)
         tbh = self.tool_bar.console.size.y
-        #size = screen.size - (0, tbh)
+        # size = screen.size - (0, tbh)
         screen.draw(self.con, top_left=(0, tbh), size=self.con.size)
         # if self.comp_enabled:
         # self.comp.render(screen)
@@ -268,7 +297,8 @@ class PixIDE:
             self.do_run = False
             self.run()
 
-def info_box(text: str):
+
+def info_box(line: int, col: int, text: str):
     lines = text.split("\n")
     lines = wrap_lines(lines, 60, " .")
     maxl = len(max(lines, key=lambda i: len(i)))
@@ -281,6 +311,7 @@ def info_box(text: str):
     screen.draw_color = 0x000040FF
     screen.filled_rect(top_left=xy, size=psz)
     screen.draw(con, top_left=xy + (4, 4))
+
 
 class InfoBox:
     def __init__(self, canvas: pix.Canvas, text: str):
