@@ -1,7 +1,9 @@
 #include "context.hpp"
 #include "colors.hpp"
+#include "gl/functions.hpp"
 #include "image_view.hpp"
 
+#include <cmath>
 #include <tesselator.h>
 
 namespace pix {
@@ -40,6 +42,34 @@ std::vector<float> Context::generate_circle(Vec2f center, float radius,
         add_to(vertexData, to_screen(v));
     }
     return vertexData;
+}
+
+std::vector<float> Context::generate_line(Vec2f p0, float r0, Vec2f p1,
+                                          float r1) const
+{
+    int t = static_cast<int>(M_PI * 1.5 / asin(sqrt(1.0 / r0)));
+    std::vector<float> result;
+    result.reserve(t * 2);
+    auto n = (p1 - p0).norm();
+
+    auto n0 = n * r0;
+    for (int i = 0; i < t; i++) {
+        auto angle = (M_PI * 3 / 2) - (M_PI * i / t);
+        auto s = sinf(angle);
+        auto c = cosf(angle);
+        auto ab = Vec2f(n0.x * c - n0.y * s, n0.x * s + n0.y * c) + p0;
+        add_to(result, to_screen(ab));
+    }
+    auto n1 = n * r1;
+    t = static_cast<int>(M_PI * 1.5 / asin(sqrt(1.0 / r1)));
+    for (int i = 0; i < t; i++) {
+        auto angle = (M_PI / 2) - (M_PI * i / t);
+        auto s = sinf(angle);
+        auto c = cosf(angle);
+        auto ab = Vec2f(n1.x * c - n1.y * s, n1.x * s + n1.y * c) + p1;
+        add_to(result, to_screen(ab));
+    }
+    return result;
 }
 
 std::array<float, 4> Context::generate_line(Vec2f from, Vec2f to) const
@@ -98,6 +128,9 @@ std::array<float, 8> Context::rotated_quad(Vec2f center, Vec2f sz,
 std::array<float, 16> Context::rotated_quad_with_uvs(Vec2f center, Vec2f sz,
                                                      float rot) const
 {
+    if (rot == 0.0) {
+        return generate_quad_with_uvs(center - sz/2, sz);
+    }
     sz = sz / 2;
     auto p0 = to_screen(rotate(Vec2f{-sz.x, -sz.y}, rot) + center);
     auto p1 = to_screen(rotate(Vec2f{sz.x, -sz.y}, rot) + center);
@@ -124,13 +157,17 @@ void Context::line(Vec2f from, Vec2f to)
     glLineWidth(line_width);
     draw_filled(generate_line(from, to), gl::Primitive::Lines);
     last_point = to;
+    last_rad = 1;
 }
 
 void Context::line(Vec2f to)
 {
-    glLineWidth(line_width);
-    draw_filled(generate_line(last_point, to), gl::Primitive::Lines);
+    if (last_rad > 0) {
+        glLineWidth(line_width);
+        draw_filled(generate_line(last_point, to), gl::Primitive::Lines);
+    }
     last_point = to;
+    last_rad = 1;
 }
 
 void Context::lines(std::vector<Vec2f> const& points)
@@ -145,6 +182,24 @@ void Context::lines(std::vector<Vec2f> const& points)
         result.push_back(p2.y);
     }
     draw_filled(result, gl::Primitive::LineStrip);
+}
+void Context::round_line(Vec2f from, float rad_from, Vec2f to, float rad_to)
+{
+    auto points = generate_line(from, rad_from, to, rad_to);
+    draw_filled(points, gl::Primitive::TriangleFan);
+
+    last_point = to;
+    last_rad = rad_to;
+}
+
+void Context::round_line(Vec2f to, float radius)
+{
+    if (last_rad > 0) {
+        auto points = generate_line(last_point, last_rad, to, radius);
+        draw_filled(points, gl::Primitive::TriangleFan);
+    }
+    last_point = to;
+    last_rad = radius;
 }
 
 void Context::circle(Vec2f const& v, float r)

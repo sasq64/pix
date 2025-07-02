@@ -15,6 +15,10 @@ class Canvas:
     A `Canvas` is used for rendering. It is implemented by both `Screen` and `Image`.
     """
     scale: Union[Float2, Int2, Tuple[float, float]]
+    def begin_lines(self) -> None:
+        """
+        Clear the last line point. The next call to `line(p)` or `rounded_line(p, r)` will start a new line sequence.
+        """
     def circle(self, center: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
         """
         Draw an (outline) circle
@@ -92,6 +96,16 @@ class Canvas:
     def rect(self, top_left: Union[Float2, Int2, Tuple[float, float]], size: Union[Float2, Int2, Tuple[float, float]]) -> None:
         """
         Draw a rectangle.
+        """
+    @typing.overload
+    def rounded_line(self, start: Union[Float2, Int2, Tuple[float, float]], rad0: float, end: Union[Float2, Int2, Tuple[float, float]], rad1: float) -> None:
+        """
+        Draw a line between start and end.
+        """
+    @typing.overload
+    def rounded_line(self, end: Union[Float2, Int2, Tuple[float, float]], radius: float) -> None:
+        """
+        Draw a line from the end of the last line to the given position.
         """
     def set_pixel(self, pos: Union[Int2, Tuple[int, int]], color: int) -> None:
         """
@@ -301,7 +315,7 @@ class Float2:
     @staticmethod
     def from_angle(angle: float) -> Float2:
         """
-        Rotates the X-axis (1,0) around `angle` counter-clockwise and returns the result.
+        Rotates the X-axis (1,0) around `angle` clockwise and returns the result.
         """
     @typing.overload
     def __add__(self, arg0: Union[Float2, Int2, Tuple[float, float]]) -> Float2:
@@ -825,7 +839,9 @@ def blend_colors(colors: list[int], t: float) -> int:
     Get a color from a color range. Works similar to bilinear filtering of an 1D texture.
     """
 def get_display() -> Screen:
-    ...
+    """
+    Get the current display, if any.
+    """
 def get_pointer() -> Float2:
     """
     Get the xy coordinate of the mouse pointer (in screen space).

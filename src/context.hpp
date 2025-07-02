@@ -51,6 +51,7 @@ public:
 
 private:
     Vec2f last_point{0, 0};
+    float last_rad = -1.0F;
 
     gl::Program& colored;
     gl::Program& textured;
@@ -72,6 +73,7 @@ private:
     std::array<float, 4> generate_line(Vec2f from, Vec2f to) const;
     std::vector<float> generate_lines(float const* screen_cords,
                                       int count) const;
+    std::vector<float> generate_line(Vec2f p0, float r0, Vec2f p1, float r1) const;
     std::array<float, 8> generate_quad(Vec2f top_left, Vec2f size) const;
     std::array<float, 8> rotated_quad(Vec2f center, Vec2f sz, float rot) const;
     std::array<float, 16> rotated_quad_with_uvs(Vec2f center, Vec2f sz,
@@ -112,6 +114,8 @@ public:
     {
     }
 
+    void begin_lines() { last_rad = -1; }
+
     std::shared_ptr<Context> copy()
     {
         return std::make_shared<Context>(*this);
@@ -139,6 +143,8 @@ public:
     void line(Vec2f from, Vec2f to);
     void line(Vec2f to);
     void lines(std::vector<Vec2f> const& points);
+    void round_line(Vec2f from, float rad_from, Vec2f to, float rad_to);
+    void round_line(Vec2f to, float radius);
     void filled_rect(Vec2f top_left, Vec2f size);
     void rect(Vec2f top_left, Vec2f size);
     void blit(pix::ImageView const& tex, Vec2f pos = {0, 0},

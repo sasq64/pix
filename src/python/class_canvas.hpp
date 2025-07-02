@@ -35,6 +35,22 @@ inline void add_canvas_functions(auto& cls)
             "Draw a filled circle.");
 
     cls.def(
+        "begin_lines", &Context::begin_lines,
+        "Clear the last line point. The next call to `line(p)` or `rounded_line(p, r)` will start a new line sequence.");
+    cls.def(
+        "rounded_line",
+        [](Context& self, Vec2f const& from, float r0, Vec2f const& to,
+           float r1) { self.round_line(from, r0, to, r1); },
+        "start"_a, "rad0"_a, "end"_a, "rad1"_a,
+        "Draw a line between start and end.");
+
+    cls.def(
+        "rounded_line",
+        [](Context& self, Vec2f const& to, float r) { self.round_line(to, r); },
+        "end"_a, "radius"_a,
+        "Draw a line from the end of the last line to the given position.");
+
+    cls.def(
         "line",
         [](Context& self, Vec2f const& from, Vec2f const& to) {
             self.line(from, to);
@@ -137,10 +153,12 @@ inline void add_canvas_functions(auto& cls)
                       "Set the point size in fractional pixels.");
     cls.def_readwrite("line_width", &Context::line_width,
                       "Set the line with in fractional pixels.");
-    //cls.def_readwrite("clip_top_left", &Context::clip_start);
-    //cls.def_readwrite("clip_size", &Context::clip_size);
+    // cls.def_readwrite("clip_top_left", &Context::clip_start);
+    // cls.def_readwrite("clip_size", &Context::clip_size);
     cls.def_readwrite("scale", &Context::target_scale);
-    cls.def_readwrite("backface_culling", &Context::backface_culling, "If true, backward facing polygons will not be rendered.");
+    cls.def_readwrite(
+        "backface_culling", &Context::backface_culling,
+        "If true, backward facing polygons will not be rendered.");
     cls.def_readwrite(
         "offset", &Context::offset,
         "The offset into a the source canvas this canvas was created from, if any.");

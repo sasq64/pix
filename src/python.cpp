@@ -251,7 +251,9 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
             "since you can only have one active display in pix.");
     mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false,
             "visible"_a = true, doc);
-    mod.def("get_display", [] { return pix::Screen::instance; });
+    mod.def(
+        "get_display", [] { return pix::Screen::instance; },
+        "Get the current display, if any.");
     mod.def(
         "update_tweens",
         [] {

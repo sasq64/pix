@@ -284,7 +284,7 @@ inline void add_vec2_class(py::module_& mod)
         .def("__sub__", &Vec2f::subs)
         .def_static(
             "from_angle", &Vec2f::from_angle, py::arg("angle"),
-            "Rotates the X-axis (1,0) around `angle` counter-clockwise and returns the result.")
+            "Rotates the X-axis (1,0) around `angle` clockwise and returns the result.")
         .def(
             "clip", &Vec2f::clip, py::arg("low"), py::arg("high"),
             "Compare the point against the bounding box defined by low/high. Returns (0,0) if point is inside the box, or a negative or positive distance to the edge if outside.")

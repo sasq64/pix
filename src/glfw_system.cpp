@@ -279,6 +279,7 @@ public:
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glEnable(GL_MULTISAMPLE);
 
         system = this;
         glfwSetCharCallback(window, [](GLFWwindow*, unsigned int codepoint) {
