@@ -261,8 +261,14 @@ class TextEdit:
         self.keepx = -1
         return False
 
+    def goto(self, xpos: int, ypos: int):
+        self.xpos = xpos
+        self.ypos = ypos
+        self.wrap_cursor()
+
     def wrap_cursor(self):
         """Check if cursor is out of bounds and move it to a correct position"""
+        print("WRAP")
         if self.xpos < 0:
             # Wrap to end of previous line
             if self.goto_line(self.ypos - 1):
@@ -343,8 +349,11 @@ class TextEdit:
                     self.con.put((x, y), t, fg, bg)
 
         # If current line is visible, move the cursor to the edit position
-        if self.ypos >= self.scroll_pos:
+        if self.ypos >= self.scroll_pos and self.ypos <= self.scroll_pos + self.con.size.y:
+            self.con.cursor_on = True
             self.con.cursor_pos = Int2(self.xpos, self.ypos - self.scroll_pos)
+        else:
+            self.con.cursor_on = False
 
 
 def main():

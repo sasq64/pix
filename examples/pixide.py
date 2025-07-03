@@ -1,4 +1,5 @@
 import builtins
+from csv import Error
 import os.path
 
 # import traceback
@@ -8,7 +9,7 @@ from typing import Final
 
 import pixpy as pix
 from editor import TextEdit
-from utils.wrap import wrap_lines
+from utils.wrap import wrap_lines, wrap_text
 from utils.tool_bar import ToolBar, ToolbarEvent
 from utils.nerd import Nerd
 
@@ -16,44 +17,46 @@ fwd = Path(os.path.abspath(__file__)).parent
 hack_font = fwd / "data" / "HackNerdFont-Regular.ttf"
 
 
-def run(source: str, file_name: str):
-    fc = screen.frame_counter
-    try:
-        pix.allow_break(True)
-        exec(
-            source,
-            {
-                "__module__": "runcode",
-                "__builtins__": builtins,
-                "__name__": "__main__",
-                "__file__": file_name,
-            },
+class ErrorBox:
+    def __init__(
+        self,
+        canvas: pix.Canvas,
+        point_to: pix.Float2,
+        text: str,
+        font: pix.Font,
+        size: int,
+    ):
+        self.canvas = canvas
+        self.point_to = point_to
+        margin = 10
+        lines: list[str] = []
+        for line in text.splitlines():
+            lines += wrap_text(line, font, size, canvas.size.x - margin * 2)
+        self.lines = [font.make_image(line, size, pix.color.BLACK) for line in lines]
+        self.rect_size = pix.Float2(
+            canvas.size.x - 2, len(lines) * self.lines[0].size.y + margin * 2
         )
-        pix.allow_break(False)
-        if fc != screen.frame_counter:
-            events = pix.all_events()
-            return
-        info_box("[PRESS ANY KEY]")
-    except SyntaxError as se:
-        screen.swap()
-        info_box(f"Syntax error '{se.msg}' in line {se.lineno}")
-    except Exception as e:
-        screen.swap()
-        info = traceback.format_exc()
-        tbe = traceback.TracebackException.from_exception(e)
-        s = tbe.stack[-1]
-        for frame in tbe.stack:
-            print(f"{frame.filename}:{frame.lineno} in {frame.name}")
-            print(f"    {frame.line}")
+        sz = pix.Float2(32, 24)
+        self.triangle = pix.Image(size=sz)
+        points: list[pix.Float2] = [pix.Float2(sz.x / 2, 0), sz, pix.Float2(0, sz.y)]
+        self.triangle.draw_color = pix.color.LIGHT_RED
+        self.triangle.polygon(points, True)
 
-        info_box(s.lineno, s.colno, info)
-    screen.swap()
-    leave = False
-    while pix.run_loop() and not leave:
-        events = pix.all_events()
-        for e in events:
-            if isinstance(e, pix.event.Key):
-                leave = True
+    def set_point(self, to: pix.Float2):
+        self.point_to = to
+
+    def render(self):
+        target = self.canvas
+        target.draw(image=self.triangle, top_left=self.point_to)
+        target.draw_color = pix.color.LIGHT_RED
+        p = pix.Float2(0, self.point_to.y + self.triangle.size.y)
+        target.filled_rect(top_left=p, size=self.rect_size)
+        target.draw_color = pix.color.WHITE
+        target.rect(top_left=p, size=self.rect_size)
+        pos = p + (10, 10)
+        for line in self.lines:
+            target.draw(line, top_left=pos)
+            pos += (0, line.size.y)
 
 
 class NerdIcon:
@@ -86,7 +89,7 @@ class PixIDE:
             "float": 8,
             "comment": 6,
             "identifier": 1,
-            "ERROR": 9,
+            #"ERROR": 9,
         }
 
         self.palette: Final = [
@@ -101,10 +104,9 @@ class PixIDE:
             0x6B89FF,  # dark blue
             0xFF2020,  # red
         ]
-
         self.do_run: bool = False
         self.screen: Final = screen
-        self.font_size: int = 24
+        self.font_size: int = 20
         self.font: pix.Font = pix.load_font(hack_font)
         self.ts: pix.TileSet = pix.TileSet(self.font, size=self.font_size)
 
@@ -143,21 +145,9 @@ class PixIDE:
         self.load(self.files[1])
         self.highlight()
 
+        self.error_box: None | ErrorBox = None
+
         pix.run_every_frame(self.draw_title)
-
-    def error_box(self, line: int, col: int, text: str):
-        lines = text.split("\n")
-        lines = wrap_lines(lines, 60, " .")
-        maxl = len(max(lines, key=lambda i: len(i)))
-
-        sz = pix.Int2(maxl, len(lines))
-        con = pix.Console(cols=sz.x, rows=sz.y + 1)
-        con.write(text)
-        psz = sz * (8, 16) + (8, 8)
-        xy = screen.size - psz
-        screen.draw_color = 0x000040FF
-        screen.filled_rect(top_left=xy, size=psz)
-        screen.draw(con, top_left=xy + (4, 4))
 
     def handle_toolbar(self, event: object):
         if isinstance(event, ToolbarEvent):
@@ -166,13 +156,7 @@ class PixIDE:
             if button == 0:
                 if self.running:
                     pix.quit_loop()
-                    self.tool_bar.set_button(
-                        0, Nerd.nf_fa_play_circle, pix.color.LIGHT_GREEN
-                    )
                 else:
-                    self.tool_bar.set_button(
-                        0, Nerd.nf_fa_stop_circle, pix.color.LIGHT_RED
-                    )
                     self.do_run = True
             return False
         return True
@@ -221,16 +205,73 @@ class PixIDE:
                 color = 1
             self.edit.highlight_lines(row0, col0, row1, col1, color)
 
+    def show_error(self, text: str, source_pos: pix.Int2):
+        print(f"ERROR AT {source_pos}")
+        self.edit.scroll_pos = source_pos.y - 2
+
+        # self.edit.dirty = True
+        pos = pix.Float2(source_pos.x - 0.5, source_pos.y - self.edit.scroll_pos)
+        pos = pos * self.con.tile_size + (0, 48)
+        self.error_box = ErrorBox(screen, pos, text, self.font, 20)
+        print(f"ERROR BOX at {pos}")
+
     def run(self):
+        self.tool_bar.set_button(0, Nerd.nf_fa_stop_circle, pix.color.LIGHT_RED)
+        self.running = True
+        self.run2()
+        self.running = False
+        self.tool_bar.set_button(0, Nerd.nf_fa_play_circle, pix.color.LIGHT_GREEN)
+
+    def run2(self):
+        screen = self.screen
+        # run(self.edit.get_text(), self.current_file.as_posix())
+        source = self.edit.get_text()
+        file_name = self.current_file.as_posix()
         text = self.edit.get_text()
         with open(Path.home() / ".pixwork.py", "w") as f:
             _ = f.write(text)
         screen.draw_color = (self.palette[1] << 8) | 0xFF
-        self.running = True
-        run(self.edit.get_text(), self.current_file.as_posix())
-        self.running = False
+        fc = screen.frame_counter
+        try:
+            pix.allow_break(True)
+            exec(
+                source,
+                {
+                    "__module__": "runcode",
+                    "__builtins__": builtins,
+                    "__name__": "__main__",
+                    "__file__": file_name,
+                },
+            )
+            pix.allow_break(False)
+            if fc != screen.frame_counter:
+                events = pix.all_events()
+                return
+            # info_box("[PRESS ANY KEY]")
+        except SyntaxError as se:
+            screen.swap()
+            # info_box(f"Syntax error '{se.msg}' in line {se.lineno}")
+            self.show_error(se.msg, pix.Int2(0, se.lineno or 0))
+            events = pix.all_events()
+            return
+        except Exception as e:
+            screen.swap()
+            info = str(e)
+            tbe = traceback.TracebackException.from_exception(e)
+            s = tbe.stack[-1]
+            self.show_error(info, pix.Int2(s.colno or 0, s.lineno or 0))
+            events = pix.all_events()
+            return
+        screen.swap()
+        leave = False
+        while pix.run_loop() and not leave:
+            events = pix.all_events()
+            for e in events:
+                if isinstance(e, pix.event.Key):
+                    leave = True
 
     def render(self):
+        # print(self.xxx)
         screen = self.screen
         ctrl = pix.is_pressed(pix.key.RCTRL) or pix.is_pressed(pix.key.LCTRL)
         events = pix.all_events()
@@ -241,6 +282,8 @@ class PixIDE:
                 print("RESIZE")
                 self.resize()
             elif isinstance(e, pix.event.Key):
+                print("KEY")
+                self.error_box = None
                 if ctrl and e.key >= 0x30 and e.key <= 0x39:
                     i = e.key - 0x30
                     self.load(self.files[i])
@@ -267,8 +310,11 @@ class PixIDE:
                 elif e.key == pix.key.BACKSPACE and self.comp_enabled:
                     should_update = True
             elif self.comp_enabled and isinstance(e, pix.event.Text):
+                self.error_box = None
                 should_update = True
             elif isinstance(e, pix.event.Click):
+                print("CLICK")
+                self.error_box = None
                 tbh = self.tool_bar.console.size.y
                 self.edit.click(int(e.x), int(e.y) - tbh)
                 continue
@@ -291,6 +337,12 @@ class PixIDE:
         tbh = self.tool_bar.console.size.y
         # size = screen.size - (0, tbh)
         screen.draw(self.con, top_left=(0, tbh), size=self.con.size)
+
+        if self.error_box:
+            # p = self.con.cursor_pos * self.con.tile_size + (0, 48 + self.con.tile_size.y)
+            # self.error_box.set_point(p.tof())
+            self.error_box.render()
+
         # if self.comp_enabled:
         # self.comp.render(screen)
         if self.do_run:
