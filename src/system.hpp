@@ -50,11 +50,6 @@ template <typename... Ts> struct Overload : Ts... // NOLINT
 };
 template <class... Ts> Overload(Ts...) -> Overload<Ts...>;
 
-struct UserEvent {
-    uint32_t code;
-    float value;
-};
-
 struct KeyEvent
 {
     uint32_t key;
@@ -89,6 +84,13 @@ struct MoveEvent
     int buttons;
 };
 
+struct ScrollEvent
+{
+    float x;
+    float y;
+};
+
+
 struct TextEvent
 {
     std::string text;
@@ -96,7 +98,7 @@ struct TextEvent
 };
 
 using AnyEvent = std::variant<NoEvent, KeyEvent, MoveEvent, ClickEvent,
-                              TextEvent, ResizeEvent, QuitEvent, UserEvent>;
+                              TextEvent, ResizeEvent, QuitEvent, ScrollEvent>;
 
 class Display
 {

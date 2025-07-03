@@ -296,6 +296,9 @@ public:
         glfwSetCursorPosCallback(window, [](GLFWwindow*, double x, double y) {
             system->mouse_move(x, y);
         });
+        glfwSetScrollCallback(window, [](GLFWwindow*, double x, double y) {
+            system->scroll(x, y);
+        });
         glfwSetWindowSizeCallback(
             window, [](GLFWwindow*, int w, int h) { system->resized(w, h); });
         glViewport(0, 0, settings.display_width, settings.display_height);
@@ -314,6 +317,12 @@ public:
         int buttons = glfwGetMouseButton(window, 0);
         event_queue.emplace_back(
             MoveEvent{static_cast<float>(x), static_cast<float>(y), buttons});
+    }
+
+    void scroll(double x, double y)
+    {
+        event_queue.emplace_back(
+            ScrollEvent{static_cast<float>(x), static_cast<float>(y)});
     }
 
     void mouse_was_pressed(int button, int action, int mods)

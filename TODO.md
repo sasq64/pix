@@ -20,7 +20,7 @@
 - [ ] Scroll current line when too long
 - [ ] Right-side scrollbar
 - [ ] Select/Cut/Copy/Paste with mouse
-- [ ] Scroll with mouse-wheel
+- [x] Scroll with mouse-wheel
 - [ ] Undo/Redo
 - [x] Show stacktrace/Line number on runtime error
 - [ ] Exit also with F5

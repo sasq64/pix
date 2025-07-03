@@ -268,7 +268,6 @@ class TextEdit:
 
     def wrap_cursor(self):
         """Check if cursor is out of bounds and move it to a correct position"""
-        print("WRAP")
         if self.xpos < 0:
             # Wrap to end of previous line
             if self.goto_line(self.ypos - 1):
@@ -300,7 +299,6 @@ class TextEdit:
         if self.xpos > len(self.line):
             self.xpos = len(self.line)
         self.con.cursor_pos = Int2(self.xpos, self.ypos)
-        print("CLICKED")
 
     def update(self, events: list[pix.event.AnyEvent]):
         for e in events:
@@ -309,6 +307,19 @@ class TextEdit:
                 self.xpos += len(e.text)
                 self.dirty = True
                 self.keepx = -1
+            elif isinstance(e, pix.event.Scroll):
+                self.scroll_pos -= int(e.y) * 3
+                y = self.rows - 1
+                l = len(self.lines)
+                if self.scroll_pos < 0:
+                    self.scroll_pos = 0
+                if self.scroll_pos > l - y:
+                    self.scroll_pos = l - y
+                if self.ypos < self.scroll_pos:
+                    self.ypos = self.scroll_pos
+                y = self.rows - 1
+                if self.ypos >= self.scroll_pos + y:
+                    self.ypos = self.scroll_pos + y - 1
             elif isinstance(e, pix.event.Key):
                 if self.handle_key(e.key, e.mods):
                     self.dirty = True
@@ -349,7 +360,10 @@ class TextEdit:
                     self.con.put((x, y), t, fg, bg)
 
         # If current line is visible, move the cursor to the edit position
-        if self.ypos >= self.scroll_pos and self.ypos <= self.scroll_pos + self.con.size.y:
+        if (
+            self.ypos >= self.scroll_pos
+            and self.ypos <= self.scroll_pos + self.con.size.y
+        ):
             self.con.cursor_on = True
             self.con.cursor_pos = Int2(self.xpos, self.ypos - self.scroll_pos)
         else:

@@ -1,5 +1,4 @@
 import builtins
-from csv import Error
 import os.path
 
 # import traceback
@@ -89,7 +88,7 @@ class PixIDE:
             "float": 8,
             "comment": 6,
             "identifier": 1,
-            #"ERROR": 9,
+            # "ERROR": 9,
         }
 
         self.palette: Final = [
@@ -251,7 +250,8 @@ class PixIDE:
         except SyntaxError as se:
             screen.swap()
             # info_box(f"Syntax error '{se.msg}' in line {se.lineno}")
-            self.show_error(se.msg, pix.Int2(0, se.lineno or 0))
+            print(f"{se.lineno} {se.offset}")
+            self.show_error(se.msg, pix.Int2((se.offset or 1) - 1, se.lineno or 0))
             events = pix.all_events()
             return
         except Exception as e:
@@ -282,7 +282,6 @@ class PixIDE:
                 print("RESIZE")
                 self.resize()
             elif isinstance(e, pix.event.Key):
-                print("KEY")
                 self.error_box = None
                 if ctrl and e.key >= 0x30 and e.key <= 0x39:
                     i = e.key - 0x30
@@ -313,7 +312,6 @@ class PixIDE:
                 self.error_box = None
                 should_update = True
             elif isinstance(e, pix.event.Click):
-                print("CLICK")
                 self.error_box = None
                 tbh = self.tool_bar.console.size.y
                 self.edit.click(int(e.x), int(e.y) - tbh)
@@ -327,7 +325,6 @@ class PixIDE:
             # self.update_completion()
 
         if self.edit.dirty:
-            print("DIRTY")
             self.highlight()
         self.edit.render()
         # self.con.set_color(pix.color.WHITE, pix.color.RED)
@@ -363,16 +360,6 @@ def info_box(line: int, col: int, text: str):
     screen.draw_color = 0x000040FF
     screen.filled_rect(top_left=xy, size=psz)
     screen.draw(con, top_left=xy + (4, 4))
-
-
-class InfoBox:
-    def __init__(self, canvas: pix.Canvas, text: str):
-        self.text = text
-        self.canvas = canvas
-
-    def render(self):
-        self.canvas.filled_rect(top_left=self.pos, size=self.size)
-        self.canvas.draw(con, top_left=xy + (4, 4))
 
 
 def main():

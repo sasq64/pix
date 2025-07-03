@@ -16,7 +16,7 @@ void TileSet::add_char(char32_t c)
     auto pos = alloc_char(c);
 
     // Render character into texture
-    auto [fw, fh] = font_ptr->get_size(0x2588);
+    // auto [fw, fh] = font_ptr->get_size(0x2588);
     // printf("%d %d\n", fw, fh);
     // auto [cw, ch] = font_ptr->get_size(c);
     std::vector<uint32_t> temp(char_width * char_height * 2);

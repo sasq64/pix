@@ -2,7 +2,7 @@ from __future__ import annotations
 import pixpy._pixpy
 import typing
 import pixpy
-__all__ = ['AnyEvent', 'Click', 'Key', 'Move', 'NoEvent', 'Quit', 'Resize', 'Text', 'User']
+__all__ = ['AnyEvent', 'Click', 'Key', 'Move', 'NoEvent', 'Quit', 'Resize', 'Scroll', 'Text']
 class Click:
     """
     Event sent when screen was clicked.
@@ -42,7 +42,7 @@ class Move:
     """
     Event sent when mouse was moved.
     """
-    __match_args__: typing.ClassVar[tuple] = ('pos', 'buttons')
+    __match_args__: typing.ClassVar[tuple] = ('x', 'y')
     def __repr__(self) -> str:
         ...
     @property
@@ -73,6 +73,16 @@ class Resize:
     @property
     def y(self) -> int:
         ...
+class Scroll:
+    __match_args__: typing.ClassVar[tuple] = ('x', 'y')
+    def __repr__(self) -> str:
+        ...
+    @property
+    def x(self) -> float:
+        ...
+    @property
+    def y(self) -> float:
+        ...
 class Text:
     """
     Event sent when text was input into the window.
@@ -83,6 +93,4 @@ class Text:
     @property
     def text(self) -> str:
         ...
-class User:
-    pass
-AnyEvent = typing.Union[NoEvent, Key, Move, Click, Text, Resize, Quit, User]
+AnyEvent = typing.Union[NoEvent, Key, Move, Click, Text, Resize, Quit, Scroll]

@@ -124,7 +124,7 @@ def main(_):
             wf.add_line(
                 len(wf),
                 "AnyEvent = typing.Union"
-                + "[NoEvent, Key, Move, Click, Text, Resize, Quit, User]",
+                + "[NoEvent, Key, Move, Click, Text, Resize, Quit, Scroll]",
             )
 
 
