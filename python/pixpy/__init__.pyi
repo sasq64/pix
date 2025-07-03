@@ -451,11 +451,11 @@ class Float2:
         """
         Convert a `Float2` to an `Int2`
         """
-    def tween_from(self, from: Union[Float2, Int2, Tuple[float, float]], secs: float = 1.0, ease: typing.Callable[[float], float] = ...) -> Float2:
+    def tween_from(self, value: Union[Float2, Int2, Tuple[float, float]], secs: float = 1.0, ease: typing.Callable[[float], float] = ...) -> Float2:
         """
         Animate this Float2 from `from` to its current value in `secs` seconds.
         """
-    def tween_to(self, to: Union[Float2, Int2, Tuple[float, float]], secs: float = 1.0, ease: typing.Callable[[float], float] = ...) -> Float2:
+    def tween_to(self, value: Union[Float2, Int2, Tuple[float, float]], secs: float = 1.0, ease: typing.Callable[[float], float] = ...) -> Float2:
         """
         Animate this Float2 so it reaches `to` in `secs` seconds.
         """

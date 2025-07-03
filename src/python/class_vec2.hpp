@@ -214,7 +214,7 @@ inline void add_vec2_class(py::module_& mod)
                 it->fn = ease;
                 return self.cast<Vec2f&>();
             },
-            "to"_a, "secs"_a = 1.0F, "ease"_a = lf,
+            "value"_a, "secs"_a = 1.0F, "ease"_a = lf,
             "Animate this Float2 so it reaches `to` in `secs` seconds.")
         .def(
             "tween_from",
@@ -229,7 +229,7 @@ inline void add_vec2_class(py::module_& mod)
                 it->fn = ease;
                 return self.cast<Vec2f&>();
             },
-            "from"_a, "secs"_a = 1.0F, "ease"_a = &lf,
+            "value"_a, "secs"_a = 1.0F, "ease"_a = &lf,
             "Animate this Float2 from `from` to its current value in `secs` seconds.")
         .def(
             "tween_velocity",
