@@ -2,15 +2,14 @@
 
 ## Bugs
 
-- [x] Error highlighting broken @done(06/17/25 14:44)
+- [ ] Error highlighting broken
+- [ ] Last line not visible
 
 ## General
 
 - [ ] Use py::buffer for pixel plot array
 - [ ] Open hidden window on pix calls before open_display()
 - [ ] Clear handling of context/canvas size vs view_size vs target_size
-
-## Editor / PixIDE
 
 ### Basic
 
@@ -23,9 +22,14 @@
 - [ ] Select/Cut/Copy/Paste with mouse
 - [ ] Scroll with mouse-wheel
 - [ ] Undo/Redo
-- [ ] Show stacktrace/Line number on runtime error
+- [x] Show stacktrace/Line number on runtime error
+- [ ] Exit also with F5
+- [ ] Goto line
+- [ ] Goto last error
+- [ ] Line number margin
 
-### Intellisense
+
+### Intellisense (TBD)
 
 - [ ] Simple dot completion of members using popup list
 - [ ] Use treesitter to populate navigation database

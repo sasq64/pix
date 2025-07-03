@@ -30,8 +30,8 @@ def generate_module(module: type, mod_name: str):
                 if len(p) > 1:
                     t = p[1].rstrip("\n").replace("pixpy._pixpy.", "")
                     print(f"{name}: {t}\n", file=sys.stderr)
-            if doc_comment:
-                props[name] = (doc_comment.strip(), t)
+            doc_comment = doc_comment or ""
+            props[name] = (doc_comment.strip(), t)
             # print(f"### {name}\n{doc_comment.strip()}")
         elif callable(obj):
             doc_comment = inspect.getdoc(obj)
@@ -146,6 +146,15 @@ with open(output_file, "w") as f:
             print(f"\n## {name}\n\n{doc}\n")
             generate_module(obj, name)
 
+    print("## pixpy.event (module)")
+    generate_module(pixpy.event, "event")
+    for name, obj in inspect.getmembers(pixpy.event):
+        if inspect.isclass(obj):
+            doc = inspect.getdoc(obj)
+            if not doc:
+                continue
+            print(f"\n## {name}\n\n{doc}\n")
+            generate_module(obj, name)
     print("## pixpy.color (module)")
     generate_module(pixpy.color, "color")
     print("## pixpy.key (module)")

@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import pixpy as pix
 
+pwd = Path(__file__).absolute().parent
+
 TileNo = int
 
 BOX = 9
@@ -71,11 +73,11 @@ class Sokoban:
 
         self.con = pix.Console(cols=20, rows=20, tile_size=self.tile_size)
         self.con.set_color(pix.color.WHITE, 0x779699FF)
-        tiles = pix.load_png("data/sokoban_tilesheet.png").split(size=self.tile_size)
+        tiles = pix.load_png(pwd / "data/sokoban_tilesheet.png").split(size=self.tile_size)
         for i, tile in enumerate(tiles):
             self.con.get_image_for(256 + i).copy_from(tile)
 
-        self.load_levels(Path("data/sokoban_levels.txt"))
+        self.load_levels(pwd / "data/sokoban_levels.txt")
         self.level_no = 0
         self.set_level(self.levels[self.level_no])
 

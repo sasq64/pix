@@ -1,0 +1,10 @@
+{
+  "typeCheckingMode": "all",
+  "reportImplicitRelativeImport": false,
+  "reportUnusedCallResult": false,
+  "enableTypeIgnoreComments": true,
+  "reportUnannotatedClassAttribute": false,
+  "include": [
+    "examples"
+  ],
+}
