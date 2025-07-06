@@ -1,5 +1,5 @@
 import unittest
-from edit_cmd import EditCmd, EditSplit, EditJoin, EditDelete, EditInsert, Char
+from edit_cmd import EditCmd, EditSplit, EditJoin, EditDelete, EditInsert, CombinedCmd, CmdStack, Char, Pos
 
 
 class TestEditCmd(unittest.TestCase):
@@ -8,16 +8,56 @@ class TestEditCmd(unittest.TestCase):
     def test_base_edit_cmd(self):
         """Test basic EditCmd functionality"""
         cmd = EditCmd()
-        self.assertFalse(cmd.join_prev)
-        
-        cmd = EditCmd(join_prev=True)
-        self.assertTrue(cmd.join_prev)
         
         # Test default implementations
         target = [[(ord('a'), 0), (ord('b'), 1)]]
-        cmd.apply(target)
+        result = cmd.apply(target)
+        self.assertIsNone(result)
         result = cmd.undo(target)
         self.assertIsNone(result)
+
+
+class TestCombinedCmd(unittest.TestCase):
+    """Test CombinedCmd class"""
+    
+    def setUp(self):
+        """Set up test data"""
+        self.target = [
+            [(ord('H'), 0), (ord('e'), 1), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)],
+            [(ord('W'), 0), (ord('o'), 1), (ord('r'), 2), (ord('l'), 3), (ord('d'), 4)]
+        ]
+    
+    def test_combined_cmd_apply(self):
+        """Test applying combined commands"""
+        insert_cmd = EditInsert(0, 2, [(ord('X'), 5)])
+        delete_cmd = EditDelete(0, 1, 1)
+        combined = CombinedCmd([insert_cmd, delete_cmd])
+        
+        original = [line[:] for line in self.target]
+        result = combined.apply(self.target)
+        
+        # Should apply both commands
+        expected = [(ord('H'), 0), (ord('X'), 5), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)]
+        self.assertEqual(self.target[0], expected)
+        self.assertEqual(result, (0, 1))  # Position after delete (last command)
+        
+        # Test undo
+        undo_result = combined.undo(self.target)
+        self.assertEqual(self.target, original)
+        self.assertEqual(undo_result, (0, 1))  # Position after delete undo
+    
+    def test_combined_cmd_empty_list(self):
+        """Test combined command with empty list"""
+        combined = CombinedCmd([])
+        original = [line[:] for line in self.target]
+        
+        result = combined.apply(self.target)
+        self.assertIsNone(result)
+        self.assertEqual(self.target, original)
+        
+        undo_result = combined.undo(self.target)
+        self.assertIsNone(undo_result)
+        self.assertEqual(self.target, original)
 
 
 class TestEditSplit(unittest.TestCase):
@@ -35,17 +75,18 @@ class TestEditSplit(unittest.TestCase):
         cmd = EditSplit(0, 2)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         # Check that line was split correctly
         self.assertEqual(len(self.target), 3)
         self.assertEqual(self.target[0], [(ord('H'), 0), (ord('e'), 1)])
         self.assertEqual(self.target[1], [(ord('l'), 2), (ord('l'), 3), (ord('o'), 4)])
         self.assertEqual(self.target[2], [(ord('W'), 0), (ord('o'), 1), (ord('r'), 2), (ord('l'), 3), (ord('d'), 4)])
+        self.assertEqual(result, (0, 2))
         
         # Test undo
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (0, 2))
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 2))
         self.assertEqual(self.target, original)
     
     def test_split_at_beginning(self):
@@ -53,14 +94,15 @@ class TestEditSplit(unittest.TestCase):
         cmd = EditSplit(0, 0)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         self.assertEqual(len(self.target), 3)
         self.assertEqual(self.target[0], [])
         self.assertEqual(self.target[1], [(ord('H'), 0), (ord('e'), 1), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)])
-        
-        result = cmd.undo(self.target)
         self.assertEqual(result, (0, 0))
+        
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 0))
         self.assertEqual(self.target, original)
     
     def test_split_at_end(self):
@@ -68,14 +110,15 @@ class TestEditSplit(unittest.TestCase):
         cmd = EditSplit(0, 5)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         self.assertEqual(len(self.target), 3)
         self.assertEqual(self.target[0], [(ord('H'), 0), (ord('e'), 1), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)])
         self.assertEqual(self.target[1], [])
-        
-        result = cmd.undo(self.target)
         self.assertEqual(result, (0, 5))
+        
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 5))
         self.assertEqual(self.target, original)
     
     def test_split_second_line(self):
@@ -83,15 +126,16 @@ class TestEditSplit(unittest.TestCase):
         cmd = EditSplit(1, 2)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         self.assertEqual(len(self.target), 3)
         self.assertEqual(self.target[0], [(ord('H'), 0), (ord('e'), 1), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)])
         self.assertEqual(self.target[1], [(ord('W'), 0), (ord('o'), 1)])
         self.assertEqual(self.target[2], [(ord('r'), 2), (ord('l'), 3), (ord('d'), 4)])
-        
-        result = cmd.undo(self.target)
         self.assertEqual(result, (1, 2))
+        
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (1, 2))
         self.assertEqual(self.target, original)
 
 
@@ -111,7 +155,7 @@ class TestEditJoin(unittest.TestCase):
         cmd = EditJoin(0)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         # Check that lines were joined correctly
         self.assertEqual(len(self.target), 2)
@@ -119,10 +163,11 @@ class TestEditJoin(unittest.TestCase):
                           (ord('W'), 0), (ord('o'), 1), (ord('r'), 2), (ord('l'), 3), (ord('d'), 4)]
         self.assertEqual(self.target[0], expected_joined)
         self.assertEqual(self.target[1], [(ord('!'), 0)])
+        self.assertEqual(result, (0, 5))
         
         # Test undo
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (1, 0))
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (1, 0))
         self.assertEqual(self.target, original)
     
     def test_join_last_line(self):
@@ -130,15 +175,16 @@ class TestEditJoin(unittest.TestCase):
         cmd = EditJoin(1)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         self.assertEqual(len(self.target), 2)
         self.assertEqual(self.target[0], [(ord('H'), 0), (ord('e'), 1), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)])
         expected_joined = [(ord('W'), 0), (ord('o'), 1), (ord('r'), 2), (ord('l'), 3), (ord('d'), 4), (ord('!'), 0)]
         self.assertEqual(self.target[1], expected_joined)
+        self.assertEqual(result, (1, 5))
         
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (2, 0))
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (2, 0))
         self.assertEqual(self.target, original)
     
     def test_join_empty_line(self):
@@ -151,14 +197,24 @@ class TestEditJoin(unittest.TestCase):
         cmd = EditJoin(0)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         self.assertEqual(len(self.target), 2)
         self.assertEqual(self.target[0], [(ord('H'), 0), (ord('e'), 1), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)])
         self.assertEqual(self.target[1], [(ord('W'), 0), (ord('o'), 1), (ord('r'), 2), (ord('l'), 3), (ord('d'), 4)])
+        self.assertEqual(result, (0, 5))
+        
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (1, 0))
+        self.assertEqual(self.target, original)
+    
+    def test_join_without_apply(self):
+        """Test joining without applying first"""
+        cmd = EditJoin(0)
+        original = [line[:] for line in self.target]
         
         result = cmd.undo(self.target)
-        self.assertEqual(result, (1, 0))
+        self.assertIsNone(result)
         self.assertEqual(self.target, original)
 
 
@@ -177,15 +233,16 @@ class TestEditDelete(unittest.TestCase):
         cmd = EditDelete(0, 1, 1)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         # Check that character was deleted
         self.assertEqual(self.target[0], [(ord('H'), 0), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)])
         self.assertEqual(self.target[1], [(ord('W'), 0), (ord('o'), 1), (ord('r'), 2), (ord('l'), 3), (ord('d'), 4)])
+        self.assertEqual(result, (0, 1))
         
         # Test undo
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (0, 2))
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 2))
         self.assertEqual(self.target, original)
     
     def test_delete_multiple_characters(self):
@@ -193,28 +250,30 @@ class TestEditDelete(unittest.TestCase):
         cmd = EditDelete(0, 1, 3)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
-        # Check that characters were deleted (note: current implementation only stores one char)
+        # Check that characters were deleted
         self.assertEqual(self.target[0], [(ord('H'), 0), (ord('o'), 4)])
         self.assertEqual(self.target[1], [(ord('W'), 0), (ord('o'), 1), (ord('r'), 2), (ord('l'), 3), (ord('d'), 4)])
+        self.assertEqual(result, (0, 1))
         
-        # Test undo (will only restore one character due to implementation bug)
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (0, 2))
-        # Note: This won't fully restore due to the bug in the implementation
+        # Test undo (should fully restore the original line)
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 4))
+        self.assertEqual(self.target, original)
     
     def test_delete_at_beginning(self):
         """Test deleting at the beginning of a line"""
         cmd = EditDelete(0, 0, 1)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         self.assertEqual(self.target[0], [(ord('e'), 1), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)])
+        self.assertEqual(result, (0, 0))
         
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (0, 1))
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 1))
         self.assertEqual(self.target, original)
     
     def test_delete_at_end(self):
@@ -222,12 +281,13 @@ class TestEditDelete(unittest.TestCase):
         cmd = EditDelete(0, 4, 1)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         self.assertEqual(self.target[0], [(ord('H'), 0), (ord('e'), 1), (ord('l'), 2), (ord('l'), 3)])
+        self.assertEqual(result, (0, 4))
         
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (0, 5))
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 5))
         self.assertEqual(self.target, original)
     
     def test_delete_entire_line(self):
@@ -235,28 +295,38 @@ class TestEditDelete(unittest.TestCase):
         cmd = EditDelete(0, 0, 5)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         self.assertEqual(self.target[0], [])
         self.assertEqual(self.target[1], [(ord('W'), 0), (ord('o'), 1), (ord('r'), 2), (ord('l'), 3), (ord('d'), 4)])
+        self.assertEqual(result, (0, 0))
         
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (0, 1))
-        # Note: This won't fully restore due to the implementation bug
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 5))
+        self.assertEqual(self.target, original)
     
     def test_delete_zero_characters(self):
         """Test deleting zero characters"""
         cmd = EditDelete(0, 2, 0)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         # Should be unchanged
         self.assertEqual(self.target, original)
+        self.assertEqual(result, (0, 2))
+        
+        undo_result = cmd.undo(self.target)
+        self.assertIsNotNone(undo_result)
+    
+    def test_delete_without_apply(self):
+        """Test deleting without applying first"""
+        cmd = EditDelete(0, 1, 2)
+        original = [line[:] for line in self.target]
         
         result = cmd.undo(self.target)
-        # Even with zero characters, the undo still returns a position
-        self.assertIsNotNone(result)
+        self.assertIsNone(result)
+        self.assertEqual(self.target, original)
 
 
 class TestEditInsert(unittest.TestCase):
@@ -275,16 +345,17 @@ class TestEditInsert(unittest.TestCase):
         cmd = EditInsert(0, 2, new_char)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         # Check that character was inserted
         expected = [(ord('H'), 0), (ord('e'), 1), (ord('X'), 5), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)]
         self.assertEqual(self.target[0], expected)
         self.assertEqual(self.target[1], [(ord('W'), 0), (ord('o'), 1), (ord('r'), 2), (ord('l'), 3), (ord('d'), 4)])
+        self.assertEqual(result, (0, 3))
         
         # Test undo
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (0, 2))
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 2))
         self.assertEqual(self.target, original)
     
     def test_insert_multiple_characters(self):
@@ -293,16 +364,17 @@ class TestEditInsert(unittest.TestCase):
         cmd = EditInsert(0, 2, new_chars)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         # Check that characters were inserted
         expected = [(ord('H'), 0), (ord('e'), 1), (ord('X'), 5), (ord('Y'), 6), (ord('Z'), 7), 
                    (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)]
         self.assertEqual(self.target[0], expected)
+        self.assertEqual(result, (0, 5))
         
         # Test undo
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (0, 2))
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 2))
         self.assertEqual(self.target, original)
     
     def test_insert_at_beginning(self):
@@ -311,13 +383,13 @@ class TestEditInsert(unittest.TestCase):
         cmd = EditInsert(0, 0, new_char)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         expected = [(ord('X'), 5), (ord('H'), 0), (ord('e'), 1), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)]
         self.assertEqual(self.target[0], expected)
         
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (0, 0))
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 0))
         self.assertEqual(self.target, original)
     
     def test_insert_at_end(self):
@@ -326,13 +398,13 @@ class TestEditInsert(unittest.TestCase):
         cmd = EditInsert(0, 5, new_char)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         expected = [(ord('H'), 0), (ord('e'), 1), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4), (ord('X'), 5)]
         self.assertEqual(self.target[0], expected)
         
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (0, 5))
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 5))
         self.assertEqual(self.target, original)
     
     def test_insert_empty_list(self):
@@ -340,13 +412,14 @@ class TestEditInsert(unittest.TestCase):
         cmd = EditInsert(0, 2, [])
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         # Should be unchanged
         self.assertEqual(self.target, original)
-        
-        result = cmd.undo(self.target)
         self.assertEqual(result, (0, 2))
+        
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 2))
         self.assertEqual(self.target, original)
     
     def test_insert_into_empty_line(self):
@@ -359,45 +432,196 @@ class TestEditInsert(unittest.TestCase):
         cmd = EditInsert(0, 0, new_char)
         original = [line[:] for line in self.target]
         
-        cmd.apply(self.target)
+        result = cmd.apply(self.target)
         
         self.assertEqual(self.target[0], [(ord('X'), 5)])
         self.assertEqual(self.target[1], [(ord('W'), 0), (ord('o'), 1), (ord('r'), 2), (ord('l'), 3), (ord('d'), 4)])
+        self.assertEqual(result, (0, 1))
         
-        result = cmd.undo(self.target)
-        self.assertEqual(result, (0, 0))
+        undo_result = cmd.undo(self.target)
+        self.assertEqual(undo_result, (0, 0))
         self.assertEqual(self.target, original)
     
-    def test_insert_with_default_empty_list(self):
-        """Test EditInsert with default empty list parameter"""
-        cmd = EditInsert(0, 2)  # Using default empty list
+    def test_insert_without_apply(self):
+        """Test inserting without applying first"""
+        cmd = EditInsert(0, 2, [(ord('X'), 5)])
         original = [line[:] for line in self.target]
-        
-        cmd.apply(self.target)
-        
-        # Should be unchanged
-        self.assertEqual(self.target, original)
         
         result = cmd.undo(self.target)
         self.assertEqual(result, (0, 2))
+        # Note: EditInsert.undo() modifies the target even when apply() was never called
+        # This deletes characters from the target, which is a side effect
+
+
+class TestCmdStack(unittest.TestCase):
+    """Test CmdStack class"""
+    
+    def setUp(self):
+        """Set up test data"""
+        self.target = [
+            [(ord('H'), 0), (ord('e'), 1), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)],
+            [(ord('W'), 0), (ord('o'), 1), (ord('r'), 2), (ord('l'), 3), (ord('d'), 4)]
+        ]
+        self.stack = CmdStack()
+    
+    def test_apply_single_command(self):
+        """Test applying a single command"""
+        cmd = EditInsert(0, 2, [(ord('X'), 5)])
+        result = self.stack.apply(cmd, self.target)
+        
+        self.assertEqual(result, cmd)
+        self.assertEqual(len(self.stack.stack), 1)
+        self.assertEqual(len(self.stack.redo_stack), 0)
+        
+        expected = [(ord('H'), 0), (ord('e'), 1), (ord('X'), 5), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)]
+        self.assertEqual(self.target[0], expected)
+    
+    def test_undo_redo(self):
+        """Test undo and redo functionality"""
+        original = [line[:] for line in self.target]
+        
+        # Apply a command
+        cmd = EditInsert(0, 2, [(ord('X'), 5)])
+        self.stack.apply(cmd, self.target)
+        
+        # Undo
+        undo_pos = self.stack.undo(self.target)
+        self.assertEqual(self.target, original)
+        self.assertEqual(undo_pos, (0, 2))
+        self.assertEqual(len(self.stack.stack), 0)
+        self.assertEqual(len(self.stack.redo_stack), 1)
+        
+        # Redo
+        redo_pos = self.stack.redo(self.target)
+        expected = [(ord('H'), 0), (ord('e'), 1), (ord('X'), 5), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)]
+        self.assertEqual(self.target[0], expected)
+        self.assertEqual(redo_pos, (0, 3))
+        self.assertEqual(len(self.stack.stack), 1)
+        self.assertEqual(len(self.stack.redo_stack), 0)
+    
+    def test_multiple_commands(self):
+        """Test multiple commands"""
+        original = [line[:] for line in self.target]
+        
+        # Apply multiple commands
+        cmd1 = EditInsert(0, 2, [(ord('X'), 5)])
+        cmd2 = EditDelete(0, 1, 1)
+        cmd3 = EditSplit(0, 3)
+        
+        self.stack.apply(cmd1, self.target)
+        self.stack.apply(cmd2, self.target)
+        self.stack.apply(cmd3, self.target)
+        
+        self.assertEqual(len(self.stack.stack), 3)
+        
+        # Undo all
+        self.stack.undo(self.target)
+        self.stack.undo(self.target)
+        self.stack.undo(self.target)
+        
+        self.assertEqual(self.target, original)
+        self.assertEqual(len(self.stack.stack), 0)
+        self.assertEqual(len(self.stack.redo_stack), 3)
+    
+    def test_undo_empty_stack(self):
+        """Test undoing from empty stack"""
+        result = self.stack.undo(self.target)
+        self.assertIsNone(result)
+        self.assertEqual(len(self.stack.stack), 0)
+        self.assertEqual(len(self.stack.redo_stack), 0)
+    
+    def test_redo_empty_stack(self):
+        """Test redoing from empty stack"""
+        result = self.stack.redo(self.target)
+        self.assertIsNone(result)
+        self.assertEqual(len(self.stack.stack), 0)
+        self.assertEqual(len(self.stack.redo_stack), 0)
+    
+    def test_clear_redo_on_new_command(self):
+        """Test that redo stack is cleared when new command is applied"""
+        # Apply and undo a command
+        cmd1 = EditInsert(0, 2, [(ord('X'), 5)])
+        self.stack.apply(cmd1, self.target)
+        self.stack.undo(self.target)
+        
+        self.assertEqual(len(self.stack.redo_stack), 1)
+        
+        # Apply new command
+        cmd2 = EditDelete(0, 1, 1)
+        self.stack.apply(cmd2, self.target)
+        
+        self.assertEqual(len(self.stack.redo_stack), 0)
+        self.assertEqual(len(self.stack.stack), 1)
+    
+    def test_join_prev_combine(self):
+        """Test joining commands with join_prev=True"""
+        cmd1 = EditInsert(0, 2, [(ord('X'), 5)])
+        cmd2 = EditInsert(0, 3, [(ord('Y'), 6)])
+        
+        self.stack.apply(cmd1, self.target)
+        result = self.stack.apply(cmd2, self.target, join_prev=True)
+        
+        self.assertEqual(len(self.stack.stack), 1)
+        self.assertIsInstance(self.stack.stack[0], CombinedCmd)
+        self.assertEqual(result, cmd2)
+        
+        # Check that both commands were applied
+        expected = [(ord('H'), 0), (ord('e'), 1), (ord('X'), 5), (ord('Y'), 6), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)]
+        self.assertEqual(self.target[0], expected)
+    
+    def test_join_prev_insert_optimization(self):
+        """Test joining consecutive insert commands"""
+        cmd1 = EditInsert(0, 2, [(ord('X'), 5)])
+        cmd2 = EditInsert(0, 3, [(ord('Y'), 6)])
+        
+        self.stack.apply(cmd1, self.target)
+        result = self.stack.apply(cmd2, self.target)
+        
+        # Should optimize to a single insert command
+        self.assertEqual(len(self.stack.stack), 1)
+        self.assertIsInstance(self.stack.stack[0], EditInsert)
+        self.assertEqual(result, cmd2)
+        
+        # Check that both characters were inserted
+        expected = [(ord('H'), 0), (ord('e'), 1), (ord('X'), 5), (ord('Y'), 6), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)]
+        self.assertEqual(self.target[0], expected)
+    
+    def test_join_prev_delete_optimization(self):
+        """Test joining consecutive delete commands"""
+        cmd1 = EditDelete(0, 1, 1)  # Delete at position 1
+        cmd2 = EditDelete(0, 2, 1)  # Delete at position 2 (after first delete)
+        
+        self.stack.apply(cmd1, self.target)
+        result = self.stack.apply(cmd2, self.target)
+        
+        # Should optimize to a single delete command
+        self.assertEqual(len(self.stack.stack), 1)
+        self.assertIsInstance(self.stack.stack[0], EditDelete)
+        self.assertEqual(result, cmd2)
+        
+        # Check that both characters were deleted
+        expected = [(ord('H'), 0), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)]
+        self.assertEqual(self.target[0], expected)
+    
+    def test_no_join_prev_optimization(self):
+        """Test that commands don't join when conditions aren't met"""
+        cmd1 = EditInsert(0, 2, [(ord('X'), 5)])
+        cmd2 = EditInsert(0, 4, [(ord('Y'), 6)])  # Different position
+        
+        self.stack.apply(cmd1, self.target)
+        result = self.stack.apply(cmd2, self.target)
+        
+        # Should not optimize
+        self.assertEqual(len(self.stack.stack), 2)
+        self.assertEqual(result, cmd2)
+        
+        # Check that both characters were inserted
+        expected = [(ord('H'), 0), (ord('e'), 1), (ord('X'), 5), (ord('l'), 2), (ord('Y'), 6), (ord('l'), 3), (ord('o'), 4)]
+        self.assertEqual(self.target[0], expected)
 
 
 class TestEdgeCases(unittest.TestCase):
     """Test edge cases and error conditions"""
-    
-    def test_join_prev_flag(self):
-        """Test that join_prev flag is properly set"""
-        cmd = EditSplit(0, 0)
-        self.assertFalse(cmd.join_prev)
-        
-        cmd = EditJoin(0)
-        self.assertFalse(cmd.join_prev)
-        
-        cmd = EditDelete(0, 0, 1)
-        self.assertFalse(cmd.join_prev)
-        
-        cmd = EditInsert(0, 0, [(ord('a'), 0)])
-        self.assertFalse(cmd.join_prev)
     
     def test_empty_document_operations(self):
         """Test operations on empty document (should raise IndexError)"""
@@ -418,91 +642,6 @@ class TestEdgeCases(unittest.TestCase):
         with self.assertRaises(IndexError):
             cmd = EditInsert(0, 0, [(ord('X'), 0)])
             cmd.apply(empty_doc)
-    
-    def test_undo_without_apply(self):
-        """Test undoing commands without applying them first"""
-        target = [[(ord('H'), 0), (ord('e'), 1), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)]]
-        original = [line[:] for line in target]
-        
-        # Test EditDelete undo without apply
-        cmd = EditDelete(0, 1, 2)
-        result = cmd.undo(target)
-        self.assertIsNone(result)  # No characters were removed, so undo returns None
-        # Note: The EditDelete undo modifies the target even when no chars were removed
-        # This is a side effect of the current implementation
-        
-        # Test EditInsert undo without apply
-        target = [line[:] for line in original]  # Reset target
-        cmd = EditInsert(0, 2, [(ord('X'), 5)])
-        result = cmd.undo(target)
-        self.assertEqual(result, (0, 2))
-        # Note: EditInsert.undo() modifies the target even when apply() was never called
-        # This deletes characters from the target, which is a side effect
-
-
-class TestComplexScenarios(unittest.TestCase):
-    """Test complex scenarios with multiple operations"""
-    
-    def test_multiple_operations_chain(self):
-        """Test a chain of multiple operations and their undos"""
-        target = [
-            [(ord('H'), 0), (ord('e'), 1), (ord('l'), 2), (ord('l'), 3), (ord('o'), 4)],
-            [(ord('W'), 0), (ord('o'), 1), (ord('r'), 2), (ord('l'), 3), (ord('d'), 4)]
-        ]
-        original = [line[:] for line in target]
-        
-        # Apply multiple operations
-        insert_cmd = EditInsert(0, 2, [(ord('X'), 5), (ord('Y'), 6)])
-        insert_cmd.apply(target)
-        
-        delete_cmd = EditDelete(0, 1, 2)
-        delete_cmd.apply(target)
-        
-        split_cmd = EditSplit(0, 3)
-        split_cmd.apply(target)
-        
-        join_cmd = EditJoin(0)
-        join_cmd.apply(target)
-        
-        # Undo in reverse order
-        join_cmd.undo(target)
-        split_cmd.undo(target)
-        delete_cmd.undo(target)
-        insert_cmd.undo(target)
-        
-        # Note: Due to the EditDelete bug (only stores one character), 
-        # the document won't be fully restored, but the operations should work
-        # The test verifies that the operations don't crash and return expected values
-    
-    def test_operations_on_different_lines(self):
-        """Test operations on different lines"""
-        target = [
-            [(ord('L'), 0), (ord('i'), 1), (ord('n'), 2), (ord('e'), 3), (ord('1'), 4)],
-            [(ord('L'), 0), (ord('i'), 1), (ord('n'), 2), (ord('e'), 3), (ord('2'), 4)],
-            [(ord('L'), 0), (ord('i'), 1), (ord('n'), 2), (ord('e'), 3), (ord('3'), 4)]
-        ]
-        original = [line[:] for line in target]
-        
-        # Insert on line 0
-        insert_cmd = EditInsert(0, 2, [(ord('X'), 5)])
-        insert_cmd.apply(target)
-        
-        # Delete from line 1
-        delete_cmd = EditDelete(1, 1, 2)
-        delete_cmd.apply(target)
-        
-        # Split line 2
-        split_cmd = EditSplit(2, 2)
-        split_cmd.apply(target)
-        
-        # Undo all operations
-        split_cmd.undo(target)
-        delete_cmd.undo(target)
-        insert_cmd.undo(target)
-        
-        # Note: Due to the EditDelete bug (only stores one character), 
-        # the document won't be fully restored, but the operations should work
-        # The test verifies that the operations don't crash and return expected values
 
 
 if __name__ == '__main__':

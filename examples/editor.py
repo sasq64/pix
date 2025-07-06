@@ -1,9 +1,10 @@
 from array import array
+from pathlib import Path
 from typing import Final, cast
 
 import pixpy as pix
 
-from edit_cmd import EditCmd, EditDelete, EditInsert, EditJoin, EditSplit
+from edit_cmd import EditCmd, EditDelete, EditInsert, EditJoin, EditSplit, CmdStack
 
 Int2 = pix.Int2
 
@@ -56,15 +57,14 @@ class TextEdit:
 
     def __init__(self, con: pix.Console):
         self.lines: list[list[Char]] = [[]]
-        # self.line: list[Char] = self.lines[0]
+        self.line: list[Char] = self.lines[0]
         self.scroll_pos: int = 0
         self.last_scroll: int = -1
         self.xpos: int = 0
         self.ypos: int = 0
         self.keepx: int = -1
         self.yank: list[Char] = []
-        self.cmd_stack: list[EditCmd] = []
-        self.redo_sck: list[EditCmd] = []
+        self.cmd_stack: CmdStack = CmdStack()
 
         self.cols: int = con.grid_size.x
         self.rows: int = con.grid_size.y
@@ -209,47 +209,26 @@ class TextEdit:
         return x
 
     def apply(self, cmd: EditCmd, join_prev: bool = False):
-        self.cmd_stack.append(cmd)
-        self.cmd_stack[-1].apply(self.lines)
-        self.cmd_stack[-1].join_prev = join_prev
+        self.cmd_stack.apply(cmd, self.lines, join_prev)
 
     def undo(self):
-        if len(self.cmd_stack) > 0:
-            more = True
-            while more:
-                pos = self.cmd_stack[-1].undo(self.lines)
-                more = self.cmd_stack[-1].join_prev
-                del self.cmd_stack[-1]
-                if pos:
-                    self.ypos, self.xpos = pos
+        pos = self.cmd_stack.undo(self.lines)
+        if pos is not None:
+            self.ypos, self.xpos = pos
             self.line = self.lines[self.ypos]
             self.dirty = True
 
     def redo(self):
-        pass
+        pos = self.cmd_stack.redo(self.lines)
+        if pos is not None:
+            self.ypos, self.xpos = pos
+            self.line = self.lines[self.ypos]
+        self.dirty = True
 
     def insert(self, text: list[Char], join_prev: bool = False):
-        if len(self.cmd_stack) > 0:
-            prev = self.cmd_stack[-1]
-            if not join_prev and not prev.join_prev and isinstance(prev, EditInsert):
-                if prev.line == self.ypos and prev.col == self.xpos - len(prev.add):
-                    prev.undo(self.lines)
-                    prev.add += text
-                    prev.apply(self.lines)
-                    return
-        self.apply(EditInsert(self.ypos, self.xpos, text))
-        self.cmd_stack[-1].join_prev = join_prev
+        self.apply(EditInsert(self.ypos, self.xpos, text), join_prev)
 
     def remove(self, count: int):
-        if len(self.cmd_stack) > 0:
-            prev = self.cmd_stack[-1]
-            if isinstance(prev, EditDelete):
-                if prev.line == self.ypos and prev.col == self.xpos + 1:
-                    prev.undo(self.lines)
-                    prev.remove += 1
-                    prev.col -= 1
-                    prev.apply(self.lines)
-                    return
         self.apply(EditDelete(self.ypos, self.xpos, count))
 
     def handle_key(self, key: int, mods: int) -> bool:
@@ -268,6 +247,8 @@ class TextEdit:
             # Ctrl command
             if key == ord("z"):
                 self.undo()
+            elif key == ord("r"):
+                self.redo()
             elif key == ord("k"):
                 length = len(self.line) - self.xpos
                 self.apply(EditDelete(self.ypos, self.xpos, length))
@@ -442,10 +423,12 @@ class TextEdit:
             self.con.cursor_on = False
 
 
+data_dir = Path(__file__).absolute().parent / "data"
+
 def main():
     screen = pix.open_display(width=60 * 16, height=50 * 16)
     sz = screen.size.toi() // (8 * 2, 16 * 2)
-    con = pix.Console(sz.x, sz.y, font_file="data/Hack.ttf", font_size=24)
+    con = pix.Console(sz.x, sz.y, font_file=data_dir / "Hack.ttf", font_size=24)
     edit = TextEdit(con)
     while pix.run_loop():
         edit.update(pix.all_events())
