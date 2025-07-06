@@ -3,6 +3,8 @@ from typing import Final, cast
 
 import pixpy as pix
 
+from edit_cmd import EditCmd, EditDelete, EditInsert, EditJoin, EditSplit
+
 Int2 = pix.Int2
 
 CMD = 0x10000000
@@ -21,6 +23,31 @@ def clamp[T: float | int](v: T, lo: T, hi: T) -> T:
 Char = tuple[int, int]
 """A `Char` holds a character and a color index"""
 
+"""
+Removing 'remove' chars starting at 'line'/'col':
+
+n = min(r, rest)
+
+del lines[line][col:n]
+
+        r = self.remove
+        lino = self.line
+        col = self.col
+        while r > 0:
+            n = min(r, len(target[lino][col:-1]))
+            del target[lino][col:n]
+            r -= n
+            lino += 1
+            col = 0
+        lines = [
+            list(a[1])
+            for a in itertools.groupby(self.add, lambda c: c[0] == 10)
+            if not a[0]
+        ]
+
+        for line in lines:
+"""
+
 
 class TextEdit:
     """
@@ -29,13 +56,15 @@ class TextEdit:
 
     def __init__(self, con: pix.Console):
         self.lines: list[list[Char]] = [[]]
-        self.line: list[Char] = self.lines[0]
+        # self.line: list[Char] = self.lines[0]
         self.scroll_pos: int = 0
         self.last_scroll: int = -1
         self.xpos: int = 0
         self.ypos: int = 0
         self.keepx: int = -1
         self.yank: list[Char] = []
+        self.cmd_stack: list[EditCmd] = []
+        self.redo_sck: list[EditCmd] = []
 
         self.cols: int = con.grid_size.x
         self.rows: int = con.grid_size.y
@@ -179,10 +208,49 @@ class TextEdit:
             x -= 1
         return x
 
-    def insert(self, text: str):
-        self.line[self.xpos : self.xpos] = list([(ord(t), 1) for t in text])
-        self.xpos += len(text)
-        self.dirty = True
+    def apply(self, cmd: EditCmd, join_prev: bool = False):
+        self.cmd_stack.append(cmd)
+        self.cmd_stack[-1].apply(self.lines)
+        self.cmd_stack[-1].join_prev = join_prev
+
+    def undo(self):
+        if len(self.cmd_stack) > 0:
+            more = True
+            while more:
+                pos = self.cmd_stack[-1].undo(self.lines)
+                more = self.cmd_stack[-1].join_prev
+                del self.cmd_stack[-1]
+                if pos:
+                    self.ypos, self.xpos = pos
+            self.line = self.lines[self.ypos]
+            self.dirty = True
+
+    def redo(self):
+        pass
+
+    def insert(self, text: list[Char], join_prev: bool = False):
+        if len(self.cmd_stack) > 0:
+            prev = self.cmd_stack[-1]
+            if not join_prev and not prev.join_prev and isinstance(prev, EditInsert):
+                if prev.line == self.ypos and prev.col == self.xpos - len(prev.add):
+                    prev.undo(self.lines)
+                    prev.add += text
+                    prev.apply(self.lines)
+                    return
+        self.apply(EditInsert(self.ypos, self.xpos, text))
+        self.cmd_stack[-1].join_prev = join_prev
+
+    def remove(self, count: int):
+        if len(self.cmd_stack) > 0:
+            prev = self.cmd_stack[-1]
+            if isinstance(prev, EditDelete):
+                if prev.line == self.ypos and prev.col == self.xpos + 1:
+                    prev.undo(self.lines)
+                    prev.remove += 1
+                    prev.col -= 1
+                    prev.apply(self.lines)
+                    return
+        self.apply(EditDelete(self.ypos, self.xpos, count))
 
     def handle_key(self, key: int, mods: int) -> bool:
         k = key | CMD if mods & 8 != 0 else key
@@ -198,20 +266,18 @@ class TextEdit:
             return False
         elif mods & 2 != 0:
             # Ctrl command
-            if key == ord("k"):
-                self.line[self.xpos :] = []
+            if key == ord("z"):
+                self.undo()
+            elif key == ord("k"):
+                length = len(self.line) - self.xpos
+                self.apply(EditDelete(self.ypos, self.xpos, length))
                 return True
             elif key == ord("d"):
                 self.yank[:] = self.line
-                if len(self.lines) == 1:
-                    self.line[:] = []
-                    self.xpos = 0
-                elif len(self.lines) > 1:
-                    del self.lines[self.ypos]
-                    if self.ypos >= len(self.lines):
-                        self.ypos = len(self.lines) - 1
-                    self.line = self.lines[self.ypos]
-                self.ypos += 1
+                length = len(self.line)
+                self.apply(EditDelete(self.ypos, 0, length))
+                if len(self.lines) > 1:
+                    self.apply(EditJoin(self.ypos), True)
                 self.line = self.lines[self.ypos]
                 return True
             return False
@@ -225,37 +291,42 @@ class TextEdit:
                 if self.xpos < 0:
                     self.xpos = 0
             else:
-                self.line[self.xpos : self.xpos] = [(0x20, 0)] * 4
+                self.insert([(0x20, 0)] * 4)
+                # self.line[self.xpos : self.xpos] = [(0x20, 0)] * 4
                 self.xpos += 4
             return True
         elif key == pix.key.ENTER:
-            rest = self.line[self.xpos :]
-            self.lines[self.ypos] = [] if self.xpos == 0 else self.line[: self.xpos]
-            self.lines.insert(self.ypos + 1, rest)
+            i = 0
+            while i < len(self.line) and self.line[i][0] == 0x20:
+                i += 1
+            if i >= len(self.line):
+                i = 0
+            self.apply(EditSplit(self.ypos, self.xpos))
             _ = self.goto_line(self.ypos + 1)
             self.xpos = 0
-            if self.ypos > 0:
-                # Simple auto indent
-                i = 0
-                last_line = self.lines[self.ypos - 1]
-                while i < len(last_line) and last_line[i][0] == 0x20:
-                    i += 1
-                if i and i < len(last_line):
-                    self.line[0:0] = [(0x20, 0)] * i
-                    self.xpos = i
+            if i:
+                self.insert([(0x20, 0)] * i, join_prev=True)
+                self.xpos = i
+            # if self.ypos > 0:
+            #     # Simple auto indent
+            #     i = 0
+            #     last_line = self.lines[self.ypos - 1]
+            #     while i < len(last_line) and last_line[i][0] == 0x20:
+            #         i += 1
+            #     if i and i < len(last_line):
+            #         self.line[0:0] = [(0x20, 0)] * i
+            #         self.xpos = i
             self.wrap_cursor()
             return True
         elif key == pix.key.BACKSPACE:
             if self.xpos > 0:
                 self.xpos -= 1
-                del self.line[self.xpos]
+                self.remove(1)
             elif self.ypos > 0:
                 # Handle backspace at beginning of line
-                y = self.ypos
-                ll = len(self.lines[y - 1])
-                self.lines[y - 1] = self.lines[y - 1] + self.line
-                del self.lines[y]
-                _ = self.goto_line(y - 1)
+                ll = len(self.lines[self.ypos - 1])
+                self.apply(EditJoin(self.ypos - 1))
+                _ = self.goto_line(self.ypos - 1)
                 self.xpos = ll
             return True
         self.keepx = -1
@@ -303,12 +374,13 @@ class TextEdit:
     def update(self, events: list[pix.event.AnyEvent]):
         for e in events:
             if isinstance(e, pix.event.Text):
-                self.line.insert(self.xpos, (ord(e.text), 1))
+                self.insert([(ord(e.text), 1)])
+                # self.line.insert(self.xpos, (ord(e.text), 1))
                 self.xpos += len(e.text)
                 self.dirty = True
                 self.keepx = -1
             elif isinstance(e, pix.event.Scroll):
-                self.scroll_pos -= int(e.y) * 3
+                self.scroll_pos -= int(e.y * 3)
                 y = self.rows - 1
                 l = len(self.lines)
                 if self.scroll_pos < 0:
