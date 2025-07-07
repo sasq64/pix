@@ -11,6 +11,7 @@ from editor import TextEdit
 from utils.wrap import wrap_lines, wrap_text
 from utils.tool_bar import ToolBar, ToolbarEvent
 from utils.nerd import Nerd
+from smart_chat import SmartChat
 
 fwd = Path(os.path.abspath(__file__)).parent
 hack_font = fwd / "data" / "HackNerdFont-Regular.ttf"
@@ -120,7 +121,7 @@ class PixIDE:
         self.running: bool = False
         tool_ts = pix.TileSet(self.font, tile_size=(50, 50))
         self.tool_bar: Final = (
-            ToolBar(tile_set=tool_ts, bg_color=self.title_bg)
+            ToolBar(tile_set=tool_ts, bg_color=self.title_bg, canvas=screen)
             .add_button(Nerd.nf_fa_play_circle, pix.color.LIGHT_GREEN)
             .add_button(Nerd.nf_fa_question_circle, pix.color.LIGHT_BLUE)
         )
@@ -162,7 +163,7 @@ class PixIDE:
 
     def draw_title(self):
         self.tool_bar.render()
-        screen.draw(self.title, top_left=(40 * 4, 8), size=self.title.size)
+        self.screen.draw(self.title, top_left=(40 * 4, 8), size=self.title.size)
         return True
 
     def resize(self):
@@ -211,7 +212,7 @@ class PixIDE:
         # self.edit.dirty = True
         pos = pix.Float2(source_pos.x - 0.5, source_pos.y - self.edit.scroll_pos)
         pos = pos * self.con.tile_size + (0, 48)
-        self.error_box = ErrorBox(screen, pos, text, self.font, 20)
+        self.error_box = ErrorBox(self.screen, pos, text, self.font, 20)
         print(f"ERROR BOX at {pos}")
 
     def run(self):
@@ -287,12 +288,12 @@ class PixIDE:
                     i = e.key - 0x30
                     self.load(self.files[i])
                     continue
-                if e.key == pix.key.TAB:
-                    x, _ = self.edit.get_location()
-                    if x > 0 and self.edit.get_char(x - 1) != 0x20:
-                        # self.update_completion()
-                        continue
-                elif e.key == pix.key.F5:
+                #if e.key == pix.key.TAB:
+                #    x, _ = self.edit.get_location()
+                #    if x > 0 and self.edit.get_char(x - 1) != 0x20:
+                #        # self.update_completion()
+                #        continue
+                if e.key == pix.key.F5:
                     self.run()
                     continue
                 elif (
@@ -347,29 +348,32 @@ class PixIDE:
             self.run()
 
 
-def info_box(line: int, col: int, text: str):
-    lines = text.split("\n")
-    lines = wrap_lines(lines, 60, " .")
-    maxl = len(max(lines, key=lambda i: len(i)))
+# def info_box(line: int, col: int, text: str):
+#     lines = text.split("\n")
+#     lines = wrap_lines(lines, 60, " .")
+#     maxl = len(max(lines, key=lambda i: len(i)))
 
-    sz = pix.Int2(maxl, len(lines))
-    con = pix.Console(cols=sz.x, rows=sz.y + 1)
-    con.write(text)
-    psz = sz * (8, 16) + (8, 8)
-    xy = screen.size - psz
-    screen.draw_color = 0x000040FF
-    screen.filled_rect(top_left=xy, size=psz)
-    screen.draw(con, top_left=xy + (4, 4))
-
+#     sz = pix.Int2(maxl, len(lines))
+#     con = pix.Console(cols=sz.x, rows=sz.y + 1)
+#     con.write(text)
+#     psz = sz * (8, 16) + (8, 8)
+#     xy = screen.size - psz
+#     screen.draw_color = 0x000040FF
+#     screen.filled_rect(top_left=xy, size=psz)
+#     screen.draw(con, top_left=xy + (4, 4))
 
 def main():
-    global screen
-    screen = pix.open_display(width=640, height=720, full_screen=False)
-    ide = PixIDE(screen)
+    screen = pix.open_display(width=1280, height=720, full_screen=False)
+    split = screen.split((2, 1))
+    ide = PixIDE(split[0])
+    chat = SmartChat(split[1], pix.load_font(hack_font))
+    chat.write("Hello and welcome!\n> ")
+    chat.read_line()
 
     print("RUN")
     while pix.run_loop():
         ide.render()
+        chat.render()
         screen.swap()
 
 

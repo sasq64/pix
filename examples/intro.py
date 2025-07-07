@@ -27,6 +27,19 @@ class DrawCommand:
     image: pix.Image
     pos: pix.Float2
 
+class Slide:
+    """
+    A slide is something that renders fullscreen and can transition to
+    another slide.
+    """
+    def __init__(self):
+        pass
+
+
+class SlideDeck:
+    def __init__(self):
+        self.formats: list[Format] = [Format()] * 10
+
 
 formats: list[Format] = [Format()] * 10
 

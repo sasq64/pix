@@ -22,7 +22,11 @@ System::Propagate FullConsole::put_event(const KeyEvent& event)
     } else if (key == Key::ENTER) {
         reading_line = false;
         line.push_back(u'\n');
-        system->post_event(TextEvent{utf8::utf8_encode(line), 0});
+        if (readline_cb) {
+            readline_cb(utf8::utf8_encode(line), device);
+        } else {
+            system->post_event(TextEvent{utf8::utf8_encode(line), device});
+        }
         line.clear();
     } else if (key == Key::BACKSPACE) {
         if (xpos > 0) { line.erase(--xpos, 1); }

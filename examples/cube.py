@@ -5,23 +5,35 @@ import math
 
 def make_x_mat(a: float):
     """Create a matrix that rotates a 3D point around the X-axis by `a` degrees"""
-    return np.array([[1.0, 0.0, 0.0],
-                    [0.0, math.cos(a), -math.sin(a)],
-                    [0.0, math.sin(a), math.cos(a)]])
+    return np.array(
+        [
+            [1.0, 0.0, 0.0],
+            [0.0, math.cos(a), -math.sin(a)],
+            [0.0, math.sin(a), math.cos(a)],
+        ]
+    )
 
 
 def make_y_mat(a: float):
     """Create a matrix that rotates a 3D point around the Y-axis by `a` degrees"""
-    return np.array([[math.cos(a), 0.0, math.sin(a)],
-                     [0.0, 1.0, 0.0],
-                     [-math.sin(a), 0.0, math.cos(a)]])
+    return np.array(
+        [
+            [math.cos(a), 0.0, math.sin(a)],
+            [0.0, 1.0, 0.0],
+            [-math.sin(a), 0.0, math.cos(a)],
+        ]
+    )
 
 
 def make_z_mat(a: float):
     """Create a matrix that rotates a 3D point around the Z-axis by `a` degrees"""
-    return np.array([[math.cos(a), -math.sin(a), 0.0],
-                     [math.sin(a), math.cos(a), 0.0],
-                     [0.0, 0.0, 1.0]])
+    return np.array(
+        [
+            [math.cos(a), -math.sin(a), 0.0],
+            [math.sin(a), math.cos(a), 0.0],
+            [0.0, 0.0, 1.0],
+        ]
+    )
 
 
 screen = pix.open_display(size=(1280, 720))
@@ -33,12 +45,32 @@ y_angle = 0.0
 z_angle = 0.0
 
 # 3D points that form the corners of a 1x1x1 cube
-vertices = [[1, 1, 1], [1, 1, -1], [1, -1, 1], [1, -1, -1],
-            [-1, 1, 1], [-1, 1, -1], [-1, -1, 1], [-1, -1, -1]]
+vertices = [
+    [1, 1, 1],
+    [1, 1, -1],
+    [1, -1, 1],
+    [1, -1, -1],
+    [-1, 1, 1],
+    [-1, 1, -1],
+    [-1, -1, 1],
+    [-1, -1, -1],
+]
 
 # Indicates which points should be connected by lines
-lines = [(0, 1), (1, 3), (3, 2), (2, 0), (4, 5), (5, 7),
-         (7, 6), (6, 4), (0, 4), (1, 5), (2, 6), (3, 7)]
+lines = [
+    (0, 1),
+    (1, 3),
+    (3, 2),
+    (2, 0),
+    (4, 5),
+    (5, 7),
+    (7, 6),
+    (6, 4),
+    (0, 4),
+    (1, 5),
+    (2, 6),
+    (3, 7),
+]
 
 screen.line_width = 6
 
@@ -53,12 +85,16 @@ while pix.run_loop():
     points = [v @ mat for v in vertices]
 
     # 3D -> 2D: Translate points to screen and add perspective
-    points2d = [pix.Float2(v[0], v[1]) * (4/(v[2] + 3))
-         * 150 + center for v in points]
+    points2d: list[tuple[float, pix.Float2]] = [
+        (2.5 - v[2], pix.Float2(v[0], v[1]) * (4 / (v[2] + 3)) * 150 + center)
+        for v in points
+    ]
 
     # Draw the lines using the transformed points
     for line in lines:
-        screen.line(points2d[line[0]], points2d[line[1]])
+        p0 = points2d[line[0]]
+        p1 = points2d[line[1]]
+        screen.rounded_line(p0[1], (p0[0]) * 2 + 2, p1[1], (p1[0]) * 2 + 2)
 
     x_angle += 0.001
     y_angle += 0.002

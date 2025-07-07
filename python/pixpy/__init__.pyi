@@ -231,9 +231,17 @@ class Console:
         """
         Set the default colors used when putting/writing to the console.
         """
+    def set_device_no(self, devno: int) -> None:
+        """
+        Set the device number that will be reported for TextEvents from this console.
+        """
     def set_line(self, text: str) -> None:
         """
         Change the edited line.
+        """
+    def set_readline_callback(self, callback: typing.Callable[[str, int], None]) -> None:
+        """
+        Sets a cllback that will be called when a line of text was entered by the user. Setting this will stop the normal TextEvent from being sent.
         """
     def set_tile_images(self, start_no: int, images: list[Image]) -> None:
         """

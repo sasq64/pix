@@ -67,6 +67,7 @@ inline void add_event_mod(py::module_ const& mod)
     auto ke = py::class_<KeyEvent>(mod, "Key")
                   .def_readonly("key", &KeyEvent::key)
                   .def_readonly("mods", &KeyEvent::mods)
+                  .def_readonly("device", &KeyEvent::device)
                   .def("__repr__", [](KeyEvent const& e) {
                       return "Key(key=" + std::to_string(e.key) +
                              ", mods=" + std::to_string(e.mods) + ")";
@@ -76,6 +77,7 @@ inline void add_event_mod(py::module_ const& mod)
 
     auto te = py::class_<TextEvent>(mod, "Text")
                   .def_readonly("text", &TextEvent::text)
+                  .def_readonly("device", &TextEvent::device)
                   .def("__repr__", [](TextEvent const& e) {
                       return "Text(\""s + e.text + "\")";
                   });

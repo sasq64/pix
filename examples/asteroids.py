@@ -3,9 +3,12 @@ Asteroids example for pixpy
 """
 
 import math
+import os
+from pathlib import Path
 import random
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Final
 
 import pixpy as pix
 from pixpy import Float2
@@ -17,6 +20,9 @@ SCORE_SIZE = 32
 
 LAUNCH_CHANGE_COUNT = 0
 last_change_count = 0
+
+
+fwd = Path(os.path.abspath(__file__)).parent
 
 
 def was_changed() -> bool:
@@ -68,9 +74,14 @@ class Sprite:
                 self.pos -= target.size * d.sign()
             else:
                 self.dead = True
-        target.draw(image=self.image, center=self.pos, rot=self.rotation)
+        target.draw(
+            image=self.image,
+            size=self.image.size / 2,
+            center=self.pos,
+            rot=self.rotation,
+        )
 
-    F2 = Float2 | tuple[float, float]
+    F2: Final = Float2 | tuple[float, float]
 
     @staticmethod
     def from_lines(
@@ -78,10 +89,18 @@ class Sprite:
         points: list[Float2] | list[tuple[float, float]],
     ):
         """Create a sprite from lines"""
-        image = pix.Image(size)
+        p2 = Float2(2, 2)
+        image = pix.Image(p2 * size)
         image.clear(pix.color.TRANSP)
         image.line_width = 1
-        image.lines(points + [points[0]])  # type: ignore
+        image.begin_lines()
+        r = 4
+        image.draw_color = 0xFFFFFFFF
+        for point in points:
+            image.rounded_line(p2 * point, r / 2)
+        image.rounded_line(p2 * points[0], r / 2)
+        # image.lines(points + [points[0]])  # type: ignore
+        image.set_texture_filter(True, True)
         return Sprite(image, pos=Float2.ZERO)
 
 
@@ -118,7 +137,7 @@ class Asteroids:
         self.game_state: State = State.PLAYING
         self.score = 0
         self.frame_counter = 0
-        self.font = pix.load_font("data/hyperspace_bold.ttf")
+        self.font = pix.load_font(fwd / "data/hyperspace_bold.ttf")
 
         self.asteroids: list[Sprite] = []
         "Current active asteroid sprites"
@@ -135,7 +154,7 @@ class Asteroids:
         bs = Float2(BULLET_SIZE, BULLET_SIZE)
         self.bullet = pix.Image(bs)
         self.bullet.filled_circle(center=bs / 2, radius=bs.y / 2)
-        self.font = pix.load_font("data/hyperspace_bold.ttf")
+        self.font = pix.load_font(fwd / "data/hyperspace_bold.ttf")
         self.numbers = [
             self.font.make_image(text=chr(0x30 + i), size=SCORE_SIZE, color=SCORE_COLOR)
             for i in range(10)
@@ -152,7 +171,7 @@ class Asteroids:
             screen.draw(
                 image=self.life_image,
                 center=(i * 40 + 500, 30),
-                size=self.life_image.size * 2,
+                size=self.life_image.size,
                 rot=-math.pi / 2,
             )
 

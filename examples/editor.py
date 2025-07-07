@@ -257,7 +257,7 @@ class TextEdit:
                 self.yank[:] = self.line
                 length = len(self.line)
                 self.apply(EditDelete(self.ypos, 0, length))
-                if len(self.lines) > 1:
+                if self.ypos < len(self.lines)-1:
                     self.apply(EditJoin(self.ypos), True)
                 self.line = self.lines[self.ypos]
                 return True
@@ -355,6 +355,8 @@ class TextEdit:
     def update(self, events: list[pix.event.AnyEvent]):
         for e in events:
             if isinstance(e, pix.event.Text):
+                if e.device != 0:
+                    continue
                 self.insert([(ord(e.text), 1)])
                 # self.line.insert(self.xpos, (ord(e.text), 1))
                 self.xpos += len(e.text)

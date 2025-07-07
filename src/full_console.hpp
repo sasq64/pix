@@ -7,6 +7,7 @@
 #include "system.hpp"
 
 #include <optional>
+#include <functional>
 
 class FullConsole
 {
@@ -24,6 +25,8 @@ class FullConsole
     bool reading_line = false;
     void refresh();
     int listener = -1;
+    int device = 0;
+    std::function<void(std::string, int)> readline_cb;
 
     System::Propagate put_event(KeyEvent const& event);
     System::Propagate put_event(TextEvent const& te);
@@ -33,6 +36,10 @@ public:
                 std::shared_ptr<System> const& sys);
 
     ~FullConsole();
+
+    void set_device(int dev) {
+        device = dev;
+    }
 
     bool wrap = true;
     void set_wrap(bool on) { wrap = on; }
@@ -113,4 +120,8 @@ public:
     uint32_t bg = color::black;
 
     bool cursor_on = false;
+
+    void set_readline_callback(std::function<void(std::string, int)> const& cb) {
+        readline_cb = cb;
+    }
 };

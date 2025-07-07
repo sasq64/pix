@@ -33,6 +33,9 @@ class Key:
     def __repr__(self) -> str:
         ...
     @property
+    def device(self) -> int:
+        ...
+    @property
     def key(self) -> int:
         ...
     @property
@@ -89,6 +92,9 @@ class Text:
     """
     __match_args__: typing.ClassVar[tuple] = ('text')
     def __repr__(self) -> str:
+        ...
+    @property
+    def device(self) -> int:
         ...
     @property
     def text(self) -> str:

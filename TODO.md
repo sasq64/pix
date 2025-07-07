@@ -21,7 +21,7 @@
 - [ ] Right-side scrollbar
 - [ ] Select/Cut/Copy/Paste with mouse
 - [x] Scroll with mouse-wheel
-- [ ] Undo/Redo
+- [x] Undo/Redo
 - [x] Show stacktrace/Line number on runtime error
 - [ ] Exit also with F5
 - [ ] Goto line

@@ -61,8 +61,9 @@ inline void add_console_functions(auto& cls)
 {
     using namespace pybind11::literals;
     cls.def(
-        py::init<>(&make_console), "cols"_a, "rows"_a, "font_file"_a = std::nullopt,
-           "tile_size"_a = Vec2i{-1, -1}, "font_size"_a = -1,
+           py::init<>(&make_console), "cols"_a, "rows"_a,
+           "font_file"_a = std::nullopt, "tile_size"_a = Vec2i{-1, -1},
+           "font_size"_a = -1,
            "Create a new Console holding `cols`*`rows` tiles.\n\n`font_file` is the file name of a TTF font to use as backing. If no font is given, the built in _Unscii_ font will be used.\n\n`tile_size` sets the size in pixels of each tile. If not given, it will be derived from the size of a character in the font with the provided `font_size`.")
         .def(
             py::init<>(&make_console2), "cols"_a, "rows"_a, "tile_set"_a,
@@ -105,6 +106,9 @@ inline void add_console_functions(auto& cls)
              "Change the edited line.")
         .def("get_font_image", &FullConsole::get_font_texture)
         .def(
+            "set_device_no", &FullConsole::set_device, "devno"_a,
+            "Set the device number that will be reported for TextEvents from this console.")
+        .def(
             "get_image_for", &FullConsole::get_texture_for_char, "tile"_a,
             "Get the image of a specific tile. Use to render the tile manually, or to copy another image into the tile;\n\n`console.get_image_for(1024).copy_from(some_tile_image)`.")
         .def(
@@ -122,6 +126,10 @@ inline void add_console_functions(auto& cls)
         .def("set_tile_images", &FullConsole::set_tile_images, "start_no"_a,
              "images"_a,
              "Set images to use for a set of indexes, starting at `start_no`.")
+        .def(
+            "set_readline_callback", &FullConsole::set_readline_callback,
+            "callback"_a,
+            "Sets a cllback that will be called when a line of text was entered by the user. Setting this will stop the normal TextEvent from being sent.")
         .def(
             "colorize_section", &FullConsole::colorize, "x"_a, "y"_a, "width"_a,
             "Colorize the given area with the current foreground and background color, without changing the characters")
