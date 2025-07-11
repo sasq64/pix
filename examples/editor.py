@@ -60,6 +60,7 @@ class TextEdit:
         self.line: list[Char] = self.lines[0]
         self.scroll_pos: int = 0
         self.last_scroll: int = -1
+        self.last_scrollx: int = -1
         self.xpos: int = 0
         self.ypos: int = 0
         self.keepx: int = -1
@@ -72,6 +73,8 @@ class TextEdit:
         self.dirty: bool = True
         self.con.cursor_on = True
         self.con.wrapping = False
+
+        self.scrollx: int = 0
 
         self.fg: int = pix.color.GREEN
         self.bg: int = 0x202330
@@ -257,9 +260,10 @@ class TextEdit:
                 self.yank[:] = self.line
                 length = len(self.line)
                 self.apply(EditDelete(self.ypos, 0, length))
-                if self.ypos < len(self.lines)-1:
+                if self.ypos < len(self.lines) - 1:
                     self.apply(EditJoin(self.ypos), True)
                 self.line = self.lines[self.ypos]
+                self.wrap_cursor()
                 return True
             return False
         elif key == pix.key.TAB:
@@ -341,6 +345,19 @@ class TextEdit:
         if self.ypos >= self.scroll_pos + y:
             self.scroll_pos = self.ypos - y
 
+        # The current line needs to be scrolled so the cursor is visible
+
+        if self.xpos > self.cols - 2:
+            self.scrollx = self.xpos - self.cols + 2
+        else:
+            self.scrollx = 0
+
+        # if self.xpos < self.scrollx:
+        #     self.scrollx = self.xpos
+        # if self.xpos >= self.scrollx + (self.cols - 1):
+        #     self.scrollx = self.xpos - (self.cols - 1)
+        # print(self.scrollx)
+
     def click(self, x: int, y: int):
         self.keepx = -1
         p = Int2(x, y) // self.con.tile_size
@@ -360,6 +377,7 @@ class TextEdit:
                 self.insert([(ord(e.text), 1)])
                 # self.line.insert(self.xpos, (ord(e.text), 1))
                 self.xpos += len(e.text)
+                self.wrap_cursor()
                 self.dirty = True
                 self.keepx = -1
             elif isinstance(e, pix.event.Scroll):
@@ -394,8 +412,13 @@ class TextEdit:
         self.con.set_color(self.fg, self.bg)
 
     def render(self):
-        if self.dirty or self.last_scroll != self.scroll_pos:
+        if (
+            self.dirty
+            or self.last_scroll != self.scroll_pos
+            or self.scrollx != self.last_scrollx
+        ):
             self.last_scroll = self.scroll_pos
+            self.last_scrollx = self.scrollx
             self.dirty = False
             self.xpos = clamp(self.xpos, 0, len(self.line) + 1)
             self.con.set_color(self.fg, self.bg)
@@ -404,15 +427,33 @@ class TextEdit:
                 i = y + self.scroll_pos
                 if i >= len(self.lines):
                     break
-                # self.con.cursor_pos = Int2(0, y)
-                for x, (t, c) in enumerate(self.lines[i]):
-                    if x >= self.cols:
-                        self.con.put(
-                            (x - 1, y), ord("$"), pix.color.LIGHT_RED, pix.color.BLACK
-                        )
-                        break
-                    fg, bg = self.palette[c]
-                    self.con.put((x, y), t, fg, bg)
+                left_cropped = False
+                right_cropped = False
+                for x, (t, c) in enumerate(self.lines[i], -self.scrollx):
+                    if x < 0:
+                        if t != 0x20:
+                            left_cropped = True
+                    elif x >= self.cols - 1:
+                        if t != 0x20:
+                            right_cropped = True
+                    else:
+                        fg, bg = self.palette[c]
+                        self.con.put((x, y), t, fg, bg)
+
+                if left_cropped:
+                    self.con.put(
+                        (0, y),
+                        ord("$"),
+                        pix.color.LIGHT_RED,
+                        pix.color.BLACK,
+                    )
+                if right_cropped:
+                    self.con.put(
+                        (self.cols - 1, y),
+                        ord("$"),
+                        pix.color.LIGHT_RED,
+                        pix.color.BLACK,
+                    )
 
         # If current line is visible, move the cursor to the edit position
         if (
@@ -420,12 +461,15 @@ class TextEdit:
             and self.ypos <= self.scroll_pos + self.con.size.y
         ):
             self.con.cursor_on = True
-            self.con.cursor_pos = Int2(self.xpos, self.ypos - self.scroll_pos)
+            self.con.cursor_pos = Int2(
+                self.xpos - self.scrollx, self.ypos - self.scroll_pos
+            )
         else:
             self.con.cursor_on = False
 
 
 data_dir = Path(__file__).absolute().parent / "data"
+
 
 def main():
     screen = pix.open_display(width=60 * 16, height=50 * 16)

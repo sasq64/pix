@@ -1,11 +1,12 @@
-
 import pixpy as pix
 from typing import Callable, Final, Self
 from dataclasses import dataclass
 
+
 @dataclass
 class ToolbarEvent:
     button: int = -1
+
 
 class ToolBar:
     def __init__(
@@ -19,7 +20,7 @@ class ToolBar:
         self.tile_set: Final = tile_set or pix.TileSet(tile_size=(48, 48))
         self.pos: pix.Float2 = pos
         tw = self.tile_set.tile_size.x
-        cols = int((self.canvas.size.x + tw-1) // tw)
+        cols = int((self.canvas.size.x + tw - 1) // tw)
         self.add_pos: pix.Int2 = pix.Int2(0, 0)
         self.console: Final = pix.Console(rows=1, cols=cols, tile_set=self.tile_set)
         self.console.set_color(pix.color.WHITE, bg_color)
@@ -27,6 +28,10 @@ class ToolBar:
         self.height: int = 48
         self.handler: None | Callable[[int], None] = None
         _ = pix.add_event_listener(self.__toolbar_click, 0)
+
+    @property
+    def size(self) -> pix.Int2:
+        return self.console.tile_size * (self.add_pos.x, 1)
 
     def on_click(self, handler: Callable[[int], None]) -> Self:
         self.handler = handler
@@ -54,4 +59,3 @@ class ToolBar:
                         self.handler(x)
                     return False
         return True
-

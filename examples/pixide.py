@@ -114,9 +114,6 @@ class PixIDE:
 
         self.comp_enabled: bool = False
         self.con: pix.Console = pix.Console(con_size.x, con_size.y - 1, self.ts)
-        con_size = (screen.size.toi() - 40 * 4) / self.ts.tile_size
-        self.title: pix.Console = pix.Console(con_size.x, 1, self.ts)
-
         self.title_bg: int = 0x205020
         self.running: bool = False
         tool_ts = pix.TileSet(self.font, tile_size=(50, 50))
@@ -125,6 +122,9 @@ class PixIDE:
             .add_button(Nerd.nf_fa_play_circle, pix.color.LIGHT_GREEN)
             .add_button(Nerd.nf_fa_question_circle, pix.color.LIGHT_BLUE)
         )
+        con_size = (screen.size.toi() - self.tool_bar.size) / self.ts.tile_size
+        self.title: pix.Console = pix.Console(con_size.x, 1, self.ts)
+
         pix.add_event_listener(self.handle_toolbar, 0)
 
         self.title.set_color(pix.color.WHITE, self.title_bg)
@@ -162,18 +162,31 @@ class PixIDE:
         return True
 
     def draw_title(self):
+        tbh = 48
+        self.screen.draw_color = pix.color.LIGHT_GREEN
+        self.screen.filled_rect((0, 0), size=(self.screen.size.x, tbh))
+
         self.tool_bar.render()
-        self.screen.draw(self.title, top_left=(40 * 4, 8), size=self.title.size)
+        sz = self.tool_bar.size
+
+        self.screen.draw(
+            self.title,
+            top_left=(sz.x + 2, (sz.y - self.title.size.y) / 2),
+            size=self.title.size,
+        )
         return True
 
     def resize(self):
         # self.ts = pix.TileSet(self.font)
         # self.font_size: int = 20
-        con_size = self.screen.target_size.toi() / self.ts.tile_size
+        con_size = (self.screen.target_size.toi() - (0, 48)) / self.ts.tile_size
         print(f"CON SIZE {con_size.x} {con_size.y}")
-        self.con = pix.Console(con_size.x, con_size.y - 1, self.ts)
+        self.con = pix.Console(con_size.x, con_size.y, self.ts)
         self.title = pix.Console(
-            con_size.x, 1, font_file=hack_font.as_posix(), font_size=self.font_size
+            con_size.x - (self.tool_bar.size.x // self.ts.tile_size.x),
+            1,
+            font_file=hack_font.as_posix(),
+            font_size=self.font_size,
         )
         self.set_title(self.current_file.name)
         self.edit.set_console(self.con)
@@ -181,11 +194,15 @@ class PixIDE:
     def set_title(self, name: str):
         self.title.set_color(pix.color.WHITE, self.title_bg)
         self.title.clear()
-        self.title.cursor_pos = (10, 0)
+        self.title.cursor_pos = (0, 0)
         self.title.write(f"\ue73c {name}")
         self.title.cursor_pos = (self.title.grid_size.x - 10, 0)
-        col, line = self.con.cursor_pos
-        self.title.write(f"\ue0a1 {line} \ue0a3 {col}")
+        # self.update_pos()
+
+    def update_pos(self):
+        col, line = self.edit.xpos + 1, self.edit.ypos + 1
+        self.title.cursor_pos = pix.Int2(self.title.grid_size.x - 18, 0)
+        self.title.write(f"Ln {line:<3} Col {col:<3}  ")
 
     def load(self, path: Path):
         if os.path.isfile(path):
@@ -277,7 +294,7 @@ class PixIDE:
         ctrl = pix.is_pressed(pix.key.RCTRL) or pix.is_pressed(pix.key.LCTRL)
         events = pix.all_events()
         keep: list[pix.event.AnyEvent] = []
-        should_update = False
+        should_update = len(events) > 0
         for e in events:
             if isinstance(e, pix.event.Resize):
                 print("RESIZE")
@@ -288,7 +305,7 @@ class PixIDE:
                     i = e.key - 0x30
                     self.load(self.files[i])
                     continue
-                #if e.key == pix.key.TAB:
+                # if e.key == pix.key.TAB:
                 #    x, _ = self.edit.get_location()
                 #    if x > 0 and self.edit.get_char(x - 1) != 0x20:
                 #        # self.update_completion()
@@ -321,7 +338,8 @@ class PixIDE:
         # self.comp.set_pos(self.con.cursor_pos * self.con.tile_size)
         self.edit.update(keep)
         if should_update:
-            x, _ = self.edit.get_location()
+            self.update_pos()
+            # x, _ = self.edit.get_location()
             # if x > 0 and self.edit.get_char(x - 1) != 0x20:
             # self.update_completion()
 
@@ -362,18 +380,19 @@ class PixIDE:
 #     screen.filled_rect(top_left=xy, size=psz)
 #     screen.draw(con, top_left=xy + (4, 4))
 
+
 def main():
     screen = pix.open_display(width=1280, height=720, full_screen=False)
     split = screen.split((2, 1))
-    ide = PixIDE(split[0])
+    ide = PixIDE(screen)
     chat = SmartChat(split[1], pix.load_font(hack_font))
     chat.write("Hello and welcome!\n> ")
-    chat.read_line()
+    # chat.read_line()
 
     print("RUN")
     while pix.run_loop():
         ide.render()
-        chat.render()
+        # chat.render()
         screen.swap()
 
 
