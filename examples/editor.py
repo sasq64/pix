@@ -388,14 +388,11 @@ class TextEdit:
                     self.scroll_pos = 0
                 if self.scroll_pos > l - y:
                     self.scroll_pos = l - y
-                if self.ypos < self.scroll_pos:
-                    self.ypos = self.scroll_pos
-                y = self.rows - 1
-                if self.ypos >= self.scroll_pos + y:
-                    self.ypos = self.scroll_pos + y - 1
             elif isinstance(e, pix.event.Key):
                 if self.handle_key(e.key, e.mods):
                     self.dirty = True
+                # Scroll cursor into view after any keyboard event
+                self.wrap_cursor()
             elif isinstance(e, pix.event.Click):
                 self.click(int(e.x), int(e.y))
 
