@@ -204,6 +204,43 @@ class PixIDE:
         self.title.cursor_pos = pix.Int2(self.title.grid_size.x - 18, 0)
         self.title.write(f"Ln {line:<3} Col {col:<3}  ")
 
+    def draw_scrollbar(self):
+        """Draw a scroll bar on the right side of the editor area"""
+        if len(self.edit.lines) <= self.edit.rows:
+            return  # No scrollbar needed if all content fits
+
+        # Scrollbar dimensions
+        scrollbar_width = 8
+        tbh = self.tool_bar.console.size.y
+        scrollbar_x = self.screen.size.x - scrollbar_width - 2
+        scrollbar_y = tbh
+        scrollbar_height = self.screen.size.y - tbh
+
+        # Background track
+        self.screen.draw_color = pix.color.DARK_GREY
+        self.screen.filled_rect(
+            top_left=pix.Float2(scrollbar_x, scrollbar_y),
+            size=pix.Float2(scrollbar_width, scrollbar_height),
+        )
+
+        # Calculate thumb position and size
+        total_lines = len(self.edit.lines)
+        visible_lines = self.edit.rows
+        thumb_height = max(20, (visible_lines / total_lines) * scrollbar_height)
+
+        # Calculate thumb position (avoid division by zero)
+        max_scroll = max(1, total_lines - visible_lines)
+        thumb_y = (self.edit.scroll_pos / max_scroll) * (
+            scrollbar_height - thumb_height
+        )
+
+        # Draw thumb
+        self.screen.draw_color = pix.color.LIGHT_GREY
+        self.screen.filled_rect(
+            top_left=pix.Float2(scrollbar_x, scrollbar_y + thumb_y),
+            size=pix.Float2(scrollbar_width, thumb_height),
+        )
+
     def load(self, path: Path):
         if os.path.isfile(path):
             self.current_file = path
@@ -353,9 +390,9 @@ class PixIDE:
         tbh = self.tool_bar.console.size.y
         # size = screen.size - (0, tbh)
         screen.draw(self.con, top_left=(0, tbh), size=self.con.size)
-        
+
         # Draw scrollbar
-        self.edit.draw_scrollbar(screen, pix.Float2(screen.size.x, screen.size.y - tbh), tbh)
+        self.draw_scrollbar()
 
         if self.error_box:
             # p = self.con.cursor_pos * self.con.tile_size + (0, 48 + self.con.tile_size.y)
