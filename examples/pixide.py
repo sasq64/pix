@@ -212,14 +212,13 @@ class PixIDE:
         # Scrollbar dimensions
         scrollbar_width = 8
         tbh = self.tool_bar.console.size.y
-        scrollbar_x = self.screen.size.x - scrollbar_width - 2
-        scrollbar_y = tbh
+        scrollbar_pos = pix.Float2(self.screen.size.x - scrollbar_width - 2, tbh)
         scrollbar_height = self.screen.size.y - tbh
 
         # Background track
         self.screen.draw_color = pix.color.DARK_GREY
         self.screen.filled_rect(
-            top_left=pix.Float2(scrollbar_x, scrollbar_y),
+            top_left=scrollbar_pos,
             size=pix.Float2(scrollbar_width, scrollbar_height),
         )
 
@@ -237,7 +236,7 @@ class PixIDE:
         # Draw thumb
         self.screen.draw_color = pix.color.LIGHT_GREY
         self.screen.filled_rect(
-            top_left=pix.Float2(scrollbar_x, scrollbar_y + thumb_y),
+            top_left=scrollbar_pos + (0, thumb_y),
             size=pix.Float2(scrollbar_width, thumb_height),
         )
 
@@ -301,10 +300,8 @@ class PixIDE:
             if fc != screen.frame_counter:
                 events = pix.all_events()
                 return
-            # info_box("[PRESS ANY KEY]")
         except SyntaxError as se:
             screen.swap()
-            # info_box(f"Syntax error '{se.msg}' in line {se.lineno}")
             print(f"{se.lineno} {se.offset}")
             self.show_error(se.msg, pix.Int2((se.offset or 1) - 1, se.lineno or 0))
             events = pix.all_events()
@@ -383,9 +380,6 @@ class PixIDE:
         if self.edit.dirty:
             self.highlight()
         self.edit.render()
-        # self.con.set_color(pix.color.WHITE, pix.color.RED)
-        # self.con.colorize_section(0,11,100)
-        # self.con.set_color(pix.color.WHITE, pix.color.LIGHT_BLUE)
         screen.clear(pix.color.DARK_GREY)
         tbh = self.tool_bar.console.size.y
         # size = screen.size - (0, tbh)
@@ -395,8 +389,6 @@ class PixIDE:
         self.draw_scrollbar()
 
         if self.error_box:
-            # p = self.con.cursor_pos * self.con.tile_size + (0, 48 + self.con.tile_size.y)
-            # self.error_box.set_point(p.tof())
             self.error_box.render()
 
         # if self.comp_enabled:
@@ -404,21 +396,6 @@ class PixIDE:
         if self.do_run:
             self.do_run = False
             self.run()
-
-
-# def info_box(line: int, col: int, text: str):
-#     lines = text.split("\n")
-#     lines = wrap_lines(lines, 60, " .")
-#     maxl = len(max(lines, key=lambda i: len(i)))
-
-#     sz = pix.Int2(maxl, len(lines))
-#     con = pix.Console(cols=sz.x, rows=sz.y + 1)
-#     con.write(text)
-#     psz = sz * (8, 16) + (8, 8)
-#     xy = screen.size - psz
-#     screen.draw_color = 0x000040FF
-#     screen.filled_rect(top_left=xy, size=psz)
-#     screen.draw(con, top_left=xy + (4, 4))
 
 
 def main():
