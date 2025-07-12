@@ -353,6 +353,9 @@ class PixIDE:
         tbh = self.tool_bar.console.size.y
         # size = screen.size - (0, tbh)
         screen.draw(self.con, top_left=(0, tbh), size=self.con.size)
+        
+        # Draw scrollbar
+        self.edit.draw_scrollbar(screen, pix.Float2(screen.size.x, screen.size.y - tbh), tbh)
 
         if self.error_box:
             # p = self.con.cursor_pos * self.con.tile_size + (0, 48 + self.con.tile_size.y)

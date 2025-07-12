@@ -464,6 +464,40 @@ class TextEdit:
         else:
             self.con.cursor_on = False
 
+    def draw_scrollbar(self, canvas: pix.Canvas, editor_rect: pix.Float2, offset_y: float = 0):
+        """Draw a scroll bar on the right side of the editor area"""
+        if len(self.lines) <= self.rows:
+            return  # No scrollbar needed if all content fits
+
+        # Scrollbar dimensions
+        scrollbar_width = 8
+        scrollbar_x = editor_rect.x - scrollbar_width - 2
+        scrollbar_y = offset_y
+        scrollbar_height = editor_rect.y
+
+        # Background track
+        canvas.draw_color = pix.color.DARK_GREY
+        canvas.filled_rect(
+            top_left=pix.Float2(scrollbar_x, scrollbar_y),
+            size=pix.Float2(scrollbar_width, scrollbar_height)
+        )
+
+        # Calculate thumb position and size
+        total_lines = len(self.lines)
+        visible_lines = self.rows
+        thumb_height = max(20, (visible_lines / total_lines) * scrollbar_height)
+        
+        # Calculate thumb position (avoid division by zero)
+        max_scroll = max(1, total_lines - visible_lines)
+        thumb_y = (self.scroll_pos / max_scroll) * (scrollbar_height - thumb_height)
+
+        # Draw thumb
+        canvas.draw_color = pix.color.LIGHT_GREY
+        canvas.filled_rect(
+            top_left=pix.Float2(scrollbar_x, scrollbar_y + thumb_y),
+            size=pix.Float2(scrollbar_width, thumb_height)
+        )
+
 
 data_dir = Path(__file__).absolute().parent / "data"
 
