@@ -20,7 +20,14 @@ public:
 
     int frame_counter() const { return display->get_time().frame_counter; }
 
-    void swap() { display->swap(); }
+    void swap()
+    {
+        if (log_fp) {
+            fputs("swap\n", log_fp);
+            fflush(log_fp);
+        }
+        display->swap();
+    }
 
     void set_fps(int fps) { display->set_fps(fps); }
 

@@ -205,17 +205,17 @@ void TreeSitter::set_format(
                 auto sym = symbols[part];
                 id = (id << 16) | sym;
 
-                printf("%s (%d). ", part.c_str(), sym);
+                //printf("%s (%d). ", part.c_str(), sym);
                 start_pos = pos + 1;
             } else {
                 auto part = pattern.substr(start_pos);
                 auto sym = symbols[part];
                 id = (id << 16) | sym;
-                printf("%s (%d)", part.c_str(), sym);
+                //printf("%s (%d)", part.c_str(), sym);
                 break;
             }
         }
-        puts("");
+        //puts("");
         //printf("%s -> %llx\n", pattern.c_str(), id);
         patterns[id] = color;
     }

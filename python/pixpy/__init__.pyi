@@ -79,6 +79,10 @@ class Canvas:
         """
         Draw a line strip from all the given points.
         """
+    def log_to(self, path: Union[os.PathLike[str], str]) -> None:
+        """
+        Log draw commands to this file
+        """
     @typing.overload
     def plot(self, center: Union[Float2, Int2, Tuple[float, float]], color: int) -> None:
         """

@@ -20,6 +20,7 @@
 #include "system.hpp"
 #include "vec2.hpp"
 
+#include <cstdlib>
 #include <pybind11/detail/common.h>
 #ifndef PYTHON_MODULE
 #    include "utils.h"
@@ -98,6 +99,21 @@ std::shared_ptr<pix::Screen> open_display(int width, int height,
         return s;
     }
     init();
+    auto const* val = std::getenv("PIX_HEADLESS");
+    if (val && val[0] != '0') {
+        visible = false;
+        full_screen = false;
+    }
+    val = std::getenv("PIX_RUNFRAMES");
+    if (val != nullptr) {
+        char* endptr = nullptr;
+        auto frames = std::strtol(val, &endptr, 10);
+        if (*endptr == 0) {
+            m.run_frames = frames;
+        } else {
+            fprintf(stderr, "** Illegal PIX_RUNFRAMES value '%s'\n", val);
+        }
+    }
     Display::Settings const settings{
         .screen = full_screen ? DisplayType::Full : DisplayType::Window,
         .display_width = width,
@@ -109,6 +125,8 @@ std::shared_ptr<pix::Screen> open_display(int width, int height,
 
     screen->vpscale = screen->get_scale();
 
+    val = std::getenv("PIX_DRAWLOG");
+    if (val != nullptr) { screen->log_to({val}); }
     pix::Screen::instance = screen;
     m.sys->add_listener([](AnyEvent const& e) {
         if (std::holds_alternative<ResizeEvent>(e)) {
@@ -358,6 +376,11 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
             }
             m.events.clear();
             m.in_pix--;
+            if (m.run_frames > 0) {
+                if (pix::Screen::instance->frame_counter() == m.run_frames) {
+                    return false;
+                }
+            }
             return rc;
         },
         "Should be called first in your main rendering loop. Clears all pending events and all pressed keys. Returns _True_ as long as the application is running (the user has not closed the window or quit in some other way");

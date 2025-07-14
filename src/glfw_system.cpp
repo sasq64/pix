@@ -249,7 +249,7 @@ public:
         } else {
             monitor = nullptr;
         }
-        // if (!settings.visible) { glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); }
+         if (!settings.visible) { glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); }
         if (width <= 0 || height <= 0) {
             throw system_exception("Illegal window size");
         }

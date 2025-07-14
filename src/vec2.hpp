@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
-#include <utility>
 #include <type_traits>
+#include <utility>
 
 template <typename T> struct V2Iterator
 {
@@ -18,7 +18,6 @@ template <typename T> struct V2Iterator
     {
         start = current = c;
         limit = l;
-
     }
 
     auto operator++()
@@ -41,11 +40,7 @@ template <typename T> struct V2Iterator
         return other.current != current;
     }
 
-    T operator*() const
-    {
-        return current;
-    }
-
+    T operator*() const { return current; }
 };
 
 template <typename T> struct Vec2Range
@@ -54,17 +49,9 @@ template <typename T> struct Vec2Range
     T b;
     Vec2Range(T a_, T b_) : a{a_}, b{b_} {}
 
-    [[nodiscard]] V2Iterator<T> begin() const
-    {
-        return {a, b};
+    [[nodiscard]] V2Iterator<T> begin() const { return {a, b}; }
 
-    }
-
-    [[nodiscard]] V2Iterator<T> end() const
-    {
-        return {b, b};
-    }
-
+    [[nodiscard]] V2Iterator<T> end() const { return {b, b}; }
 };
 
 template <typename T> struct Vec2
@@ -75,30 +62,25 @@ template <typename T> struct Vec2
     constexpr Vec2() = default;
 
     constexpr Vec2(Vec2 const&) = default;
-    Vec2& operator=(Vec2 const&other) = default;
+    Vec2& operator=(Vec2 const& other) = default;
 
     constexpr Vec2(std::pair<T, T> const& p) // NOLINT
-        : x{p.first}, y{p.second} {}
+        : x{p.first}, y{p.second}
+    {
+    }
     constexpr Vec2(T _x, T _y) : x{_x}, y{_y} {}
 
     constexpr T& operator[](size_t i) { return i == 0 ? x : y; }
     constexpr T const& operator[](size_t i) const { return i == 0 ? x : y; }
 
-    Vec2Range<Vec2<T>> grid_coordinates() {
-        return Vec2Range<Vec2<T>>(Vec2<T>(0,0), *this);
-    }
-
-
-    [[nodiscard]] V2Iterator<Vec2<T>> begin() const
+    Vec2Range<Vec2<T>> grid_coordinates()
     {
-        return {{0,0}, *this};
-
+        return Vec2Range<Vec2<T>>(Vec2<T>(0, 0), *this);
     }
 
-    [[nodiscard]] V2Iterator<Vec2<T>> end() const
-    {
-        return {*this, *this};
-    }
+    [[nodiscard]] V2Iterator<Vec2<T>> begin() const { return {{0, 0}, *this}; }
+
+    [[nodiscard]] V2Iterator<Vec2<T>> end() const { return {*this, *this}; }
 
     bool operator==(const Vec2& other) const
     {
@@ -128,15 +110,8 @@ template <typename T> struct Vec2
         return {static_cast<double>(x), static_cast<double>(y)};
     }
 
-
-    [[nodiscard]] Vec2 ceil() const
-    {
-        return { std::ceil(x), std::ceil(y) };
-    }
-    [[nodiscard]] Vec2 round() const
-    {
-        return { std::round(x), std::round(y) };
-    }
+    [[nodiscard]] Vec2 ceil() const { return {std::ceil(x), std::ceil(y)}; }
+    [[nodiscard]] Vec2 round() const { return {std::round(x), std::round(y)}; }
 
     // compare to low/hi bounds. Return -1 or 1 depending on if it is inside
     // or outside
@@ -171,10 +146,8 @@ template <typename T> struct Vec2
 
     [[nodiscard]] float angle_n() const
     {
-        if (x == 0)
-            return (y > 0) ? M_PI / 2 : (y == 0) ? 0 : M_PI * 3 / 2;
-        if (y == 0)
-            return (x >= 0) ? 0 : M_PI;
+        if (x == 0) return (y > 0) ? M_PI / 2 : (y == 0) ? 0 : M_PI * 3 / 2;
+        if (y == 0) return (x >= 0) ? 0 : M_PI;
         auto ret = atanf(y / x);
         if (x < 0)
             ret = M_PI + ret;
@@ -185,7 +158,10 @@ template <typename T> struct Vec2
     }
 
     // add
-    [[nodiscard]] constexpr Vec2 add(Vec2 v) const { return {v.x + x, v.y + y}; }
+    [[nodiscard]] constexpr Vec2 add(Vec2 v) const
+    {
+        return {v.x + x, v.y + y};
+    }
     [[nodiscard]] constexpr Vec2 operator+(Vec2 v) const { return add(v); }
 
     constexpr Vec2& iadd(Vec2 v)
@@ -208,7 +184,10 @@ template <typename T> struct Vec2
     constexpr Vec2 operator+=(T v) { return iadds(v); }
 
     // sub
-    [[nodiscard]] constexpr Vec2 sub(Vec2 v) const { return {x - v.x, y - v.y}; }
+    [[nodiscard]] constexpr Vec2 sub(Vec2 v) const
+    {
+        return {x - v.x, y - v.y};
+    }
     constexpr Vec2 operator-(Vec2 v) const { return sub(v); }
 
     constexpr Vec2& isub(Vec2 v)
@@ -232,7 +211,10 @@ template <typename T> struct Vec2
 
     // mul
 
-    [[nodiscard]] constexpr Vec2 mul(Vec2 v) const { return {v.x * x, v.y * y}; }
+    [[nodiscard]] constexpr Vec2 mul(Vec2 v) const
+    {
+        return {v.x * x, v.y * y};
+    }
     constexpr Vec2 operator*(Vec2 v) const { return mul(v); }
 
     constexpr Vec2& imul(Vec2 v)
@@ -259,7 +241,10 @@ template <typename T> struct Vec2
     }
 
     // div
-    [[nodiscard]] constexpr Vec2 div(Vec2 v) const { return {x / v.x, y / v.y}; }
+    [[nodiscard]] constexpr Vec2 div(Vec2 v) const
+    {
+        return {x / v.x, y / v.y};
+    }
     constexpr Vec2 operator/(Vec2 v) const { return div(v); }
 
     constexpr Vec2& idiv(Vec2 v)
@@ -311,8 +296,8 @@ template <typename T> struct Vec2
         // Every point (x,y), that solves the equation above, is on the line,
         // every point that does not solve it, is not. The equation will have a
         // positive result if it is on one side of the line and a negative one
-        // if is on the other side of it. We insert (x1,y1) and (x2,y2) of vector
-        // 2 into the equation above.
+        // if is on the other side of it. We insert (x1,y1) and (x2,y2) of
+        // vector 2 into the equation above.
         double d1 = (a1 * v21.x) + (b1 * v21.y) + c1;
         double d2 = (a1 * v22.x) + (b1 * v22.y) + c1;
 
@@ -324,9 +309,9 @@ template <typename T> struct Vec2
         if (d1 < 0 && d2 < 0) return false;
 
         // The fact that vector 2 intersected the infinite line 1 above doesn't
-        // mean it also intersects the vector 1. Vector 1 is only a subset of that
-        // infinite line 1, so it may have intersected that line before the vector
-        // started or after it ended. To know for sure, we have to repeat
+        // mean it also intersects the vector 1. Vector 1 is only a subset of
+        // that infinite line 1, so it may have intersected that line before the
+        // vector started or after it ended. To know for sure, we have to repeat
         // the same test the other way round. We start by calculating the
         // infinite line 2 in linear equation standard form.
         double a2 = v22.y - v21.y;
@@ -345,39 +330,37 @@ template <typename T> struct Vec2
         // If we get here, only two possibilities are left. Either the two
         // vectors intersect in exactly one point or they are collinear, which
         // means they intersect in any number of points from zero to infinite.
-        //if ((a1 * b2) - (a2 * b1) == 0.0f) return COLLINEAR;
+        // if ((a1 * b2) - (a2 * b1) == 0.0f) return COLLINEAR;
 
         // If they are not collinear, they must intersect in exactly one point.
         return true;
     }
 
-    inline bool inside_polygon(std::vector<Vec2> const& points) {
+    inline bool inside_polygon(std::vector<Vec2> const& points)
+    {
         Vec2 s = *this + Vec2{10000, 0};
         int count = 0;
-        for(size_t i=0; i<points.size()-1; i++) {
+        for (size_t i = 0; i < points.size() - 1; i++) {
 
             auto&& a = points[i];
-            auto&& b = points[i+1];
-            if (instersects(*this, s, a, b)) {
-                count++;
-            }
+            auto&& b = points[i + 1];
+            if (instersects(*this, s, a, b)) { count++; }
         }
-        auto&& a = points[points.size()-1];
+        auto&& a = points[points.size() - 1];
         auto&& b = points[0];
-        if (instersects(*this, s, a, b)) {
-            count++;
-        }
+        if (instersects(*this, s, a, b)) { count++; }
         return (count & 1) == 1;
     }
 
-    std::string repr()
+    std::string repr() const
     {
+        char temp[64];
         if constexpr (std::is_integral_v<T>) {
-            return "Vec2i(" + std::to_string(x) + ", " + std::to_string(y) +
-                   ")";
+            snprintf(temp, sizeof(temp), "Int2(%d, %d)", x, y);
         } else {
-            return "Vec2(" + std::to_string(x) + ", " + std::to_string(y) + ")";
+            snprintf(temp, sizeof(temp), "Float2(%.2f, %.2f)", x, y);
         }
+        return temp;
     }
 };
 

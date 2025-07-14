@@ -7,6 +7,9 @@
 
 #include "vec2.hpp"
 
+#include <filesystem>
+namespace fs = std::filesystem;
+
 namespace pix {
 
 class ImageView;
@@ -16,7 +19,16 @@ class Context
     // The GL target frame buffer
     GLuint target = 0;
 
+protected:
+    FILE* log_fp = nullptr;
+
 public:
+    void log_to(fs::path const& target)
+    {
+        if (log_fp) fclose(log_fp);
+        log_fp = fopen(target.c_str(), "w");
+    }
+
     // The size of our view into the framebuffer
     Vec2f view_size{0, 0};
 
@@ -29,8 +41,8 @@ public:
     Vec2f target_scale{1, 1};
 
     // Clip (scissor) area
-    //Vec2i clip_start{0, 0};
-    //Vec2i clip_size{0, 0};
+    // Vec2i clip_start{0, 0};
+    // Vec2i clip_size{0, 0};
 
     // Viewport scale (for when window size != framebuffer size)
     float vpscale = 1.0F;
@@ -73,7 +85,8 @@ private:
     std::array<float, 4> generate_line(Vec2f from, Vec2f to) const;
     std::vector<float> generate_lines(float const* screen_cords,
                                       int count) const;
-    std::vector<float> generate_line(Vec2f p0, float r0, Vec2f p1, float r1) const;
+    std::vector<float> generate_line(Vec2f p0, float r0, Vec2f p1,
+                                     float r1) const;
     std::array<float, 8> generate_quad(Vec2f top_left, Vec2f size) const;
     std::array<float, 8> rotated_quad(Vec2f center, Vec2f sz, float rot) const;
     std::array<float, 16> rotated_quad_with_uvs(Vec2f center, Vec2f sz,

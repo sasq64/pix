@@ -28,6 +28,8 @@ inline void add_canvas_functions(auto& cls)
 {
     using namespace pybind11::literals;
     using Context = pix::Context;
+    cls.def("log_to", &Context::log_to, "path"_a,
+            "Log draw commands to this file");
     cls.def("circle", &Context::circle, "center"_a, "radius"_a,
             "Draw an (outline) circle");
 

@@ -6,6 +6,16 @@
 #include <cmath>
 #include <tesselator.h>
 
+static const std::string str(Vec2f const& v)
+{
+    return v.repr();
+}
+
+template <typename T> std::string str(T const& t)
+{
+    return std::to_string(t);
+}
+
 namespace pix {
 
 using gl::ProgramCache;
@@ -128,9 +138,7 @@ std::array<float, 8> Context::rotated_quad(Vec2f center, Vec2f sz,
 std::array<float, 16> Context::rotated_quad_with_uvs(Vec2f center, Vec2f sz,
                                                      float rot) const
 {
-    if (rot == 0.0) {
-        return generate_quad_with_uvs(center - sz/2, sz);
-    }
+    if (rot == 0.0) { return generate_quad_with_uvs(center - sz / 2, sz); }
     sz = sz / 2;
     auto p0 = to_screen(rotate(Vec2f{-sz.x, -sz.y}, rot) + center);
     auto p1 = to_screen(rotate(Vec2f{sz.x, -sz.y}, rot) + center);
@@ -143,17 +151,32 @@ std::array<float, 16> Context::rotated_quad_with_uvs(Vec2f center, Vec2f sz,
 
 void Context::filled_rect(Vec2f top_left, Vec2f size)
 {
+    if (log_fp) {
+        fprintf(log_fp, "flled_rect top_left=%s size=%s\n", str(top_left).c_str(),
+                str(size).c_str());
+        fflush(log_fp);
+    }
     draw_filled(generate_quad(top_left, size), gl::Primitive::TriangleFan);
 }
 
 void Context::rect(Vec2f top_left, Vec2f size)
 {
+    if (log_fp) {
+        fprintf(log_fp, "rect top_left=%s size=%s\n", str(top_left).c_str(),
+                str(size).c_str());
+        fflush(log_fp);
+    }
     glLineWidth(line_width);
     draw_filled(generate_quad(top_left, size), gl::Primitive::LineLoop);
 }
 
 void Context::line(Vec2f from, Vec2f to)
 {
+    if (log_fp) {
+        fprintf(log_fp, "line from=%s to=%s\n", str(from).c_str(),
+                str(to).c_str());
+        fflush(log_fp);
+    }
     glLineWidth(line_width);
     draw_filled(generate_line(from, to), gl::Primitive::Lines);
     last_point = to;
@@ -162,6 +185,10 @@ void Context::line(Vec2f from, Vec2f to)
 
 void Context::line(Vec2f to)
 {
+    if (log_fp) {
+        fprintf(log_fp, "line to=%s\n", str(to).c_str());
+        fflush(log_fp);
+    }
     if (last_rad > 0) {
         glLineWidth(line_width);
         draw_filled(generate_line(last_point, to), gl::Primitive::Lines);
@@ -185,6 +212,12 @@ void Context::lines(std::vector<Vec2f> const& points)
 }
 void Context::round_line(Vec2f from, float rad_from, Vec2f to, float rad_to)
 {
+    if (log_fp) {
+        fprintf(log_fp,
+                "rounded_line from=%s rad_from=%.1f to=%s rad_to=%.1f\n",
+                str(from).c_str(), rad_from, str(to).c_str(), rad_to);
+        fflush(log_fp);
+    }
     auto points = generate_line(from, rad_from, to, rad_to);
     draw_filled(points, gl::Primitive::TriangleFan);
 
@@ -194,6 +227,11 @@ void Context::round_line(Vec2f from, float rad_from, Vec2f to, float rad_to)
 
 void Context::round_line(Vec2f to, float radius)
 {
+    if (log_fp) {
+        fprintf(log_fp, "rounded_line to=%s radius=%.1f\n", str(to).c_str(),
+                radius);
+        fflush(log_fp);
+    }
     if (last_rad > 0) {
         auto points = generate_line(last_point, last_rad, to, radius);
         draw_filled(points, gl::Primitive::TriangleFan);
@@ -205,16 +243,30 @@ void Context::round_line(Vec2f to, float radius)
 void Context::circle(Vec2f const& v, float r)
 {
     glLineWidth(line_width);
+    if (log_fp) {
+        fprintf(log_fp, "circle center=%s radius=%.1f\n", str(v).c_str(), r);
+        fflush(log_fp);
+    }
     draw_filled(generate_circle(v, r, false), gl::Primitive::LineLoop);
 }
 
 void Context::filled_circle(Vec2f const& v, float r)
 {
+    if (log_fp) {
+        fprintf(log_fp, "filled_circle center=%s radius=%.1f\n", str(v).c_str(), r);
+        fflush(log_fp);
+    }
     draw_filled(generate_circle(v, r, true), gl::Primitive::TriangleFan);
 }
 
 void Context::blit(pix::ImageView const& tex, Vec2f pos, Vec2f size)
 {
+    if (log_fp) {
+        auto id = tex.get_tex().tex->tex_id;
+        fprintf(log_fp, "draw image=%d top_left=%s size=%s\n", id,
+                str(pos).c_str(), str(size).c_str());
+        fflush(log_fp);
+    }
     tex.bind();
     if (size.x == 0) {
         size = {static_cast<float>(tex.width()),
@@ -229,6 +281,12 @@ void Context::blit(pix::ImageView const& tex, Vec2f pos, Vec2f size)
 void Context::draw(pix::ImageView const& tex, Vec2f center, Vec2f size,
                    float rot)
 {
+    if (log_fp) {
+        auto id = tex.get_tex().tex->tex_id;
+        fprintf(log_fp, "draw image=%d center=%s size=%s rot=%.2f\n", id,
+                str(center).c_str(), str(size).c_str(), rot);
+        fflush(log_fp);
+    }
     tex.bind();
     if (size.x == 0) {
         size = {static_cast<float>(tex.width()),

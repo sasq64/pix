@@ -16,6 +16,7 @@ struct Machine
     std::shared_ptr<System> sys{};
     std::vector<pybind11::object> events;
     int counter = 0;
+    int run_frames = -1;
     using Listener = std::function<bool(pybind11::object)>;
     std::unordered_map<int, Listener> listeners;
     //std::shared_ptr<Display> display{};
