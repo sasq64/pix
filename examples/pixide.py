@@ -8,7 +8,7 @@ from typing import Final
 
 import pixpy as pix
 from editor import TextEdit
-from utils.wrap import wrap_lines, wrap_text
+from utils.wrap import wrap_text
 from utils.tool_bar import ToolBar, ToolbarEvent
 from utils.nerd import Nerd
 from smart_chat import SmartChat
@@ -144,6 +144,8 @@ class PixIDE:
         self.edit.set_palette(self.palette)
         self.load(self.files[1])
         self.highlight()
+
+        # self.edit.mark_text(pix.Int2(2, 5), pix.Int2(2, 9))
 
         self.error_box: None | ErrorBox = None
 

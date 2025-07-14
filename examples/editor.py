@@ -71,6 +71,12 @@ class TextEdit:
         self.rows: int = con.grid_size.y
         self.con: pix.Console = con
         self.dirty: bool = True
+        """Indicate that the console text need to be updated"""
+
+        self.mark_start: pix.Int2 = pix.Int2(0, 0)
+        self.mark_end: pix.Int2 = pix.Int2(0, 0)
+        self.mark_enabled: bool = False
+
         self.con.cursor_on = True
         self.con.wrapping = False
 
@@ -82,6 +88,9 @@ class TextEdit:
         self.palette[0] = (self.bg, self.bg)
         self.palette[1] = (0xEECE6A, self.bg)
         self.palette[2] = (0x5159ED, self.bg)
+
+        self.mark_color = 100
+        self.palette[100] = (pix.color.WHITE, pix.color.BLUE)
 
         self.moves: Final = {
             pix.key.LEFT: lambda: (self.xpos - 1, self.ypos),
@@ -98,6 +107,14 @@ class TextEdit:
             CMD | pix.key.DOWN: lambda: (self.xpos, len(self.lines)),
         }
         "Key bindings for keys that move the cursor."
+
+    def mark_text(self, start: pix.Int2, end: pix.Int2):
+        self.mark_start = start
+        self.mark_end = end
+        self.mark_enabled = True
+
+    def show_mark(self, mark: bool):
+        self.mark_enabled = mark
 
     def set_console(self, console: pix.Console):
         self.con = console
@@ -155,6 +172,7 @@ class TextEdit:
         for j in range(start, end):
             line[j] = (line[j][0], color)
 
+    # OBSOLETE
     def highlight(self, start: int, end: int, color: int):
         """Set the color of a given section of the entire text"""
 
@@ -409,6 +427,10 @@ class TextEdit:
         self.con.set_color(self.fg, self.bg)
 
     def render(self):
+        """
+        Update the characters in the Console from the internal text state.
+        Needs to be done when text, hihlighting or scroll position changes.
+        """
         if (
             self.dirty
             or self.last_scroll != self.scroll_pos
@@ -426,6 +448,23 @@ class TextEdit:
                     break
                 left_cropped = False
                 right_cropped = False
+                mark_startx = -1
+                mark_endx = -1
+                if self.mark_enabled:
+                    # Figure if parts of this line should be marked
+                    my0 = i - self.mark_start[0]
+                    my1 = self.mark_end[0] - i
+                    if my0 == 0:
+                        mark_startx = self.mark_start[1]
+                    elif my0 > 0:
+                        mark_startx = 0
+                    if my1 == 0:
+                        mark_endx = self.mark_end[1]
+                    elif my1 > 0:
+                        mark_endx = 999999
+                    else:
+                        mark_startx = -1
+
                 for x, (t, c) in enumerate(self.lines[i], -self.scrollx):
                     if x < 0:
                         if t != 0x20:
@@ -434,7 +473,10 @@ class TextEdit:
                         if t != 0x20:
                             right_cropped = True
                     else:
-                        fg, bg = self.palette[c]
+                        if mark_startx >= 0 and x >= mark_startx and x <= mark_endx:
+                            fg, bg = self.palette[self.mark_color]
+                        else:
+                            fg, bg = self.palette[c]
                         self.con.put((x, y), t, fg, bg)
 
                 if left_cropped:
@@ -463,7 +505,6 @@ class TextEdit:
             )
         else:
             self.con.cursor_on = False
-
 
 
 data_dir = Path(__file__).absolute().parent / "data"
