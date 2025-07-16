@@ -122,6 +122,7 @@ class PixIDE:
             .add_button(Nerd.nf_fa_play_circle, pix.color.LIGHT_GREEN)
             .add_button(Nerd.nf_fa_question_circle, pix.color.LIGHT_BLUE)
         )
+        self.toolbar_height: int = self.tool_bar.console.size.y
         con_size = (screen.size.toi() - self.tool_bar.size) / self.ts.tile_size
         self.title: pix.Console = pix.Console(con_size.x, 1, self.ts)
 
@@ -164,9 +165,8 @@ class PixIDE:
         return True
 
     def draw_title(self):
-        tbh = 48
         self.screen.draw_color = pix.color.LIGHT_GREEN
-        self.screen.filled_rect((0, 0), size=(self.screen.size.x, tbh))
+        self.screen.filled_rect((0, 0), size=(self.screen.size.x, self.toolbar_height))
 
         self.tool_bar.render()
         sz = self.tool_bar.size
@@ -181,7 +181,7 @@ class PixIDE:
     def resize(self):
         # self.ts = pix.TileSet(self.font)
         # self.font_size: int = 20
-        con_size = (self.screen.target_size.toi() - (0, 48)) / self.ts.tile_size
+        con_size = (self.screen.target_size.toi() - (0, self.toolbar_height)) / self.ts.tile_size
         print(f"CON SIZE {con_size.x} {con_size.y}")
         self.con = pix.Console(con_size.x, con_size.y, self.ts)
         self.title = pix.Console(
@@ -213,9 +213,8 @@ class PixIDE:
 
         # Scrollbar dimensions
         scrollbar_width = 8
-        tbh = self.tool_bar.console.size.y
-        scrollbar_pos = pix.Float2(self.screen.size.x - scrollbar_width - 2, tbh)
-        scrollbar_height = self.screen.size.y - tbh
+        scrollbar_pos = pix.Float2(self.screen.size.x - scrollbar_width - 2, self.toolbar_height)
+        scrollbar_height = self.screen.size.y - self.toolbar_height
 
         # Background track
         self.screen.draw_color = pix.color.DARK_GREY
@@ -266,7 +265,7 @@ class PixIDE:
 
         # self.edit.dirty = True
         pos = pix.Float2(source_pos.x - 0.5, source_pos.y - self.edit.scroll_pos)
-        pos = pos * self.con.tile_size + (0, 48)
+        pos = pos * self.con.tile_size + (0, self.toolbar_height)
         self.error_box = ErrorBox(self.screen, pos, text, self.font, 20)
         print(f"ERROR BOX at {pos}")
 
@@ -367,8 +366,7 @@ class PixIDE:
                 should_update = True
             elif isinstance(e, pix.event.Click):
                 self.error_box = None
-                tbh = self.tool_bar.console.size.y
-                self.edit.click(int(e.x), int(e.y) - tbh)
+                self.edit.click(int(e.x), int(e.y) - self.toolbar_height)
                 continue
             keep.append(e)
         # self.comp.set_pos(self.con.cursor_pos * self.con.tile_size)
@@ -383,9 +381,8 @@ class PixIDE:
             self.highlight()
         self.edit.render()
         screen.clear(pix.color.DARK_GREY)
-        tbh = self.tool_bar.console.size.y
-        # size = screen.size - (0, tbh)
-        screen.draw(self.con, top_left=(0, tbh), size=self.con.size)
+        # size = screen.size - (0, self.toolbar_height)
+        screen.draw(self.con, top_left=(0, self.toolbar_height), size=self.con.size)
 
         # Draw scrollbar
         self.draw_scrollbar()
