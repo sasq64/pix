@@ -7,11 +7,13 @@ import traceback
 from typing import Final
 
 import pixpy as pix
-from editor import TextEdit
+from editor import TextEdit, TextRange
 from utils.wrap import wrap_text
 from utils.tool_bar import ToolBar, ToolbarEvent
 from utils.nerd import Nerd
 from smart_chat import SmartChat
+
+Int2 = pix.Int2
 
 fwd = Path(os.path.abspath(__file__)).parent
 hack_font = fwd / "data" / "HackNerdFont-Regular.ttf"
@@ -114,6 +116,7 @@ class PixIDE:
 
         self.comp_enabled: bool = False
         self.con: pix.Console = pix.Console(con_size.x, con_size.y - 1, self.ts)
+        self.con.wrapping = False
         self.title_bg: int = 0x205020
         self.running: bool = False
         tool_ts = pix.TileSet(self.font, tile_size=(50, 50))
@@ -258,10 +261,11 @@ class PixIDE:
 
     def highlight(self):
         self.treesitter.set_source(self.edit.get_text())
-        for col0, row0, col1, row1, color in self.treesitter.get_highlights():
-            if color < 0:
-                color = 1
-            self.edit.highlight_lines(row0, col0, row1, col1, color)
+        highlights = [
+            TextRange(Int2(col0, row0), Int2(col1, row1), color if color >= 0 else 1)
+            for col0, row0, col1, row1, color in self.treesitter.get_highlights()
+        ]
+        self.edit.highlight(highlights)
 
     def show_error(self, text: str, source_pos: pix.Int2):
         print(f"ERROR AT {source_pos}")

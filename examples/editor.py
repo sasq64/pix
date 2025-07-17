@@ -1,4 +1,6 @@
 from array import array
+from collections.abc import Iterator
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, cast
 
@@ -15,6 +17,22 @@ from edit_cmd import (
 )
 
 Int2 = pix.Int2
+
+
+@dataclass
+class TextRange:
+    start: Int2
+    end: Int2
+    arg: int = -1
+
+    def lines(self) -> Iterator[tuple[int, int, int]]:
+        msc, msl = self.start
+        mec, mel = self.end
+        for line_no in range(mel, msl - 1, -1):
+            col0 = msc if line_no == msl else 0
+            col1 = mec if line_no == mel else -1
+            yield (line_no, col0, col1)
+
 
 CMD = 0x10000000
 CTRL = 0x20000000
@@ -81,8 +99,7 @@ class TextEdit:
         self.dirty: bool = True
         """Indicate that the console text need to be updated"""
 
-        self.mark_start: pix.Int2 = pix.Int2(0, 0)
-        self.mark_end: pix.Int2 = pix.Int2(0, 0)
+        self.selection = TextRange(Int2.ZERO, Int2.ZERO)
         self.mark_enabled: bool = False
         self.last_clicked: pix.Int2 = pix.Int2.ZERO
 
@@ -119,8 +136,7 @@ class TextEdit:
         "Key bindings for keys that move the cursor."
 
     def mark_text(self, start: pix.Int2, end: pix.Int2):
-        self.mark_start = start
-        self.mark_end = end
+        self.selection = TextRange(start, end)
         self.dirty = True
         self.mark_enabled = True
 
@@ -137,9 +153,6 @@ class TextEdit:
         self.rows = self.con.grid_size.y
         self.wrap_cursor()
         self.dirty = True
-
-    # def console(self):
-    #    return self.con
 
     def goto_line(self, y: int):
         """Goto line, try to keep X-position. Return `False` if cursor did not move"""
@@ -175,38 +188,16 @@ class TextEdit:
         )
         return code_units.tobytes()
 
-    def hl_line(self, line: list[Char], color: int, start: int, end: int):
-        """Set color of a section of the given line"""
-
-        if end > len(line):
-            end = len(line)
-        for j in range(start, end):
-            line[j] = (line[j][0], color)
-
-    # OBSOLETE
-    def highlight(self, start: int, end: int, color: int):
-        """Set the color of a given section of the entire text"""
-
-        offset = 0  # Start of current line
-        for _, line in enumerate(self.lines):
-            ll = len(line) + 1
-            if start >= offset and start < (offset + ll):
-                self.hl_line(line, color, start - offset, end - offset)
-                start = offset + ll
-            if end > offset and end < (offset + ll):
-                break
-            offset += ll
-
-    def highlight_lines(self, line0: int, col0: int, line1: int, col1: int, color: int):
-        """Set the color of a section of text, given lines & columns"""
-
-        for ln in range(line0, line1 + 1):
-            line = self.lines[ln]
-            ll = len(line) + 1
-            c0 = col0 if ln == line0 else 0
-            c1 = col1 if ln == line1 else ll
-            # print(f"HIGHTLIGHT {ln} ({c0}-{c1}) with {color}")
-            self.hl_line(line, color, c0, c1)
+    def highlight(self, tranges: list[TextRange]):
+        """Set the color of all passed textranges, using `arg` as color"""
+        for trange in tranges:
+            color = trange.arg
+            for ln, col0, col1 in trange.lines():
+                line = self.lines[ln]
+                if col1 == -1:
+                    col1 = len(line)
+                for j in range(col0, col1):
+                    line[j] = (line[j][0], color)
 
     def get_location(self):
         return self.xpos, self.ypos
@@ -264,14 +255,18 @@ class TextEdit:
         self.apply(EditDelete(self.ypos, self.xpos, count))
 
     def cut(self):
-        msc, msl = self.mark_start
-        mec, mel = self.mark_end
         commands: list[EditCmd] = []
-        for line_no in range(mel, msl - 1, -1):
-            col0 = msc if line_no == msl else 0
-            col1 = mec if line_no == mel else len(self.lines[line_no])
-            commands.append(EditDelete(line_no, col0, col1 - col0 + 1))
-            print(f"{line_no} {col0} {col1}")
+        first = True
+        for line, col0, col1 in self.selection.lines():
+            if col1 == -1:
+                col1 = len(self.lines[line])
+            commands.append(EditDelete(line, col0, col1 - col0 + 1))
+        for line, col0, col1 in self.selection.lines():
+            if col1 == -1:
+                col1 = len(self.lines[line])
+            commands.append(EditJoin(line))
+        commands.pop()
+
         self.apply(CombinedCmd(commands))
 
     def handle_key(self, key: int, mods: int) -> bool:
@@ -396,6 +391,7 @@ class TextEdit:
             self.scroll_pos = self.ypos - y
 
         # The current line needs to be scrolled so the cursor is visible
+
         if self.xpos > self.cols - 2:
             self.scrollx = self.xpos - self.cols + 2
         else:
@@ -450,7 +446,7 @@ class TextEdit:
                 if e.buttons:
                     grid_pos = Int2(e.x, e.y) // self.con.tile_size
                     text_pos = grid_pos + (0, self.scroll_pos)
-                    if text_pos != self.mark_end:
+                    if text_pos != self.selection.end:
                         print(f"{self.last_clicked} to {text_pos}")
                         self.mark_text(self.last_clicked, text_pos)
 
@@ -492,14 +488,14 @@ class TextEdit:
                 mark_endx = -1
                 if self.mark_enabled:
                     # Figure if parts of this line should be marked
-                    my0 = i - self.mark_start[1]
-                    my1 = self.mark_end[1] - i
+                    my0 = i - self.selection.start.y
+                    my1 = self.selection.end.y - i
                     if my0 == 0:
-                        mark_startx = self.mark_start[0]
+                        mark_startx = self.selection.start.x
                     elif my0 > 0:
                         mark_startx = 0
                     if my1 == 0:
-                        mark_endx = self.mark_end[0]
+                        mark_endx = self.selection.end.x
                     elif my1 > 0:
                         mark_endx = 999999
                     else:

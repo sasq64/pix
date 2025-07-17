@@ -9,7 +9,7 @@ r = 2 * math.pi / 195
 x, y, v, t = 0.0, 0.0, 0.0, 0.0
 points = [0.0] * n * n * 2
 colors = [0] * n * n
-# comamaent
+screen.point_size = 8.0
 while pix.run_loop():
     screen.clear()
     cx, cy = screen.size / 2
@@ -24,7 +24,6 @@ while pix.run_loop():
             v = math.cos(i + v) + math.cos(ri + x)
             x = u + t
             colors[j] = col
-            "dsdsds"
             # `u` and `v` are between -2 and 2 at this point
             # We need to scale them up and move them to the center
             points[j * 2] = u * s + cx
