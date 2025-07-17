@@ -181,7 +181,9 @@ class PixIDE:
     def resize(self):
         # self.ts = pix.TileSet(self.font)
         # self.font_size: int = 20
-        con_size = (self.screen.target_size.toi() - (0, self.toolbar_height)) / self.ts.tile_size
+        con_size = (
+            self.screen.target_size.toi() - (0, self.toolbar_height)
+        ) / self.ts.tile_size
         print(f"CON SIZE {con_size.x} {con_size.y}")
         self.con = pix.Console(con_size.x, con_size.y, self.ts)
         self.title = pix.Console(
@@ -213,7 +215,9 @@ class PixIDE:
 
         # Scrollbar dimensions
         scrollbar_width = 8
-        scrollbar_pos = pix.Float2(self.screen.size.x - scrollbar_width - 2, self.toolbar_height)
+        scrollbar_pos = pix.Float2(
+            self.screen.size.x - scrollbar_width - 2, self.toolbar_height
+        )
         scrollbar_height = self.screen.size.y - self.toolbar_height
 
         # Background track
@@ -366,7 +370,13 @@ class PixIDE:
                 should_update = True
             elif isinstance(e, pix.event.Click):
                 self.error_box = None
-                self.edit.click(int(e.x), int(e.y) - self.toolbar_height)
+                keep.append(
+                    pix.event.Click(e.x, e.y - self.toolbar_height, e.buttons, e.mods)
+                )
+                continue
+            elif isinstance(e, pix.event.Move):
+                self.error_box = None
+                keep.append(pix.event.Move(e.x, e.y - self.toolbar_height, e.buttons))
                 continue
             keep.append(e)
         # self.comp.set_pos(self.con.cursor_pos * self.con.tile_size)

@@ -14,9 +14,11 @@ namespace py = pybind11;
 inline void add_event_mod(py::module_ const& mod)
 {
     using namespace std::string_literals;
+    using namespace pybind11::literals;
     // Events
 
     auto se = py::class_<ScrollEvent>(mod, "Scroll")
+                  .def(py::init<float, float>(), "x"_a = 0, "y"_a = 0)
                   .def_readonly("x", &ScrollEvent::x)
                   .def_readonly("y", &ScrollEvent::y)
                   .def("__repr__", [](ScrollEvent const& e) {
@@ -34,6 +36,8 @@ inline void add_event_mod(py::module_ const& mod)
         .doc() = "Event sent when the window was resized";
 
     auto me = py::class_<MoveEvent>(mod, "Move")
+                  .def(py::init<float, float, int>(), "x"_a = 0, "y"_a = 0,
+                       "buttons"_a = 0)
                   .def_property_readonly(
                       "pos", [](MoveEvent const& e) { return Vec2f{e.x, e.y}; })
                   .def_readonly("x", &MoveEvent::x)
@@ -49,6 +53,8 @@ inline void add_event_mod(py::module_ const& mod)
 
     auto ce =
         py::class_<ClickEvent>(mod, "Click")
+            .def(py::init<float, float, int, uint32_t>(), "x"_a = 0, "y"_a = 0,
+                 "buttons"_a = 0, "mods"_a = 0)
             .def_property_readonly(
                 "pos", [](ClickEvent const& e) { return Vec2f{e.x, e.y}; })
             .def_readonly("x", &ClickEvent::x)
@@ -65,6 +71,8 @@ inline void add_event_mod(py::module_ const& mod)
     ce.doc() = "Event sent when screen was clicked.";
 
     auto ke = py::class_<KeyEvent>(mod, "Key")
+                  .def(py::init<uint32_t, uint32_t, int>(), "key"_a = 0,
+                       "mods"_a = 0, "device"_a = 0)
                   .def_readonly("key", &KeyEvent::key)
                   .def_readonly("mods", &KeyEvent::mods)
                   .def_readonly("device", &KeyEvent::device)
@@ -75,12 +83,14 @@ inline void add_event_mod(py::module_ const& mod)
     ke.attr("__match_args__") = std::make_tuple("key");
     ke.doc() = "Event sent when key was pressed.";
 
-    auto te = py::class_<TextEvent>(mod, "Text")
-                  .def_readonly("text", &TextEvent::text)
-                  .def_readonly("device", &TextEvent::device)
-                  .def("__repr__", [](TextEvent const& e) {
-                      return "Text(\""s + e.text + "\")";
-                  });
+    auto te =
+        py::class_<TextEvent>(mod, "Text")
+            .def(py::init<std::string, int>(), "text"_a = "", "device"_a = 0)
+            .def_readonly("text", &TextEvent::text)
+            .def_readonly("device", &TextEvent::device)
+            .def("__repr__", [](TextEvent const& e) {
+                return "Text(\""s + e.text + "\")";
+            });
     te.attr("__match_args__") = std::make_tuple("text");
     te.doc() = "Event sent when text was input into the window.";
 

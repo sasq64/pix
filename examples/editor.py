@@ -4,7 +4,15 @@ from typing import Final, cast
 
 import pixpy as pix
 
-from edit_cmd import EditCmd, EditDelete, EditInsert, EditJoin, EditSplit, CmdStack
+from edit_cmd import (
+    CombinedCmd,
+    EditCmd,
+    EditDelete,
+    EditInsert,
+    EditJoin,
+    EditSplit,
+    CmdStack,
+)
 
 Int2 = pix.Int2
 
@@ -76,9 +84,11 @@ class TextEdit:
         self.mark_start: pix.Int2 = pix.Int2(0, 0)
         self.mark_end: pix.Int2 = pix.Int2(0, 0)
         self.mark_enabled: bool = False
+        self.last_clicked: pix.Int2 = pix.Int2.ZERO
 
         self.con.cursor_on = True
         self.con.wrapping = False
+        self.start_pos: pix.Int2 | None = None
 
         self.scrollx: int = 0
 
@@ -111,6 +121,7 @@ class TextEdit:
     def mark_text(self, start: pix.Int2, end: pix.Int2):
         self.mark_start = start
         self.mark_end = end
+        self.dirty = True
         self.mark_enabled = True
 
     def show_mark(self, mark: bool):
@@ -252,24 +263,54 @@ class TextEdit:
     def remove(self, count: int):
         self.apply(EditDelete(self.ypos, self.xpos, count))
 
+    def cut(self):
+        msc, msl = self.mark_start
+        mec, mel = self.mark_end
+        commands: list[EditCmd] = []
+        for line_no in range(mel, msl - 1, -1):
+            col0 = msc if line_no == msl else 0
+            col1 = mec if line_no == mel else len(self.lines[line_no])
+            commands.append(EditDelete(line_no, col0, col1 - col0 + 1))
+            print(f"{line_no} {col0} {col1}")
+        self.apply(CombinedCmd(commands))
+
     def handle_key(self, key: int, mods: int) -> bool:
         k = key | CMD if mods & 8 != 0 else key
+        shift = mods & 1 != 0
         if k in self.moves:
             # Cursor movement action
             (x, y) = self.moves[k]()
+            prev = pix.Int2(self.xpos, self.ypos)
             if self.xpos != x:
                 self.keepx = -1
                 self.xpos = x
             if self.ypos != y:
                 _ = self.goto_line(y)
+            if shift:
+                if not self.start_pos:
+                    self.start_pos = prev
+                self.mark_text(self.start_pos, pix.Int2(self.xpos, self.ypos))
+            else:
+                if self.start_pos is not None:
+                    self.dirty = True
+                self.start_pos = None
+                self.mark_enabled = False
             self.wrap_cursor()
             return False
-        elif mods & 2 != 0:
+        else:
+            if self.start_pos is not None:
+                self.dirty = True
+            self.start_pos = None
+            self.mark_enabled = False
+        if mods & 2 != 0:
             # Ctrl command
             if key == ord("z"):
                 self.undo()
             elif key == ord("r"):
                 self.redo()
+            elif key == ord("x"):
+                self.cut()
+                return True
             elif key == ord("k"):
                 length = len(self.line) - self.xpos
                 self.apply(EditDelete(self.ypos, self.xpos, length))
@@ -310,15 +351,6 @@ class TextEdit:
             if i:
                 self.insert([(0x20, 0)] * i, join_prev=True)
                 self.xpos = i
-            # if self.ypos > 0:
-            #     # Simple auto indent
-            #     i = 0
-            #     last_line = self.lines[self.ypos - 1]
-            #     while i < len(last_line) and last_line[i][0] == 0x20:
-            #         i += 1
-            #     if i and i < len(last_line):
-            #         self.line[0:0] = [(0x20, 0)] * i
-            #         self.xpos = i
             self.wrap_cursor()
             return True
         elif key == pix.key.BACKSPACE:
@@ -364,25 +396,26 @@ class TextEdit:
             self.scroll_pos = self.ypos - y
 
         # The current line needs to be scrolled so the cursor is visible
-
         if self.xpos > self.cols - 2:
             self.scrollx = self.xpos - self.cols + 2
         else:
             self.scrollx = 0
 
-        # if self.xpos < self.scrollx:
-        #     self.scrollx = self.xpos
-        # if self.xpos >= self.scrollx + (self.cols - 1):
-        #     self.scrollx = self.xpos - (self.cols - 1)
-        # print(self.scrollx)
-
     def click(self, x: int, y: int):
+        """Handle mouse click to position cursor at clicked location."""
+        # Ignore clicks outside editor area
+        if x < 0 or y < 0:
+            return
+        # Reset horizontal position tracking
         self.keepx = -1
-        p = Int2(x, y) // self.con.tile_size
-        p += (0, self.scroll_pos)
-        self.xpos = p.x
-        if self.ypos != p.y:
-            _ = self.goto_line(p.y)
+        grid_pos = Int2(x, y) // self.con.tile_size
+        text_pos = grid_pos + (0, self.scroll_pos)
+        self.last_clicked = text_pos
+        print(f"CLICK {text_pos}")
+
+        self.xpos = text_pos.x
+        if self.ypos != text_pos.y:
+            _ = self.goto_line(text_pos.y)
         if self.xpos > len(self.line):
             self.xpos = len(self.line)
         self.con.cursor_pos = Int2(self.xpos, self.ypos)
@@ -413,6 +446,13 @@ class TextEdit:
                 self.wrap_cursor()
             elif isinstance(e, pix.event.Click):
                 self.click(int(e.x), int(e.y))
+            elif isinstance(e, pix.event.Move):
+                if e.buttons:
+                    grid_pos = Int2(e.x, e.y) // self.con.tile_size
+                    text_pos = grid_pos + (0, self.scroll_pos)
+                    if text_pos != self.mark_end:
+                        print(f"{self.last_clicked} to {text_pos}")
+                        self.mark_text(self.last_clicked, text_pos)
 
     def set_color(self, fg: int, bg: int):
         self.fg = fg
@@ -452,14 +492,14 @@ class TextEdit:
                 mark_endx = -1
                 if self.mark_enabled:
                     # Figure if parts of this line should be marked
-                    my0 = i - self.mark_start[0]
-                    my1 = self.mark_end[0] - i
+                    my0 = i - self.mark_start[1]
+                    my1 = self.mark_end[1] - i
                     if my0 == 0:
-                        mark_startx = self.mark_start[1]
+                        mark_startx = self.mark_start[0]
                     elif my0 > 0:
                         mark_startx = 0
                     if my1 == 0:
-                        mark_endx = self.mark_end[1]
+                        mark_endx = self.mark_end[0]
                     elif my1 > 0:
                         mark_endx = 999999
                     else:

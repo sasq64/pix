@@ -8,6 +8,8 @@ class Click:
     Event sent when screen was clicked.
     """
     __match_args__: typing.ClassVar[tuple] = ('pos', 'buttons')
+    def __init__(self, x: float = 0, y: float = 0, buttons: int = 0, mods: int = 0) -> None:
+        ...
     def __repr__(self) -> str:
         ...
     @property
@@ -30,6 +32,8 @@ class Key:
     Event sent when key was pressed.
     """
     __match_args__: typing.ClassVar[tuple] = ('key')
+    def __init__(self, key: int = 0, mods: int = 0, device: int = 0) -> None:
+        ...
     def __repr__(self) -> str:
         ...
     @property
@@ -46,6 +50,8 @@ class Move:
     Event sent when mouse was moved.
     """
     __match_args__: typing.ClassVar[tuple] = ('x', 'y')
+    def __init__(self, x: float = 0, y: float = 0, buttons: int = 0) -> None:
+        ...
     def __repr__(self) -> str:
         ...
     @property
@@ -78,6 +84,8 @@ class Resize:
         ...
 class Scroll:
     __match_args__: typing.ClassVar[tuple] = ('x', 'y')
+    def __init__(self, x: float = 0, y: float = 0) -> None:
+        ...
     def __repr__(self) -> str:
         ...
     @property
@@ -91,6 +99,8 @@ class Text:
     Event sent when text was input into the window.
     """
     __match_args__: typing.ClassVar[tuple] = ('text')
+    def __init__(self, text: str = '', device: int = 0) -> None:
+        ...
     def __repr__(self) -> str:
         ...
     @property
