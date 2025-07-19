@@ -9,7 +9,7 @@ from . import color
 from . import event
 from . import key
 from . import treesitter
-__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'add_event_listener', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'post_event', 'quit_loop', 'remove_event_listener', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'treesitter', 'update_tweens', 'was_pressed', 'was_released']
+__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'add_event_listener', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_clipboard', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'post_event', 'quit_loop', 'remove_event_listener', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'set_clipboard', 'treesitter', 'update_tweens', 'was_pressed', 'was_released']
 class Canvas:
     """
     A `Canvas` is used for rendering. It is implemented by both `Screen` and `Image`.
@@ -850,6 +850,10 @@ def blend_colors(colors: list[int], t: float) -> int:
     """
     Get a color from a color range. Works similar to bilinear filtering of an 1D texture.
     """
+def get_clipboard() -> str:
+    """
+    Get the current clipboard content as a string.
+    """
 def get_display() -> Screen:
     """
     Get the current display, if any.
@@ -913,6 +917,10 @@ def run_loop() -> bool:
 def save_png(image: Image, file_name: Union[os.PathLike[str], str]) -> None:
     """
     Save an _Image_ to disk
+    """
+def set_clipboard(text: str) -> None:
+    """
+    Set the clipboard content to the provided text.
     """
 def update_tweens() -> None:
     """

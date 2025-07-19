@@ -418,6 +418,19 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
         },
         "points"_a, "point"_a,
         "Check if the `point` is inside the polygon formed by `points`.");
+    mod.def(
+        "get_clipboard",
+        [] {
+            return m.sys->get_clipboard();
+        },
+        "Get the current clipboard content as a string.");
+    mod.def(
+        "set_clipboard",
+        [](std::string const& text) {
+            m.sys->set_clipboard(text);
+        },
+        "text"_a,
+        "Set the clipboard content to the provided text.");
 }
 
 #ifndef PYTHON_MODULE

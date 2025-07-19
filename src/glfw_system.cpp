@@ -452,6 +452,20 @@ public:
         event_queue.clear();
         return qcp;
     }
+
+    std::string get_clipboard() const override
+    {
+        const char* clipboard_text = glfwGetClipboardString(window);
+        if (clipboard_text != nullptr) {
+            return std::string(clipboard_text);
+        }
+        return "";
+    }
+
+    void set_clipboard(std::string const& text) override
+    {
+        glfwSetClipboardString(window, text.c_str());
+    }
 };
 
 std::unique_ptr<System> create_glfw_system()

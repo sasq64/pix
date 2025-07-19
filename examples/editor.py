@@ -25,10 +25,18 @@ class TextRange:
     end: Int2
     arg: int = -1
 
-    def lines(self) -> Iterator[tuple[int, int, int]]:
+    def lines_reversed(self) -> Iterator[tuple[int, int, int]]:
         msc, msl = self.start
         mec, mel = self.end
         for line_no in range(mel, msl - 1, -1):
+            col0 = msc if line_no == msl else 0
+            col1 = mec if line_no == mel else -1
+            yield (line_no, col0, col1)
+
+    def lines(self) -> Iterator[tuple[int, int, int]]:
+        msc, msl = self.start
+        mec, mel = self.end
+        for line_no in range(msl, mel + 1):
             col0 = msc if line_no == msl else 0
             col1 = mec if line_no == mel else -1
             yield (line_no, col0, col1)
@@ -173,30 +181,31 @@ class TextEdit:
         self.xpos = new_xpos
         return True
 
-    def get_text(self):
-        return "\n".join(["".join([chr(c[0]) for c in line]) for line in self.lines])
+    def get_text(self, lines: list[list[Char]] | None = None):
+        if lines is None:
+            lines = self.lines
+        return "\n".join(["".join([chr(c[0]) for c in line]) for line in lines])
 
-    def get_utf16(self):
+    def get_utf16(self) -> list[int]:
         eol = 10
-        code_units = array(
-            "H",
-            (
+        return list(
+            [
                 codepoint
                 for line in self.lines
                 for codepoint in ([c[0] for c in line] + [eol])
-            ),
+            ]
         )
-        return code_units.tobytes()
 
     def highlight(self, tranges: list[TextRange]):
         """Set the color of all passed textranges, using `arg` as color"""
         for trange in tranges:
             color = trange.arg
-            for ln, col0, col1 in trange.lines():
+            for ln, col0, col1 in trange.lines_reversed():
+                print(f"{ln} {col0} {col1}")
                 line = self.lines[ln]
                 if col1 == -1:
                     col1 = len(line)
-                for j in range(col0, col1):
+                for j in range(col0 // 2, col1 // 2):
                     line[j] = (line[j][0], color)
 
     def get_location(self):
@@ -207,7 +216,7 @@ class TextEdit:
 
     def set_text(self, text: str):
         lines = text.split("\n")
-        self.lines = [[]]
+        self.lines = []
         for line in lines:
             self.lines.append([(ord(c), 1) for c in line])
         self.ypos = 0
@@ -255,19 +264,33 @@ class TextEdit:
         self.apply(EditDelete(self.ypos, self.xpos, count))
 
     def cut(self):
-        commands: list[EditCmd] = []
-        first = True
-        for line, col0, col1 in self.selection.lines():
-            if col1 == -1:
-                col1 = len(self.lines[line])
-            commands.append(EditDelete(line, col0, col1 - col0 + 1))
-        for line, col0, col1 in self.selection.lines():
-            if col1 == -1:
-                col1 = len(self.lines[line])
-            commands.append(EditJoin(line))
-        commands.pop()
+        """Cut (delete) the current selection using EditCommands"""
+        cut_data: list[list[Char]] = []
 
-        self.apply(CombinedCmd(commands))
+        commands: list[EditCmd] = []
+        lines_to_process = list(self.selection.lines_reversed())
+
+        for line_no, col0, col1 in lines_to_process:
+            if col1 == -1:
+                col1 = len(self.lines[line_no])
+            cut_data.insert(0, self.lines[line_no][col0:col1])
+            commands.append(EditDelete(line_no, col0, col1 - col0))
+
+        for _ in range(len(lines_to_process) - 1):
+            commands.append(EditJoin(self.selection.start.y))
+
+        if commands:
+            self.apply(CombinedCmd(commands))
+            # Position cursor at the start of the selection
+            self.xpos = self.selection.start.x
+            self.ypos = self.selection.start.y
+            self.line = self.lines[self.ypos]
+            self.mark_enabled = False
+            self.dirty = True
+        return cut_data
+
+    def paste(self, lines: list[list[Char]]):
+        pass
 
     def handle_key(self, key: int, mods: int) -> bool:
         k = key | CMD if mods & 8 != 0 else key
@@ -304,7 +327,8 @@ class TextEdit:
             elif key == ord("r"):
                 self.redo()
             elif key == ord("x"):
-                self.cut()
+                data = self.cut()
+                pix.set_clipboard(self.get_text(data))
                 return True
             elif key == ord("k"):
                 length = len(self.line) - self.xpos
@@ -421,7 +445,10 @@ class TextEdit:
             if isinstance(e, pix.event.Text):
                 if e.device != 0:
                     continue
-                self.insert([(ord(e.text), 1)])
+                code = ord(e.text)
+                if code > 0xFFFF:
+                    continue
+                self.insert([(code, 1)])
                 # self.line.insert(self.xpos, (ord(e.text), 1))
                 self.xpos += len(e.text)
                 self.wrap_cursor()
@@ -495,7 +522,7 @@ class TextEdit:
                     elif my0 > 0:
                         mark_startx = 0
                     if my1 == 0:
-                        mark_endx = self.selection.end.x
+                        mark_endx = self.selection.end.x - 1
                     elif my1 > 0:
                         mark_endx = 999999
                     else:

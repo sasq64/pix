@@ -24,6 +24,7 @@ class TreeSitter
 public:
     TreeSitter();
     void set_source_utf8(std::string const& source);
+    void set_source_utf16(std::vector<uint16_t> const& source);
     void set_format(std::vector<std::pair<std::string, int>> const& format);
     std::vector<Hilight> get_highlights();
     std::string dump_tree();

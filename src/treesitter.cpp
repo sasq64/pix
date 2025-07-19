@@ -74,9 +74,7 @@ void TreeSitter::walk_tree(TSNode node, uint64_t pattern,
     auto n = ts_node_child_count(node);
 
     auto sym = ts_node_symbol(node);
-    if (ts_node_is_error(node)) {
-        sym = 0;
-    }
+    if (ts_node_is_error(node)) { sym = 0; }
     pattern = (pattern << 16) | (uint64_t)sym;
 
     uint64_t mask = 0xffff'ffff'ffff;
@@ -100,7 +98,7 @@ void TreeSitter::walk_tree(TSNode node, uint64_t pattern,
         return;
     }
     for (uint32_t i = 0; i < n; i++) {
-        walk_tree(ts_node_child(node, i),  pattern, result);
+        walk_tree(ts_node_child(node, i), pattern, result);
     }
 }
 
@@ -191,6 +189,13 @@ void TreeSitter::set_source_utf8(std::string const& source)
         ts_parser_parse_string(parser, nullptr, source.data(), source.size());
 }
 
+void TreeSitter::set_source_utf16(std::vector<uint16_t> const& source)
+{
+    tree = ts_parser_parse_string_encoding(parser, nullptr, (const char*)source.data(),
+                                           source.size() * 2,
+                                           TSInputEncodingUTF16LE);
+}
+
 void TreeSitter::set_format(
     std::vector<std::pair<std::string, int>> const& format)
 {
@@ -205,18 +210,18 @@ void TreeSitter::set_format(
                 auto sym = symbols[part];
                 id = (id << 16) | sym;
 
-                //printf("%s (%d). ", part.c_str(), sym);
+                // printf("%s (%d). ", part.c_str(), sym);
                 start_pos = pos + 1;
             } else {
                 auto part = pattern.substr(start_pos);
                 auto sym = symbols[part];
                 id = (id << 16) | sym;
-                //printf("%s (%d)", part.c_str(), sym);
+                // printf("%s (%d)", part.c_str(), sym);
                 break;
             }
         }
-        //puts("");
-        //printf("%s -> %llx\n", pattern.c_str(), id);
+        // puts("");
+        // printf("%s -> %llx\n", pattern.c_str(), id);
         patterns[id] = color;
     }
 }

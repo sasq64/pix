@@ -263,6 +263,10 @@ public:
 
     virtual std::pair<float, float> get_pointer() { return {-1, -1}; }
 
+    virtual std::string get_clipboard() const { return ""; }
+    virtual void set_clipboard(std::string const& text) {}
+
+
 };
 
 std::unique_ptr<System> create_sdl_system();

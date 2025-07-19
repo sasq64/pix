@@ -1,3 +1,4 @@
+import argparse
 import builtins
 import os.path
 
@@ -260,7 +261,7 @@ class PixIDE:
         # print(self.treesitter.dump_tree())
 
     def highlight(self):
-        self.treesitter.set_source(self.edit.get_text())
+        self.treesitter.set_source_utf16(self.edit.get_utf16())
         highlights = [
             TextRange(Int2(col0, row0), Int2(col1, row1), color if color >= 0 else 1)
             for col0, row0, col1, row1, color in self.treesitter.get_highlights()
@@ -412,7 +413,11 @@ class PixIDE:
 
 
 def main():
-    screen = pix.open_display(width=1280, height=720, full_screen=False)
+    parser = argparse.ArgumentParser(description="PixIDE - Python IDE for PIX graphics library")
+    parser.add_argument("-f", "--fullscreen", action="store_true", help="Open display in fullscreen mode")
+    args = parser.parse_args()
+
+    screen = pix.open_display(width=1280, height=720, full_screen=args.fullscreen)
     split = screen.split((2, 1))
     ide = PixIDE(screen)
     chat = SmartChat(split[1], pix.load_font(hack_font))
