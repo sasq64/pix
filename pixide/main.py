@@ -8,11 +8,11 @@ import traceback
 from typing import Final
 
 import pixpy as pix
-from editor import TextEdit, TextRange
-from utils.wrap import wrap_text
-from utils.tool_bar import ToolBar, ToolbarEvent
-from utils.nerd import Nerd
-from smart_chat import SmartChat
+from .editor import TextEdit, TextRange
+from .utils.wrap import wrap_text
+from .utils.tool_bar import ToolBar, ToolbarEvent
+from .utils.nerd import Nerd
+from .smart_chat import SmartChat
 
 Int2 = pix.Int2
 
@@ -109,7 +109,7 @@ class PixIDE:
         ]
         self.do_run: bool = False
         self.screen: Final = screen
-        self.font_size: int = 20
+        self.font_size: int = 24
         self.font: pix.Font = pix.load_font(hack_font)
         self.ts: pix.TileSet = pix.TileSet(self.font, size=self.font_size)
 

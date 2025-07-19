@@ -6,7 +6,7 @@ from typing import Final, cast
 
 import pixpy as pix
 
-from edit_cmd import (
+from .edit_cmd import (
     CombinedCmd,
     EditCmd,
     EditDelete,
@@ -315,11 +315,6 @@ class TextEdit:
                 self.mark_enabled = False
             self.wrap_cursor()
             return False
-        else:
-            if self.start_pos is not None:
-                self.dirty = True
-            self.start_pos = None
-            self.mark_enabled = False
         if mods & 2 != 0:
             # Ctrl command
             if key == ord("z"):
@@ -373,15 +368,18 @@ class TextEdit:
             self.wrap_cursor()
             return True
         elif key == pix.key.BACKSPACE:
-            if self.xpos > 0:
-                self.xpos -= 1
-                self.remove(1)
-            elif self.ypos > 0:
-                # Handle backspace at beginning of line
-                ll = len(self.lines[self.ypos - 1])
-                self.apply(EditJoin(self.ypos - 1))
-                _ = self.goto_line(self.ypos - 1)
-                self.xpos = ll
+            if self.mark_enabled:
+                self.cut()
+            else:
+                if self.xpos > 0:
+                    self.xpos -= 1
+                    self.remove(1)
+                elif self.ypos > 0:
+                    # Handle backspace at beginning of line
+                    ll = len(self.lines[self.ypos - 1])
+                    self.apply(EditJoin(self.ypos - 1))
+                    _ = self.goto_line(self.ypos - 1)
+                    self.xpos = ll
             return True
         self.keepx = -1
         return False
@@ -445,6 +443,10 @@ class TextEdit:
             if isinstance(e, pix.event.Text):
                 if e.device != 0:
                     continue
+                if self.mark_enabled:
+                    self.cut()
+                    self.start_pos = None
+                    self.mark_enabled = False
                 code = ord(e.text)
                 if code > 0xFFFF:
                     continue
@@ -464,7 +466,8 @@ class TextEdit:
                     self.scroll_pos = l - y
             elif isinstance(e, pix.event.Key):
                 if self.handle_key(e.key, e.mods):
-                    self.dirty = True
+                    self.start_pos = None
+                    self.mark_enabled = False
                 # Scroll cursor into view after any keyboard event
                 self.wrap_cursor()
             elif isinstance(e, pix.event.Click):
