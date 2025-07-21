@@ -13,6 +13,7 @@ from .utils.wrap import wrap_text
 from .utils.tool_bar import ToolBar, ToolbarEvent
 from .utils.nerd import Nerd
 from .smart_chat import SmartChat
+from .treesitter import TreeSitter
 
 Int2 = pix.Int2
 
@@ -62,51 +63,8 @@ class ErrorBox:
             pos += (0, line.size.y)
 
 
-class NerdIcon:
-    pass
-
-
 class PixIDE:
     def __init__(self, screen: pix.Screen):
-        self.colors: dict[str, int] = {
-            "default": 1,
-            "def": 3,
-            "while": 3,
-            "if": 3,
-            "for": 3,
-            "from": 3,
-            "else": 3,
-            "import": 3,
-            "class": 3,
-            "string": 8,
-            # "string_content": 8,
-            # "string_end": 8,
-            "call.identifier": 2,
-            "decorator": 4,
-            "keyword_argument.identifier": 7,
-            "call.attribute.identifier": 2,
-            "function_definition.parameters.identifier": 6,
-            "typed_parameter.type": 7,
-            "type.identifier": 7,
-            "integer": 8,
-            "float": 8,
-            "comment": 6,
-            "identifier": 1,
-            # "ERROR": 9,
-        }
-
-        self.palette: Final = [
-            0x2A2A2E,
-            0xB1B1B3,  # gray
-            0xB98EFF,  # purple
-            0xFF7DE9,  # pink
-            0xFFFFB4,  # yellow
-            0xE9F4FE,  # white
-            0x86DE74,  # green string
-            0x75BFFF,  # light blue
-            0x6B89FF,  # dark blue
-            0xFF2020,  # red
-        ]
         self.do_run: bool = False
         self.screen: Final = screen
         self.font_size: int = 24
@@ -139,18 +97,11 @@ class PixIDE:
             [p for p in Path("examples").iterdir() if p.is_file() if p.suffix == ".py"]
         )
 
-        self.treesitter: Final = pix.treesitter.TreeSitter()
-        f = [(a, b) for a, b in self.colors.items()]
-        self.treesitter.set_format(f)
-
         self.current_file: Path
         self.edit: Final = TextEdit(self.con)
-        self.edit.set_color(self.palette[1], self.palette[0])
-        self.edit.set_palette(self.palette)
+        self.treesitter: TreeSitter = TreeSitter(self.edit)
         self.load(self.files[1])
-        self.highlight()
-
-        # self.edit.mark_text(pix.Int2(2, 5), pix.Int2(2, 9))
+        self.treesitter.highlight()
 
         self.error_box: None | ErrorBox = None
 
@@ -257,16 +208,7 @@ class PixIDE:
                 if f.readable():
                     text = f.read()
                     self.edit.set_text(text)
-        self.treesitter.set_source(self.edit.get_text())
-        # print(self.treesitter.dump_tree())
-
-    def highlight(self):
-        self.treesitter.set_source_utf16(self.edit.get_utf16())
-        highlights = [
-            TextRange(Int2(col0, row0), Int2(col1, row1), color if color >= 0 else 1)
-            for col0, row0, col1, row1, color in self.treesitter.get_highlights()
-        ]
-        self.edit.highlight(highlights)
+        self.treesitter.highlight()
 
     def show_error(self, text: str, source_pos: pix.Int2):
         print(f"ERROR AT {source_pos}")
@@ -345,6 +287,8 @@ class PixIDE:
                 self.resize()
             elif isinstance(e, pix.event.Key):
                 self.error_box = None
+                if ctrl and e.key == ord("u"):
+                    self.treesitter.select_parent_node()
                 if ctrl and e.key >= 0x30 and e.key <= 0x39:
                     i = e.key - 0x30
                     self.load(self.files[i])
@@ -393,7 +337,7 @@ class PixIDE:
             # self.update_completion()
 
         if self.edit.dirty:
-            self.highlight()
+            self.treesitter.highlight()
         self.edit.render()
         screen.clear(pix.color.DARK_GREY)
         # size = screen.size - (0, self.toolbar_height)
@@ -413,8 +357,15 @@ class PixIDE:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="PixIDE - Python IDE for PIX graphics library")
-    parser.add_argument("-f", "--fullscreen", action="store_true", help="Open display in fullscreen mode")
+    parser = argparse.ArgumentParser(
+        description="PixIDE - Python IDE for PIX graphics library"
+    )
+    parser.add_argument(
+        "-f",
+        "--fullscreen",
+        action="store_true",
+        help="Open display in fullscreen mode",
+    )
     args = parser.parse_args()
 
     screen = pix.open_display(width=1280, height=720, full_screen=args.fullscreen)

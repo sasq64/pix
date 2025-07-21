@@ -1,11 +1,30 @@
 from __future__ import annotations
-__all__ = ['TreeSitter']
+import typing
+__all__ = ['TSNode', 'TreeSitter']
+class TSNode:
+    @property
+    def end(self) -> tuple[int, int]:
+        ...
+    @property
+    def parent(self) -> TSNode | None:
+        ...
+    @property
+    def start(self) -> tuple[int, int]:
+        ...
+    @property
+    def symbol(self) -> int:
+        ...
+    @property
+    def type(self) -> str:
+        ...
 class TreeSitter:
     def __init__(self) -> None:
         """
         Create an empty treesitter object.
         """
     def dump_tree(self) -> str:
+        ...
+    def find_node(self, arg0: int, arg1: int) -> TSNode | None:
         ...
     def get_highlights(self) -> list[tuple[int, int, int, int, int]]:
         ...

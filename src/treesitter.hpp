@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -28,4 +29,5 @@ public:
     void set_format(std::vector<std::pair<std::string, int>> const& format);
     std::vector<Hilight> get_highlights();
     std::string dump_tree();
+    std::optional<TSNode> find_node(uint32_t col, uint32_t line);
 };

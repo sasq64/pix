@@ -1,6 +1,7 @@
 from array import array
 from collections.abc import Iterator
 from dataclasses import dataclass
+from itertools import takewhile
 from pathlib import Path
 from typing import Final, cast
 
@@ -144,12 +145,23 @@ class TextEdit:
         "Key bindings for keys that move the cursor."
 
     def mark_text(self, start: pix.Int2, end: pix.Int2):
-        self.selection = TextRange(start, end)
-        self.dirty = True
-        self.mark_enabled = True
 
-    def show_mark(self, mark: bool):
-        self.mark_enabled = mark
+        if start.y > end.y or (start.y == end.y and start.x > end.x):
+            start, end = end, start
+
+        m = TextRange(start, end)
+        if m != self.selection:
+            self.selection = m
+            self.dirty = True
+            self.mark_enabled = True
+
+    def deselect(self):
+        if self.mark_enabled:
+            self.dirty = True
+        self.mark_enabled = False
+
+    # def show_mark(self, mark: bool):
+    #    self.mark_enabled = mark
 
     def set_console(self, console: pix.Console):
         self.con = console
@@ -201,7 +213,6 @@ class TextEdit:
         for trange in tranges:
             color = trange.arg
             for ln, col0, col1 in trange.lines_reversed():
-                print(f"{ln} {col0} {col1}")
                 line = self.lines[ln]
                 if col1 == -1:
                     col1 = len(line)
@@ -242,6 +253,8 @@ class TextEdit:
 
     def apply(self, cmd: EditCmd, join_prev: bool = False):
         self.cmd_stack.apply(cmd, self.lines, join_prev)
+        self.dirty = True
+        self.deselect()
 
     def undo(self):
         pos = self.cmd_stack.undo(self.lines)
@@ -262,6 +275,14 @@ class TextEdit:
 
     def remove(self, count: int):
         self.apply(EditDelete(self.ypos, self.xpos, count))
+
+    def copy(self):
+        data: list[list[Char]] = []
+        for line_no, col0, col1 in self.selection.lines_reversed():
+            if col1 == -1:
+                col1 = len(self.lines[line_no])
+            data.insert(0, self.lines[line_no][col0:col1])
+        return data
 
     def cut(self):
         """Cut (delete) the current selection using EditCommands"""
@@ -289,10 +310,71 @@ class TextEdit:
             self.dirty = True
         return cut_data
 
-    def paste(self, lines: list[list[Char]]):
-        pass
+    def indent(self, dir: int):
+        lines = [self.ypos]
+        if self.mark_enabled:
+            lines.clear()
+            for line, _, _ in self.selection.lines():
+                lines.append(line)
+            if self.selection.end[0] == 0:
+                lines.pop()
+                self.selection.end = Int2(1, self.selection.end[1] - 1)
 
-    def handle_key(self, key: int, mods: int) -> bool:
+        commands: list[EditCmd] = []
+
+        n = 4
+        if dir > 0:
+            for line in lines:
+                commands.append(EditInsert(line, 0, [(0x20, 0)] * 4))
+        else:
+            for line in lines:
+                n = self.get_leading_spaces(line)
+                if n > 4:
+                    n = 4
+                commands.append(EditDelete(line, 0, n))
+        if not self.mark_enabled:
+            self.xpos += dir * n
+        self.cmd_stack.apply(CombinedCmd(commands), self.lines)
+        self.dirty = True
+        if self.mark_enabled:
+            self.selection.start = Int2(0, self.selection.start[1])
+            self.selection.end = Int2(
+                len(self.lines[self.selection.end[1]]), self.selection.end[1]
+            )
+
+    def get_leading_spaces(self, line_no: int) -> int:
+        i = 0
+        line = self.lines[line_no]
+        while i < len(line) and line[i][0] == 0x20:
+            i += 1
+        if i >= len(line):
+            i = 0
+        return i
+
+    def paste(self, lines: list[list[Char]]):
+        """Paste (insert) the provided lines using EditCommands"""
+        if not lines:
+            return
+
+        commands: list[EditCmd] = []
+
+        x = self.xpos
+        for i, line in enumerate(lines):
+            commands.append(EditInsert(self.ypos + i, x, line))
+            # Split after this line content unless it's the last line
+            if i < len(lines) - 1:
+                commands.append(EditSplit(self.ypos + i, x + len(line)))
+                x = 0
+
+        if commands:
+            self.apply(CombinedCmd(commands))
+            # Position cursor at end of pasted content
+            self.xpos = x + len(lines[-1])
+            self.ypos = self.ypos + len(lines) - 1
+            self.line = self.lines[self.ypos]
+            self.dirty = True
+
+    def handle_key(self, key: int, mods: int):
         k = key | CMD if mods & 8 != 0 else key
         shift = mods & 1 != 0
         if k in self.moves:
@@ -309,14 +391,12 @@ class TextEdit:
                     self.start_pos = prev
                 self.mark_text(self.start_pos, pix.Int2(self.xpos, self.ypos))
             else:
-                if self.start_pos is not None:
-                    self.dirty = True
+                self.deselect()
                 self.start_pos = None
-                self.mark_enabled = False
             self.wrap_cursor()
-            return False
-        if mods & 2 != 0:
-            # Ctrl command
+            return
+        if mods & 10 != 0:
+            # Ctrl or Command
             if key == ord("z"):
                 self.undo()
             elif key == ord("r"):
@@ -324,11 +404,20 @@ class TextEdit:
             elif key == ord("x"):
                 data = self.cut()
                 pix.set_clipboard(self.get_text(data))
-                return True
+            elif key == ord("c"):
+                data = self.copy()
+                pix.set_clipboard(self.get_text(data))
+            elif key == ord("v"):
+                clipboard = pix.get_clipboard()
+                lines: list[list[Char]] = []
+                for line in clipboard.splitlines():
+                    lines.append([(ord(c), 1) for c in line])
+                if self.mark_enabled:
+                    self.cut()
+                self.paste(lines)
             elif key == ord("k"):
                 length = len(self.line) - self.xpos
                 self.apply(EditDelete(self.ypos, self.xpos, length))
-                return True
             elif key == ord("d"):
                 self.yank[:] = self.line
                 length = len(self.line)
@@ -337,28 +426,11 @@ class TextEdit:
                     self.apply(EditJoin(self.ypos), True)
                 self.line = self.lines[self.ypos]
                 self.wrap_cursor()
-                return True
-            return False
         elif key == pix.key.TAB:
-            if mods & 1 != 0:
-                i = 0
-                while self.line[i][0] == 0x20 and i < 4:
-                    i += 1
-                self.line[0:i] = []
-                self.xpos -= i
-                if self.xpos < 0:
-                    self.xpos = 0
-            else:
-                self.insert([(0x20, 0)] * 4)
-                # self.line[self.xpos : self.xpos] = [(0x20, 0)] * 4
-                self.xpos += 4
-            return True
+            dir = -1 if mods & 1 != 0 else 1
+            self.indent(dir)
         elif key == pix.key.ENTER:
-            i = 0
-            while i < len(self.line) and self.line[i][0] == 0x20:
-                i += 1
-            if i >= len(self.line):
-                i = 0
+            i = self.get_leading_spaces(self.ypos)
             self.apply(EditSplit(self.ypos, self.xpos))
             _ = self.goto_line(self.ypos + 1)
             self.xpos = 0
@@ -366,7 +438,6 @@ class TextEdit:
                 self.insert([(0x20, 0)] * i, join_prev=True)
                 self.xpos = i
             self.wrap_cursor()
-            return True
         elif key == pix.key.BACKSPACE:
             if self.mark_enabled:
                 self.cut()
@@ -380,9 +451,7 @@ class TextEdit:
                     self.apply(EditJoin(self.ypos - 1))
                     _ = self.goto_line(self.ypos - 1)
                     self.xpos = ll
-            return True
         self.keepx = -1
-        return False
 
     def goto(self, xpos: int, ypos: int):
         self.xpos = xpos
@@ -419,6 +488,15 @@ class TextEdit:
         else:
             self.scrollx = 0
 
+    def scroll_screen(self, y: int):
+        self.scroll_pos -= y
+        y = self.rows - 1
+        l = len(self.lines)
+        if self.scroll_pos < 0:
+            self.scroll_pos = 0
+        if self.scroll_pos > l - y:
+            self.scroll_pos = l - y
+
     def click(self, x: int, y: int):
         """Handle mouse click to position cursor at clicked location."""
         # Ignore clicks outside editor area
@@ -429,7 +507,6 @@ class TextEdit:
         grid_pos = Int2(x, y) // self.con.tile_size
         text_pos = grid_pos + (0, self.scroll_pos)
         self.last_clicked = text_pos
-        print(f"CLICK {text_pos}")
 
         self.xpos = text_pos.x
         if self.ypos != text_pos.y:
@@ -443,31 +520,22 @@ class TextEdit:
             if isinstance(e, pix.event.Text):
                 if e.device != 0:
                     continue
+                code = ord(e.text)
+                if code > 0xFFFF:
+                    continue
                 if self.mark_enabled:
                     self.cut()
                     self.start_pos = None
                     self.mark_enabled = False
-                code = ord(e.text)
-                if code > 0xFFFF:
-                    continue
                 self.insert([(code, 1)])
-                # self.line.insert(self.xpos, (ord(e.text), 1))
                 self.xpos += len(e.text)
                 self.wrap_cursor()
                 self.dirty = True
                 self.keepx = -1
             elif isinstance(e, pix.event.Scroll):
-                self.scroll_pos -= int(e.y * 3)
-                y = self.rows - 1
-                l = len(self.lines)
-                if self.scroll_pos < 0:
-                    self.scroll_pos = 0
-                if self.scroll_pos > l - y:
-                    self.scroll_pos = l - y
+                self.scroll_screen(int(e.y * 3))
             elif isinstance(e, pix.event.Key):
-                if self.handle_key(e.key, e.mods):
-                    self.start_pos = None
-                    self.mark_enabled = False
+                self.handle_key(e.key, e.mods)
                 # Scroll cursor into view after any keyboard event
                 self.wrap_cursor()
             elif isinstance(e, pix.event.Click):
@@ -477,7 +545,7 @@ class TextEdit:
                     grid_pos = Int2(e.x, e.y) // self.con.tile_size
                     text_pos = grid_pos + (0, self.scroll_pos)
                     if text_pos != self.selection.end:
-                        print(f"{self.last_clicked} to {text_pos}")
+                        # print(f"{self.last_clicked} to {text_pos}")
                         self.mark_text(self.last_clicked, text_pos)
 
     def set_color(self, fg: int, bg: int):

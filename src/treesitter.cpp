@@ -1,4 +1,5 @@
 #include "treesitter.hpp"
+#include <optional>
 #include <tree_sitter/api.h>
 
 #include <cstdio>
@@ -102,6 +103,15 @@ void TreeSitter::walk_tree(TSNode node, uint64_t pattern,
     }
 }
 
+std::optional<TSNode> TreeSitter::find_node(uint32_t col, uint32_t line)
+{
+    auto root = ts_tree_root_node(tree);
+    auto node = ts_node_named_descendant_for_point_range(root, {line, col},
+                                                         {line, col});
+    if (ts_node_is_null(node)) { return std::nullopt; }
+    return node;
+}
+
 void TreeSitter::dump_nodes(TSNode node, size_t d, std::string& result)
 {
     static const char* spaces =
@@ -191,9 +201,9 @@ void TreeSitter::set_source_utf8(std::string const& source)
 
 void TreeSitter::set_source_utf16(std::vector<uint16_t> const& source)
 {
-    tree = ts_parser_parse_string_encoding(parser, nullptr, (const char*)source.data(),
-                                           source.size() * 2,
-                                           TSInputEncodingUTF16LE);
+    tree = ts_parser_parse_string_encoding(
+        parser, nullptr, (const char*)source.data(), source.size() * 2,
+        TSInputEncodingUTF16LE);
 }
 
 void TreeSitter::set_format(
