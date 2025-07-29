@@ -359,12 +359,26 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
             Tween::update_all(t);
             Adder::update_all(t);
             auto rc = m.sys->run_loop();
-            for (auto& e : m.sys->posted_events) {
+
+            // Go throw all events gathered since last run_loop
+            // Let listeners handle and remove them if needed
+            auto it = m.sys->posted_events.begin();
+            while (it != m.sys->posted_events.end()) {
+                auto e = *it;
+                auto propagate = true;
                 for (auto& l : m.listeners) {
-                    auto propagate = l.second(py::cast(e));
+                    propagate = l.second(py::cast(e));
                     if (!propagate) { break; }
                 }
+                if (propagate) {
+                    it++;
+                } else {
+                    it = m.sys->posted_events.erase(it);
+                }
             }
+            // Any events left will be returned by `all_events()`
+
+            // Handle events posted from python
             if (!m.events.empty()) {
                 printf("Have %zu python events\n", m.events.size());
             }
@@ -375,6 +389,7 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
                 }
             }
             m.events.clear();
+
             m.in_pix--;
             if (m.run_frames > 0) {
                 if (pix::Screen::instance->frame_counter() == m.run_frames) {
@@ -419,18 +434,16 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
         "points"_a, "point"_a,
         "Check if the `point` is inside the polygon formed by `points`.");
     mod.def(
-        "get_clipboard",
-        [] {
-            return m.sys->get_clipboard();
-        },
+        "get_clipboard", [] { return m.sys->get_clipboard(); },
         "Get the current clipboard content as a string.");
     mod.def(
         "set_clipboard",
-        [](std::string const& text) {
-            m.sys->set_clipboard(text);
-        },
-        "text"_a,
+        [](std::string const& text) { m.sys->set_clipboard(text); }, "text"_a,
         "Set the clipboard content to the provided text.");
+    mod.def(
+        "set_keyboard_device",
+        [](int device) { m.sys->set_keyboard_device(device); }, "device"_a,
+        "Set the device number that keyboard events will originate from. This can be used to handle multiple readline calls from consoles.");
 }
 
 #ifndef PYTHON_MODULE

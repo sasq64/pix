@@ -9,7 +9,7 @@ from . import color
 from . import event
 from . import key
 from . import treesitter
-__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'add_event_listener', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_clipboard', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'post_event', 'quit_loop', 'remove_event_listener', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'set_clipboard', 'treesitter', 'update_tweens', 'was_pressed', 'was_released']
+__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'add_event_listener', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_clipboard', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'post_event', 'quit_loop', 'remove_event_listener', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'set_clipboard', 'set_keyboard_device', 'treesitter', 'update_tweens', 'was_pressed', 'was_released']
 class Canvas:
     """
     A `Canvas` is used for rendering. It is implemented by both `Screen` and `Image`.
@@ -435,6 +435,8 @@ class Float2:
         """
     def floor(self) -> Float2:
         ...
+    def inside(self, arg0: Union[Float2, Int2, Tuple[float, float]], arg1: Union[Float2, Int2, Tuple[float, float]]) -> bool:
+        ...
     def inside_polygon(self, points: list[Float2]) -> bool:
         """
         Check if the `point` is inside the polygon formed by `points`.
@@ -685,6 +687,8 @@ class Int2:
         """
         Separately clamp the x and y component between the corresponding components in the given arguments.
         """
+    def inside(self, arg0: Union[Int2, Tuple[int, int]], arg1: Union[Int2, Tuple[int, int]]) -> bool:
+        ...
     def random(self) -> Int2:
         """
         Returns Int2(rnd(x), rnd(y)) where rnd(n) returns a random number between 0 and n.
@@ -921,6 +925,10 @@ def save_png(image: Image, file_name: Union[os.PathLike[str], str]) -> None:
 def set_clipboard(text: str) -> None:
     """
     Set the clipboard content to the provided text.
+    """
+def set_keyboard_device(device: int) -> None:
+    """
+    Set the device number that keyboard events will originate from. This can be used to handle multiple readline calls from consoles.
     """
 def update_tweens() -> None:
     """

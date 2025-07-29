@@ -306,11 +306,17 @@ public:
     }
 
     std::deque<AnyEvent> event_queue;
+    //int current_device = 0;
 
     void post_event(AnyEvent const& event) override
     {
         event_queue.emplace_back(event);
     }
+
+    //void set_keyboard_device(int dev) override
+    //{
+    //    current_device = dev;
+    //}
 
     void mouse_move(double x, double y)
     {
@@ -351,7 +357,7 @@ public:
     {
         auto s = utf8::utf8_encode(
             std::u32string(1, static_cast<char32_t>(codepoint)));
-        event_queue.emplace_back(TextEvent{s, 0});
+        event_queue.emplace_back(TextEvent{s, current_device});
     }
 
     std::optional<std::pair<int, int>> new_size;
@@ -365,7 +371,7 @@ public:
             auto c = static_cast<uint32_t>(std::tolower(key));
             if (down) {
                 event_queue.emplace_back(
-                    KeyEvent{c, static_cast<uint32_t>(mods), 0});
+                    KeyEvent{c, static_cast<uint32_t>(mods), current_device});
                 pressed.insert(c);
             } else {
                 released.insert(c);
@@ -377,7 +383,7 @@ public:
                 if (down) {
                     pressed.insert(k32);
                     event_queue.emplace_back(
-                        KeyEvent{k32, static_cast<uint32_t>(mods), 0});
+                        KeyEvent{k32, static_cast<uint32_t>(mods), current_device});
                 } else {
                     released.insert(k32);
                 }

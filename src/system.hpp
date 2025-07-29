@@ -199,6 +199,14 @@ public:
         do_quit_loop = true;
     }
 
+    int current_device = 0;
+
+    virtual void set_keyboard_device(int dev)
+    {
+        current_device = dev;
+    }
+
+
     virtual void post_event(AnyEvent const& event)
     {
         posted_events.emplace_back(event);

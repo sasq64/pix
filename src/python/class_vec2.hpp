@@ -147,6 +147,10 @@ py::class_<Vec2> add_common(py::module_& mod, const char* name)
             .def(
                 "clamp", &Vec2::clamp, py::arg("low"), py::arg("high"),
                 "Separately clamp the x and y component between the corresponding components in the given arguments.")
+            .def("inside", [](const Vec2& self, const Vec2& low, const Vec2& hi) {
+                auto clipped = self.clip(low, hi);
+                return clipped.x <= 0 && clipped.y <= 0;
+             })
             .def("sign", &Vec2::sign)
             .def_readonly("x", &Vec2::x)
             .def_readonly("y", &Vec2::y)

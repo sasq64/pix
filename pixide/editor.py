@@ -1,9 +1,7 @@
-from array import array
 from collections.abc import Iterator
 from dataclasses import dataclass
-from itertools import takewhile
 from pathlib import Path
-from typing import Final, cast
+from typing import Final, cast, override
 
 import pixpy as pix
 
@@ -22,9 +20,15 @@ Int2 = pix.Int2
 
 @dataclass
 class TextRange:
+    """Represent a range of text in list of strings"""
+
     start: Int2
     end: Int2
     arg: int = -1
+
+    @override
+    def __repr__(self):
+        return f"{self.start} -> {self.end}"
 
     def lines_reversed(self) -> Iterator[tuple[int, int, int]]:
         msc, msl = self.start
@@ -59,31 +63,6 @@ def clamp[T: float | int](v: T, lo: T, hi: T) -> T:
 Char = tuple[int, int]
 """A `Char` holds a character and a color index"""
 
-"""
-Removing 'remove' chars starting at 'line'/'col':
-
-n = min(r, rest)
-
-del lines[line][col:n]
-
-        r = self.remove
-        lino = self.line
-        col = self.col
-        while r > 0:
-            n = min(r, len(target[lino][col:-1]))
-            del target[lino][col:n]
-            r -= n
-            lino += 1
-            col = 0
-        lines = [
-            list(a[1])
-            for a in itertools.groupby(self.add, lambda c: c[0] == 10)
-            if not a[0]
-        ]
-
-        for line in lines:
-"""
-
 
 class TextEdit:
     """
@@ -92,7 +71,7 @@ class TextEdit:
 
     def __init__(self, con: pix.Console):
         self.lines: list[list[Char]] = [[]]
-        self.line: list[Char] = self.lines[0]
+        # self.line: list[Char] = self.lines[0]
         self.scroll_pos: int = 0
         self.last_scroll: int = -1
         self.last_scrollx: int = -1
@@ -110,7 +89,7 @@ class TextEdit:
 
         self.selection = TextRange(Int2.ZERO, Int2.ZERO)
         self.mark_enabled: bool = False
-        self.last_clicked: pix.Int2 = pix.Int2.ZERO
+        self.last_clicked: pix.Int2 | None = None
 
         self.con.cursor_on = True
         self.con.wrapping = False
@@ -122,18 +101,16 @@ class TextEdit:
         self.bg: int = 0x202330
         self.palette: list[tuple[int, int]] = [(0, 0)] * 128
         self.palette[0] = (self.bg, self.bg)
-        self.palette[1] = (0xEECE6A, self.bg)
-        self.palette[2] = (0x5159ED, self.bg)
 
         self.mark_color = 100
-        self.palette[100] = (pix.color.WHITE, pix.color.BLUE)
+        self.palette[100] = (pix.color.WHITE, pix.color.LIGHT_BLUE)
 
         self.moves: Final = {
             pix.key.LEFT: lambda: (self.xpos - 1, self.ypos),
             pix.key.RIGHT: lambda: (self.xpos + 1, self.ypos),
             CMD | pix.key.RIGHT: lambda: (self.next_word(), self.ypos),
             CMD | pix.key.LEFT: lambda: (self.pre_word(), self.ypos),
-            pix.key.END: lambda: (len(self.line), self.ypos),
+            pix.key.END: lambda: (len(self.lines[self.ypos]), self.ypos),
             pix.key.HOME: lambda: (int(0), self.ypos),
             pix.key.UP: lambda: (self.xpos, self.ypos - 1),
             pix.key.DOWN: lambda: (self.xpos, self.ypos + 1),
@@ -144,7 +121,11 @@ class TextEdit:
         }
         "Key bindings for keys that move the cursor."
 
-    def mark_text(self, start: pix.Int2, end: pix.Int2):
+    @property
+    def current_line(self) -> list[Char]:
+        return self.lines[self.ypos]
+
+    def select(self, start: pix.Int2, end: pix.Int2):
 
         if start.y > end.y or (start.y == end.y and start.x > end.x):
             start, end = end, start
@@ -160,9 +141,6 @@ class TextEdit:
             self.dirty = True
         self.mark_enabled = False
 
-    # def show_mark(self, mark: bool):
-    #    self.mark_enabled = mark
-
     def set_console(self, console: pix.Console):
         self.con = console
         self.con.cursor_on = True
@@ -174,6 +152,11 @@ class TextEdit:
         self.wrap_cursor()
         self.dirty = True
 
+    def goto(self, xpos: int, ypos: int):
+        self.xpos = xpos
+        self.ypos = ypos
+        self.wrap_cursor()
+
     def goto_line(self, y: int):
         """Goto line, try to keep X-position. Return `False` if cursor did not move"""
 
@@ -184,10 +167,9 @@ class TextEdit:
         if self.ypos == y:
             return False
         self.ypos = y
-        self.line = self.lines[y]
         if self.keepx >= 0:
             self.xpos = self.keepx
-        new_xpos = clamp(self.xpos, 0, len(self.line) + 1)
+        new_xpos = clamp(self.xpos, 0, len(self.current_line) + 1)
         if new_xpos != self.xpos:
             self.keepx = self.xpos
         self.xpos = new_xpos
@@ -198,7 +180,7 @@ class TextEdit:
             lines = self.lines
         return "\n".join(["".join([chr(c[0]) for c in line]) for line in lines])
 
-    def get_utf16(self) -> list[int]:
+    def get_codepoints(self) -> list[int]:
         eol = 10
         return list(
             [
@@ -212,18 +194,20 @@ class TextEdit:
         """Set the color of all passed textranges, using `arg` as color"""
         for trange in tranges:
             color = trange.arg
-            for ln, col0, col1 in trange.lines_reversed():
+            for ln, col0, col1 in trange.lines():
+                if ln >= len(self.lines):
+                    break
                 line = self.lines[ln]
                 if col1 == -1:
                     col1 = len(line)
-                for j in range(col0 // 2, col1 // 2):
+                for j in range(col0, col1):
                     line[j] = (line[j][0], color)
 
     def get_location(self):
         return self.xpos, self.ypos
 
     def get_char(self, x: int):
-        return self.line[x][0]
+        return self.current_line[x][0]
 
     def set_text(self, text: str):
         lines = text.split("\n")
@@ -232,22 +216,22 @@ class TextEdit:
             self.lines.append([(ord(c), 1) for c in line])
         self.ypos = 0
         self.xpos = 0
-        self.line = self.lines[0]
         self.dirty = True
 
     def next_word(self) -> int:
         x = self.xpos
-        while x < len(self.line) and self.line[x][0] != 0x20:
+        length = len(self.current_line)
+        while x < length and self.current_line[x][0] != 0x20:
             x += 1
-        while x < len(self.line) and self.line[x][0] == 0x20:
+        while x < length and self.current_line[x][0] == 0x20:
             x += 1
         return x
 
     def pre_word(self) -> int:
         x = self.xpos
-        while x > 0 and self.line[x - 1][0] == 0x20:
+        while x > 0 and self.current_line[x - 1][0] == 0x20:
             x -= 1
-        while x > 0 and self.line[x - 1][0] != 0x20:
+        while x > 0 and self.current_line[x - 1][0] != 0x20:
             x -= 1
         return x
 
@@ -260,14 +244,12 @@ class TextEdit:
         pos = self.cmd_stack.undo(self.lines)
         if pos is not None:
             self.ypos, self.xpos = pos
-            self.line = self.lines[self.ypos]
             self.dirty = True
 
     def redo(self):
         pos = self.cmd_stack.redo(self.lines)
         if pos is not None:
             self.ypos, self.xpos = pos
-            self.line = self.lines[self.ypos]
         self.dirty = True
 
     def insert(self, text: list[Char], join_prev: bool = False):
@@ -305,7 +287,6 @@ class TextEdit:
             # Position cursor at the start of the selection
             self.xpos = self.selection.start.x
             self.ypos = self.selection.start.y
-            self.line = self.lines[self.ypos]
             self.mark_enabled = False
             self.dirty = True
         return cut_data
@@ -371,7 +352,6 @@ class TextEdit:
             # Position cursor at end of pasted content
             self.xpos = x + len(lines[-1])
             self.ypos = self.ypos + len(lines) - 1
-            self.line = self.lines[self.ypos]
             self.dirty = True
 
     def handle_key(self, key: int, mods: int):
@@ -389,7 +369,7 @@ class TextEdit:
             if shift:
                 if not self.start_pos:
                     self.start_pos = prev
-                self.mark_text(self.start_pos, pix.Int2(self.xpos, self.ypos))
+                self.select(self.start_pos, pix.Int2(self.xpos, self.ypos))
             else:
                 self.deselect()
                 self.start_pos = None
@@ -416,15 +396,14 @@ class TextEdit:
                     self.cut()
                 self.paste(lines)
             elif key == ord("k"):
-                length = len(self.line) - self.xpos
+                length = len(self.current_line) - self.xpos
                 self.apply(EditDelete(self.ypos, self.xpos, length))
             elif key == ord("d"):
-                self.yank[:] = self.line
-                length = len(self.line)
+                self.yank[:] = self.current_line
+                length = len(self.current_line)
                 self.apply(EditDelete(self.ypos, 0, length))
                 if self.ypos < len(self.lines) - 1:
                     self.apply(EditJoin(self.ypos), True)
-                self.line = self.lines[self.ypos]
                 self.wrap_cursor()
         elif key == pix.key.TAB:
             dir = -1 if mods & 1 != 0 else 1
@@ -453,26 +432,21 @@ class TextEdit:
                     self.xpos = ll
         self.keepx = -1
 
-    def goto(self, xpos: int, ypos: int):
-        self.xpos = xpos
-        self.ypos = ypos
-        self.wrap_cursor()
-
     def wrap_cursor(self):
         """Check if cursor is out of bounds and move it to a correct position"""
         if self.xpos < 0:
             # Wrap to end of previous line
             if self.goto_line(self.ypos - 1):
-                self.xpos = len(self.line)
+                self.xpos = len(self.current_line)
             else:
                 self.xpos = 0
 
-        if self.xpos > len(self.line):
+        if self.xpos > len(self.current_line):
             # Wrap to beginning of next line
             if self.goto_line(self.ypos + 1):
                 self.xpos = 0
             else:
-                self.xpos = len(self.line)
+                self.xpos = len(self.current_line)
 
         # Scroll screen if ypos not visible
         if self.ypos < self.scroll_pos:
@@ -482,7 +456,6 @@ class TextEdit:
             self.scroll_pos = self.ypos - y
 
         # The current line needs to be scrolled so the cursor is visible
-
         if self.xpos > self.cols - 2:
             self.scrollx = self.xpos - self.cols + 2
         else:
@@ -511,8 +484,8 @@ class TextEdit:
         self.xpos = text_pos.x
         if self.ypos != text_pos.y:
             _ = self.goto_line(text_pos.y)
-        if self.xpos > len(self.line):
-            self.xpos = len(self.line)
+        if self.xpos > len(self.current_line):
+            self.xpos = len(self.current_line)
         self.con.cursor_pos = Int2(self.xpos, self.ypos)
 
     def update(self, events: list[pix.event.AnyEvent]):
@@ -541,12 +514,14 @@ class TextEdit:
             elif isinstance(e, pix.event.Click):
                 self.click(int(e.x), int(e.y))
             elif isinstance(e, pix.event.Move):
-                if e.buttons:
+                if e.buttons and self.last_clicked:
                     grid_pos = Int2(e.x, e.y) // self.con.tile_size
                     text_pos = grid_pos + (0, self.scroll_pos)
                     if text_pos != self.selection.end:
                         # print(f"{self.last_clicked} to {text_pos}")
-                        self.mark_text(self.last_clicked, text_pos)
+                        self.select(self.last_clicked, text_pos)
+                else:
+                    self.last_clicked = None
 
     def set_color(self, fg: int, bg: int):
         self.fg = fg
@@ -570,63 +545,7 @@ class TextEdit:
             or self.last_scroll != self.scroll_pos
             or self.scrollx != self.last_scrollx
         ):
-            self.last_scroll = self.scroll_pos
-            self.last_scrollx = self.scrollx
-            self.dirty = False
-            self.xpos = clamp(self.xpos, 0, len(self.line) + 1)
-            self.con.set_color(self.fg, self.bg)
-            self.con.clear()
-            for y in range(self.rows):
-                i = y + self.scroll_pos
-                if i >= len(self.lines):
-                    break
-                left_cropped = False
-                right_cropped = False
-                mark_startx = -1
-                mark_endx = -1
-                if self.mark_enabled:
-                    # Figure if parts of this line should be marked
-                    my0 = i - self.selection.start.y
-                    my1 = self.selection.end.y - i
-                    if my0 == 0:
-                        mark_startx = self.selection.start.x
-                    elif my0 > 0:
-                        mark_startx = 0
-                    if my1 == 0:
-                        mark_endx = self.selection.end.x - 1
-                    elif my1 > 0:
-                        mark_endx = 999999
-                    else:
-                        mark_startx = -1
-
-                for x, (t, c) in enumerate(self.lines[i], -self.scrollx):
-                    if x < 0:
-                        if t != 0x20:
-                            left_cropped = True
-                    elif x >= self.cols - 1:
-                        if t != 0x20:
-                            right_cropped = True
-                    else:
-                        if mark_startx >= 0 and x >= mark_startx and x <= mark_endx:
-                            fg, bg = self.palette[self.mark_color]
-                        else:
-                            fg, bg = self.palette[c]
-                        self.con.put((x, y), t, fg, bg)
-
-                if left_cropped:
-                    self.con.put(
-                        (0, y),
-                        ord("$"),
-                        pix.color.LIGHT_RED,
-                        pix.color.BLACK,
-                    )
-                if right_cropped:
-                    self.con.put(
-                        (self.cols - 1, y),
-                        ord("$"),
-                        pix.color.LIGHT_RED,
-                        pix.color.BLACK,
-                    )
+            self.render_editor()
 
         # If current line is visible, move the cursor to the edit position
         if (
@@ -640,11 +559,68 @@ class TextEdit:
         else:
             self.con.cursor_on = False
 
+    def render_editor(self):
+        self.last_scroll = self.scroll_pos
+        self.last_scrollx = self.scrollx
+        self.dirty = False
+        self.xpos = clamp(self.xpos, 0, len(self.current_line) + 1)
+        self.con.set_color(self.fg, self.bg)
+        self.con.clear()
+        for y in range(self.rows):
+            i = y + self.scroll_pos
+            if i >= len(self.lines):
+                break
+            left_cropped = False
+            right_cropped = False
+            mark_startx = -1
+            mark_endx = -1
+            if self.mark_enabled:
+                # Figure if parts of this line should be marked
+                my0 = i - self.selection.start.y
+                my1 = self.selection.end.y - i
+                if my0 == 0:
+                    mark_startx = self.selection.start.x
+                elif my0 > 0:
+                    mark_startx = 0
+                if my1 == 0:
+                    mark_endx = self.selection.end.x - 1
+                elif my1 > 0:
+                    mark_endx = 999999
+                else:
+                    mark_startx = -1
 
-data_dir = Path(__file__).absolute().parent / "data"
+            for x, (t, c) in enumerate(self.lines[i], -self.scrollx):
+                if x < 0:
+                    if t != 0x20:
+                        left_cropped = True
+                elif x >= self.cols - 1:
+                    if t != 0x20:
+                        right_cropped = True
+                else:
+                    if mark_startx >= 0 and x >= mark_startx and x <= mark_endx:
+                        fg, bg = self.palette[self.mark_color]
+                    else:
+                        fg, bg = self.palette[c]
+                    self.con.put((x, y), t, fg, bg)
+
+            if left_cropped:
+                self.con.put(
+                    (0, y),
+                    ord("$"),
+                    pix.color.LIGHT_RED,
+                    pix.color.BLACK,
+                )
+            if right_cropped:
+                self.con.put(
+                    (self.cols - 1, y),
+                    ord("$"),
+                    pix.color.LIGHT_RED,
+                    pix.color.BLACK,
+                )
 
 
 def main():
+    data_dir = Path(__file__).absolute().parent / "data"
     screen = pix.open_display(width=60 * 16, height=50 * 16)
     sz = screen.size.toi() // (8 * 2, 16 * 2)
     con = pix.Console(sz.x, sz.y, font_file=data_dir / "Hack.ttf", font_size=24)

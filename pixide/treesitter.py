@@ -59,10 +59,12 @@ class TreeSitter:
     def highlight(self):
         if not self.edit.mark_enabled:
             self.node = None
-        self.treesitter.set_source_utf16(self.edit.get_utf16())
+        self.treesitter.set_source_utf16(self.edit.get_codepoints())
         highlights = [
             TextRange(
-                pix.Int2(col0, row0), pix.Int2(col1, row1), color if color >= 0 else 1
+                pix.Int2(col0 // 2, row0),
+                pix.Int2(col1 // 2, row1),
+                color if color >= 0 else 1,
             )
             for col0, row0, col1, row1, color in self.treesitter.get_highlights()
         ]

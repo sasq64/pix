@@ -117,8 +117,8 @@ template <typename T> struct Vec2
     // or outside
     [[nodiscard]] Vec2 clip(Vec2 low, Vec2 hi) const
     {
-        return {x < low.x ? x - low.x : (x >= hi.x ? x - hi.x : 0.0F),
-                y < low.y ? y - low.y : (y >= hi.y ? y - hi.y : 0.0F)};
+        return {x < low.x ? x - low.x : (x >= hi.x ? x - hi.x : 0),
+                y < low.y ? y - low.y : (y >= hi.y ? y - hi.y : 0)};
     }
 
     [[nodiscard]] Vec2 cossin() const { return {cos(x), sin(y)}; }

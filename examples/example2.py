@@ -1,6 +1,9 @@
+from pathlib import Path
 from typing import Any, Callable
 import pixpy as pix
-from tween import tween, Ease
+from utils.tween import tween, Ease
+
+pwd = Path(__file__).absolute().parent
 
 Float2 = pix.Float2
 
@@ -9,7 +12,7 @@ screen = pix.open_display(size=(1280, 720))
 pos = Float2(-400, screen.size.y / 2).tween_to(screen.size / 2)
 
 
-font = pix.load_font("data/hyperspace_bold.ttf")
+font = pix.load_font(pwd / "data/hyperspace_bold.ttf")
 hello_image = font.make_image("Hello World", size=64, color=pix.color.ORANGE)
 
 screen.draw_color = pix.color.YELLOW

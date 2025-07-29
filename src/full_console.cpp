@@ -10,6 +10,9 @@ template <typename T, typename S = int> static constexpr S len(T&& t)
 
 System::Propagate FullConsole::put_event(const KeyEvent& event)
 {
+    if (event.device != device) {
+        return System::Propagate::Pass;
+    }
     auto key = static_cast<Key>(event.key);
     if (key == Key::RIGHT) {
         xpos++;
@@ -42,6 +45,9 @@ System::Propagate FullConsole::put_event(const KeyEvent& event)
 }
 System::Propagate FullConsole::put_event(const TextEvent& te)
 {
+    if (te.device != device) {
+        return System::Propagate::Pass;
+    }
     for (auto&& c : utf8::utf8_decode(te.text)) {
         line.insert(xpos, 1, c);
         xpos++;

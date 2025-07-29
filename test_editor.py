@@ -44,7 +44,7 @@ class TestEditor(unittest.TestCase):
         """Test TextEdit.render() with a mocked Console"""
 
         self.text_edit.set_text("Hello World\nSecond line\nThird line")
-        self.text_edit.mark_text(Int2(7, 0), Int2(3, 2))
+        self.text_edit.select(Int2(7, 0), Int2(3, 2))
         cut_data = self.text_edit.cut()
         print("CUT TEXT:" + self.text_edit.get_text(cut_data))
         result = self.text_edit.get_text()
@@ -55,11 +55,11 @@ class TestEditor(unittest.TestCase):
         """Test paste with single line content"""
         self.text_edit.set_text("Hello World")
         self.text_edit.goto(6, 0)  # Position cursor after "Hello "
-        
+
         # Create paste data (list of character lists)
-        paste_data = [[(ord('X'), 1), (ord('Y'), 1), (ord('Z'), 1)]]
+        paste_data = [[(ord("X"), 1), (ord("Y"), 1), (ord("Z"), 1)]]
         self.text_edit.paste(paste_data)
-        
+
         result = self.text_edit.get_text()
         self.assertEqual(result, "Hello XYZWorld")
         self.assertEqual(self.text_edit.xpos, 9)  # Cursor after pasted content
@@ -70,15 +70,22 @@ class TestEditor(unittest.TestCase):
         """Test paste with multi-line content"""
         self.text_edit.set_text("Hello World")
         self.text_edit.goto(6, 0)  # Position cursor after "Hello "
-        
+
         # Create multi-line paste data
         paste_data = [
-            [(ord('F'), 1), (ord('i'), 1), (ord('r'), 1), (ord('s'), 1), (ord('t'), 1)],
-            [(ord('S'), 1), (ord('e'), 1), (ord('c'), 1), (ord('o'), 1), (ord('n'), 1), (ord('d'), 1)],
-            [(ord('T'), 1), (ord('h'), 1), (ord('i'), 1), (ord('r'), 1), (ord('d'), 1)]
+            [(ord("F"), 1), (ord("i"), 1), (ord("r"), 1), (ord("s"), 1), (ord("t"), 1)],
+            [
+                (ord("S"), 1),
+                (ord("e"), 1),
+                (ord("c"), 1),
+                (ord("o"), 1),
+                (ord("n"), 1),
+                (ord("d"), 1),
+            ],
+            [(ord("T"), 1), (ord("h"), 1), (ord("i"), 1), (ord("r"), 1), (ord("d"), 1)],
         ]
         self.text_edit.paste(paste_data)
-        
+
         result = self.text_edit.get_text()
         expected = "Hello First\nSecond\nThirdWorld"
         self.assertEqual(result, expected)
@@ -90,19 +97,19 @@ class TestEditor(unittest.TestCase):
         """Test that cut and paste work together correctly"""
         original_text = "Hello World\nSecond line\nThird line"
         self.text_edit.set_text(original_text)
-        
+
         # Select text from "World" to "Second"
-        self.text_edit.mark_text(Int2(6, 0), Int2(6, 1))
+        self.text_edit.select(Int2(6, 0), Int2(6, 1))
         cut_data = self.text_edit.cut()
-        
+
         # Verify cut worked
         after_cut = self.text_edit.get_text()
         self.assertEqual(after_cut, "Hello  line\nThird line")
-        
+
         # Move cursor to end and paste back
         self.text_edit.goto(4, 1)  # End of "line"
         self.text_edit.paste(cut_data)
-        
+
         # Should restore something close to original (minus exact formatting)
         result = self.text_edit.get_text()
         # The paste should insert the cut content
@@ -114,10 +121,10 @@ class TestEditor(unittest.TestCase):
         """Test paste with empty content"""
         self.text_edit.set_text("Hello World")
         original_text = self.text_edit.get_text()
-        
+
         # Paste empty content
         self.text_edit.paste([])
-        
+
         # Text should remain unchanged
         result = self.text_edit.get_text()
         self.assertEqual(result, original_text)

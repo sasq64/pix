@@ -105,6 +105,8 @@ class PixIDE:
 
         self.error_box: None | ErrorBox = None
 
+        self.resize()
+
         pix.run_every_frame(self.draw_title)
 
     def handle_toolbar(self, event: object):
@@ -228,16 +230,29 @@ class PixIDE:
         self.tool_bar.set_button(0, Nerd.nf_fa_play_circle, pix.color.LIGHT_GREEN)
 
     def run2(self):
+        import sys
+
         screen = self.screen
         # run(self.edit.get_text(), self.current_file.as_posix())
         source = self.edit.get_text()
         file_name = self.current_file.as_posix()
+        print(file_name)
+        file_dir = str(self.current_file.parent.absolute())
         text = self.edit.get_text()
         with open(Path.home() / ".pixwork.py", "w") as f:
             _ = f.write(text)
-        screen.draw_color = (self.palette[1] << 8) | 0xFF
+        col = 0xB1B1B3
+        screen.draw_color = (col << 8) | 0xFF
         fc = screen.frame_counter
+
+        # Save current sys.path to restore later
+        original_sys_path = sys.path[:]
+
         try:
+            # Add the current file's directory to sys.path so imports work
+            if file_dir not in sys.path:
+                sys.path.insert(0, file_dir)
+
             pix.allow_break(True)
             exec(
                 source,
@@ -266,6 +281,9 @@ class PixIDE:
             self.show_error(info, pix.Int2(s.colno or 0, s.lineno or 0))
             events = pix.all_events()
             return
+        finally:
+            # Restore original sys.path
+            sys.path[:] = original_sys_path
         screen.swap()
         leave = False
         while pix.run_loop() and not leave:
@@ -318,11 +336,15 @@ class PixIDE:
                 self.error_box = None
                 should_update = True
             elif isinstance(e, pix.event.Click):
-                self.error_box = None
-                keep.append(
-                    pix.event.Click(e.x, e.y - self.toolbar_height, e.buttons, e.mods)
-                )
-                continue
+                print("CLICK EVENT")
+                if e.y >= self.toolbar_height:
+                    self.error_box = None
+                    keep.append(
+                        pix.event.Click(
+                            e.x, e.y - self.toolbar_height, e.buttons, e.mods
+                        )
+                    )
+                    continue
             elif isinstance(e, pix.event.Move):
                 self.error_box = None
                 keep.append(pix.event.Move(e.x, e.y - self.toolbar_height, e.buttons))
@@ -368,17 +390,46 @@ def main():
     )
     args = parser.parse_args()
 
-    screen = pix.open_display(width=1280, height=720, full_screen=args.fullscreen)
+    screen = pix.open_display(width=1600, height=1080, full_screen=args.fullscreen)
     split = screen.split((2, 1))
-    ide = PixIDE(screen)
-    chat = SmartChat(split[1], pix.load_font(hack_font))
+    ide = PixIDE(split[0])
+    chat = SmartChat(
+        split[1].crop((10, 10), split[1].size - (20, 20)),
+        pix.load_font(hack_font),
+        ide.edit,
+    )
+
+    chat.con.set_device_no(1)
+    current_dev = 0
+
+    def click_handler(event: pix.event.AnyEvent) -> bool:
+        if isinstance(event, pix.event.Click):
+            new_dev = -1
+            nonlocal current_dev
+            if event.pos.inside(split[0].offset, split[0].offset + split[0].size):
+                new_dev = 0
+            elif event.pos.inside(split[1].offset, split[1].offset + split[1].size):
+                new_dev = 1
+            pix.set_keyboard_device(new_dev)
+
+            print(f"{new_dev} {current_dev}")
+            if new_dev != current_dev:
+                current_dev = new_dev
+                ide.con.cursor_on = current_dev == 0
+                chat.con.cursor_on = current_dev == 1
+                return False
+            return current_dev == 0
+        return True
+
+    pix.add_event_listener(click_handler, 0)
+
     chat.write("Hello and welcome!\n> ")
-    # chat.read_line()
+    chat.read_line()
 
     print("RUN")
     while pix.run_loop():
         ide.render()
-        # chat.render()
+        chat.render()
         screen.swap()
 
 
