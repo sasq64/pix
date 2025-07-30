@@ -396,7 +396,7 @@ def main():
     chat = SmartChat(
         split[1].crop((10, 10), split[1].size - (20, 20)),
         pix.load_font(hack_font),
-        ide.edit,
+        ide,
     )
 
     chat.con.set_device_no(1)
