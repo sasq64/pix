@@ -75,10 +75,12 @@ void init()
             m.events.clear();
             m.listeners.clear();
             m.counter = 0;
-            if (pix::Screen::instance != nullptr &&
-                pix::Screen::instance->frame_counter() == 0) {
+            auto screen = pix::Screen::instance;
+            if (screen != nullptr &&
+                screen->visible && 
+                screen->frame_counter() == 0) {
                 log("Running at exit\n");
-                pix::Screen::instance->swap();
+                screen->swap();
                 while (m.sys->run_loop()) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
@@ -99,7 +101,14 @@ std::shared_ptr<pix::Screen> open_display(int width, int height,
         return s;
     }
     init();
-    auto const* val = std::getenv("PIX_HEADLESS");
+    auto const* val = std::getenv("PIX_CHECK");
+    if (val != nullptr) {
+        visible = false;
+        full_screen = false;
+        m.run_frames = 1;
+    }
+
+    val = std::getenv("PIX_HEADLESS");
     if (val && val[0] != '0') {
         visible = false;
         full_screen = false;
@@ -122,6 +131,7 @@ std::shared_ptr<pix::Screen> open_display(int width, int height,
 
     auto display = m.sys->init_screen(settings);
     auto screen = std::make_shared<pix::Screen>(display);
+    screen->visible = visible;
 
     screen->vpscale = screen->get_scale();
 
