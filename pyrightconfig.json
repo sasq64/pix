@@ -4,6 +4,7 @@
   "reportUnusedCallResult": false,
   "enableTypeIgnoreComments": true,
   "reportUnannotatedClassAttribute": false,
+  "reportAny": false,
   "include": [
     "examples"
   ],
