@@ -1,16 +1,12 @@
-from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Protocol, Callable, Any
-from openai.types.responses import FunctionToolParam
-from openai.types.responses.response_input_param import Message
+from typing import Literal, Protocol, Callable
+from openai.types.responses import FunctionToolParam, ResponseInputItemParam
+from openai.types.responses.easy_input_message_param import EasyInputMessageParam
 import pixpy as pix
-import os
 from openai import OpenAI
 import inspect
 
 from . import TextEdit
-
-# from openai.types.responses.response_input_param import Message
 
 
 def create_function(
@@ -21,7 +17,7 @@ def create_function(
     """Create an OpenAI function schema from a Python function using inspect.signature"""
     sig = inspect.signature(fn)
     properties = {}
-    required = []
+    required: list[str] = []
 
     for param_name, param in sig.parameters.items():
         param_type = "string"
@@ -60,11 +56,6 @@ def create_function(
     }
 
 
-#@dataclass
-#class Message:
-#    role: str = "user"
-#    content: str = ""
-
 
 class Console(Protocol):
     def write(self, text: str) -> None: ...
@@ -72,6 +63,17 @@ class Console(Protocol):
 
 def get_user_name() -> str:
     return "Jonas"
+
+
+Role = Literal["user", "assistant", "system", "developer"]
+
+
+def message(text: str, role: Role = "user") -> EasyInputMessageParam:
+    return {
+        "content": [{"text": text, "type": "input_text"}],
+        "role": role,
+        "type": "message",
+    }
 
 
 class SmartChat:
@@ -90,7 +92,7 @@ class SmartChat:
         key = (Path.home() / ".openai.key").read_text().rstrip()
         self.client = OpenAI(api_key=key)
 
-        self.messages: list[Message] = []
+        self.messages: list[ResponseInputItemParam] = []
         self.code: str | None = None
         self.tools: list[FunctionToolParam] = []
 
@@ -98,7 +100,7 @@ class SmartChat:
 
     def add_function(
         self,
-        fn: Callable[..., Any],
+        fn: Callable[..., object],
         desc: str | None = None,
         arg_desc: dict[str, str] | None = None,
     ):
@@ -110,39 +112,32 @@ class SmartChat:
 
     def add_line(self, line: str) -> None:
 
-        msg: Message = {
-            "content": line,
-            "role": "user",
-            "type": "message"
-        }
-
-        self.messages.append(Message(content=line))
-        messages = list([asdict(m) for m in self.messages])
+        self.messages.append(message(line))
         self.code = self.editor.get_text()
         if self.code:
-            messages.insert(
+            self.messages.insert(
                 0,
-                {
-                    "role": "user",
-                    "content": f"This is the python code I am currently working on:\n\n{self.code}",
-                },
+                message(
+                    f"This is the python code I am currently working on:\n\n{self.code}"
+                ),
             )
 
-        print(messages)
-        # messages=[
-        #    {"role": "system", "content": "You are a helpful assistant."},
-        #    {"role": "user", "content": "Hello!"}
-        # ]
         response = self.client.responses.create(
             model="gpt-4o-mini",
-            instructions="You are an AI programming teacher. You try to help the user with their programming problems, but you want them to learn so avoid directly solving their problems, instead give pointers so they can move forward.\n\nGive *short* answers, normally a single sentence would do.",
-            input=messages, 
+            instructions="""
+You are an AI programming teacher. You try to help the user with their programming problems, but you want them to learn so avoid directly solving their problems, instead give pointers so they can move forward.
+
+Give *short* answers, normally a single sentence would do.
+""",
+            input=self.messages,
             tools=self.tools,
         )
         print(self.tools)
         print("DONE")
         print(response.output)
-        self.messages.append(Message(role="assistant", content=response.output_text))
+        self.messages.append(
+            EasyInputMessageParam(role="assistant", content=response.output_text)
+        )
         self.con.write(response.output_text)
 
     def handle_events(self, event: object) -> bool:
