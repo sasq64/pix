@@ -87,7 +87,10 @@ inline auto add_screen_class(py::module_ const& mod, auto ctx_class)
                     const auto keep_running = (*it)();
                     it = keep_running ? it+1 : callbacks.erase(it);
                 }
-                screen->swap();
+                {
+                    py::gil_scoped_release gil;
+                    screen->swap();
+                }
             },
             "Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This is normally the last thing you do in your render loop.");
     screen.doc() =
