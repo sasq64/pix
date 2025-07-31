@@ -1,7 +1,7 @@
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, cast, override
+from typing import Final, cast, override, Protocol
 
 import pixpy as pix
 
@@ -51,7 +51,13 @@ CMD = 0x10000000
 CTRL = 0x20000000
 
 
-def clamp[T: float | int](v: T, lo: T, hi: T) -> T:
+class Clampable(Protocol):
+    def __lt__(self, _) -> bool: ...
+    def __ge__(self, _) -> bool: ...
+    def __sub__(self, _: int) -> "Clampable": ...
+
+
+def clamp[T: Clampable](v: T, lo: T, hi: T) -> T:
     "Clamp value between `lo` inclusive and `hi` exclusive."
     if v < lo:
         return lo
