@@ -1,7 +1,12 @@
+import builtins
 from concurrent.futures import Future, ThreadPoolExecutor
 import json
+import os
+import inspect
 from pathlib import Path
+import subprocess
 from typing import Literal, Protocol, Callable
+
 from openai.types.responses import (
     FunctionToolParam,
     Response,
@@ -12,11 +17,11 @@ from openai.types.responses import (
 )
 from openai.types.responses.easy_input_message_param import EasyInputMessageParam
 from openai.types.responses.response_input_item_param import FunctionCallOutput
-import pixpy as pix
 from openai import OpenAI
-import inspect
 
-from . import TextEdit
+import pixpy as pix
+
+from .ide import PixIDE
 
 
 def create_function(
@@ -66,14 +71,6 @@ def create_function(
     }
 
 
-class Console(Protocol):
-    def write(self, text: str) -> None: ...
-
-
-def get_user_name() -> str:
-    return "Jonas"
-
-
 Role = Literal["user", "assistant", "system", "developer"]
 
 
@@ -85,25 +82,54 @@ def message(text: str, role: Role = "user") -> EasyInputMessageParam:
     }
 
 
+class Console(Protocol):
+    def write(self, text: str) -> None: ...
+
+
 class SmartChat:
+
+    def run(self) -> str:
+        import sys
+
+        screen = pix.get_display()
+        current_file = self.ide.current_file
+        file_name = current_file.as_posix()
+        print(file_name)
+        file_dir = str(current_file.parent.absolute())
+        text = self.editor.get_text()
+        with open(Path.home() / ".pixwork.py", "w") as f:
+            _ = f.write(text)
+
+        new_env = os.environ.copy()
+        new_env["PIX_CHECK"] = "1"
+        new_env["PYTHONPATH"] = file_dir + os.pathsep + new_env.get("PYTHONPATH", "")
+
+        res = "OK"
+        pr = subprocess.run(
+            ["python3", (Path.home() / ".pixwork.py").as_posix()],
+            capture_output=True,
+            env=new_env,
+        )
+        return pr.stderr.decode()
 
     def get_box_contents(self, box_no: int) -> str:
         """Get the contents of a numbered box"""
         return str(box_no * 5)
 
-    def get_users_source_code(self) -> str:
+    def read_users_program(self) -> str:
         """Get the source of the users current python program."""
         return self.editor.get_text()
 
     def run_users_program(self) -> str:
-        """Run the users program in headless mode for one frame. Use this function to see which errors (if any) the program contains."""
-        return "OK"
+        """Run the users program in headless mode for one frame. Use this function to see which errors (if any) the program contains. Will return 'OK' if no errors detected, otherwise the error in string form."""
+        return self.run()
 
-    def __init__(self, canvas: pix.Canvas, font: pix.Font, editor: TextEdit):
+    def __init__(self, canvas: pix.Canvas, font: pix.Font, ide: PixIDE):
         self.canvas = canvas
         self.font_size: int = 20
         self.font = font
-        self.editor = editor
+        self.editor = ide.edit
+        self.ide = ide
         self.executor = ThreadPoolExecutor(max_workers=2)
         self.ts: pix.TileSet = pix.TileSet(self.font, size=self.font_size)
         con_size = canvas.size.toi() / self.ts.tile_size
@@ -121,8 +147,8 @@ class SmartChat:
         self.tools: list[FunctionToolParam] = []
         self.functions: dict[str, Callable[..., object]] = {}
 
-        self.add_function(get_user_name)
-        self.add_function(self.get_box_contents)
+        self.add_function(self.read_users_program)
+        self.add_function(self.run_users_program)
 
     def add_function(
         self,
@@ -160,40 +186,45 @@ class SmartChat:
         self.code = code
 
     def get_ai_response(self, messages: list[ResponseInputItemParam]) -> Response:
-        print("===MESSAGES")
-        print(messages)
-        print("===TOOLS")
-        print(self.tools)
-        print("")
         response = self.client.responses.create(
             model="gpt-4o-mini",
             instructions="""
-You are an AI programming teacher. You try to help the user with their programming problems, but you want them to learn so avoid directly solving their problems, instead give pointers so they can move forward.
+You are an AI programming teacher. You try to help the user with their programming problems, but you want them to learn so you avoid directly solving their problems, instead give pointers so they can move forward.
 
-Give *short* answers, normally a single sentence would do.
+The user is currently editing a python program in their text editor, and may ask questions about this program.
+
+When the user asks questions about the program, you *should* read it so you can
+answer the question.
+
+If a user problem is not obvious, you *should* run the program and parse the error messages.
+
+Give *short* answers, normally a single sentence will do.
 """,
             input=messages,
             tools=self.tools,
         )
-        print("AI DONE")
         return response
 
     def add_line(self, line: str) -> None:
         self.add_message(message(line))
 
-    def add_message(self, msg: ResponseInputItemParam):
+    def add_message(self, message: ResponseInputItemParam):
 
-        self.messages.append(msg)
+        # Update program
+        read_id = ""
+        for msg in self.messages:
+            if "type" in msg:
+                print(msg)
+                if msg["type"] == "function_call":
+                    if msg["name"] == "read_users_program":
+                        read_id = msg["call_id"]
+                if msg["type"] == "function_call_output":
+                    if msg["call_id"] == read_id:
+                        msg["output"] = self.editor.get_text()
+
+        self.messages.append(message)
         self.code = self.editor.get_text()
         messages = self.messages.copy()
-        if self.code:
-            messages.insert(
-                0,
-                message(
-                    f"This is the python code I am currently working on:\n\n{self.code}"
-                ),
-            )
-
         future = self.executor.submit(self.get_ai_response, messages)
         self.responses.append(future)
 

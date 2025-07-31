@@ -10,3 +10,4 @@ from .main import PixIDE
 
 __version__ = "1.0.0"
 __all__ = ["TextEdit", "TextRange", "PixIDE"]
+

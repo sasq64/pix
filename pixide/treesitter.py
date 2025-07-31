@@ -79,5 +79,5 @@ class TreeSitter:
         if self.node is not None:
             start = pix.Int2(self.node.start[0] / 2, self.node.start[1])
             end = pix.Int2(self.node.end[0] / 2, self.node.end[1])
-            self.edit.mark_text(start, end)
+            self.edit.select(start, end)
             self.node = self.node.parent
