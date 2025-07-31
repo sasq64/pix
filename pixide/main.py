@@ -5,6 +5,12 @@ import pixpy as pix
 from .ide import PixIDE
 from .smart_chat import SmartChat
 
+
+class IdeArgs:
+    fullscreen: bool = False
+    font_size: int = 24
+
+
 fwd = Path(__file__).parent
 hack_font = fwd / "data" / "HackNerdFont-Regular.ttf"
 
@@ -19,11 +25,21 @@ def main():
         action="store_true",
         help="Open display in fullscreen mode",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "-S",
+        "--font-size",
+        type=int,
+        help="Set the font size",
+    )
 
-    screen = pix.open_display(width=1600, height=1080, full_screen=args.fullscreen)
+    args = parser.parse_args(namespace=IdeArgs())
+    size = pix.Int2(1280, 720)
+    if args.fullscreen:
+        size = pix.Int2(-1, -1)
+
+    screen = pix.open_display(size=size, full_screen=args.fullscreen)
     split = screen.split((2, 1))
-    ide = PixIDE(split[0])
+    ide = PixIDE(split[0], font_size=args.font_size)
     chat = SmartChat(
         split[1].crop((10, 10), split[1].size - (20, 20)),
         pix.load_font(hack_font),

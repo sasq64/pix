@@ -3,16 +3,18 @@ import os.path
 import sys
 import traceback
 from pathlib import Path
-from typing import Final
+from typing import Final, Protocol
 
+from openai.types import image
 import pixpy as pix
-from .editor import TextEdit
+from .editor import TextEdit, dataclass
 from .utils.wrap import wrap_text
 from .utils.tool_bar import ToolBar, ToolbarEvent
 from .utils.nerd import Nerd
 from .treesitter import TreeSitter
 
 Int2 = pix.Int2
+Float2 = pix.Float2
 
 fwd = Path(os.path.abspath(__file__)).parent
 hack_font = fwd / "data" / "HackNerdFont-Regular.ttf"
@@ -61,10 +63,10 @@ class ErrorBox:
 
 
 class PixIDE:
-    def __init__(self, screen: pix.Screen):
+    def __init__(self, screen: pix.Screen, font_size: int = 24):
         self.do_run: bool = False
         self.screen: Final = screen
-        self.font_size: int = 24
+        self.font_size: int = font_size
         self.font: pix.Font = pix.load_font(hack_font)
         self.ts: pix.TileSet = pix.TileSet(self.font, size=self.font_size)
 

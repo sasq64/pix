@@ -18,9 +18,6 @@ make dist
 
 # Generate documentation
 make mkdoc
-
-# Generate Python type stubs
-make stubs
 ```
 ## Architecture
 
@@ -45,12 +42,6 @@ The Python interface is implemented through PyBind11 in `src/python.cpp` with in
 - `mod_key.hpp`: Key constants and input handling
 - `mod_color.hpp`: Color utilities
 
-### Platform Support
-
-- **Desktop**: GLFW + OpenGL (Windows, macOS, Linux)
-- **Raspberry Pi**: EGL + OpenGL ES
-- **Web**: Emscripten + WebGL
-
 ## Key Development Patterns
 
 ### Image System
@@ -61,16 +52,6 @@ The console uses a tile-based approach where each character/tile is stored in a 
 
 ### Event Handling
 Events are queued and processed through the Machine singleton. The Python interface provides both polling (`is_pressed`) and event-driven (`all_events`) approaches.
-
-## Testing
-
-Examples serve as integration tests and are located in `examples/`. Key test files:
-- `hello_world.py`: Basic rendering
-- `editor.py`: Text editing with console
-- `paint.py`: Mouse input and drawing
-- `sokoban.py`: Tile-based game example
-
-No formal test suite exists - testing is done through examples and manual verification.
 
 ### Headless Testing and Graphics Logging
 

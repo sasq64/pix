@@ -16,8 +16,6 @@ class TreeSitter:
             "import": 3,
             "class": 3,
             "string": 8,
-            # "string_content": 8,
-            # "string_end": 8,
             "call.identifier": 2,
             "decorator": 4,
             "keyword_argument.identifier": 7,
