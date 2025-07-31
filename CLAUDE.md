@@ -1,0 +1,111 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+PIX (pixpy) is a cross-platform 2D graphics library with a C++ core and Python bindings. It's designed for learning and game development, providing efficient console/tileset rendering and composable images using OpenGL/GLES2.
+
+## Build Commands
+
+### C++ Library and Python Module
+```bash
+# Build the Python module (development)
+make all
+
+# Create Python distribution
+make dist
+
+# Generate documentation
+make mkdoc
+
+# Generate Python type stubs
+make stubs
+```
+## Architecture
+
+### Core Components
+
+- **Context** (`src/context.hpp`): OpenGL rendering context management with viewport, clipping, and blend modes
+- **Image** (`src/image.hpp`): Texture-based image system with efficient cropping and compositing
+- **PixConsole** (`src/pixel_console.hpp`): Console/terminal rendering system for tile-based games
+- **TileSet** (`src/tile_set.hpp`): Manages character/tile graphics for console rendering
+- **Screen** (`src/screen.hpp`): Main display surface and event handling
+- **System** (`src/system.hpp`): Platform abstraction layer (GLFW/Pi/Emscripten)
+
+### Python Bindings
+
+The Python interface is implemented through PyBind11 in `src/python.cpp` with individual class bindings in `src/python/`:
+
+- `class_screen.hpp`: Main display and event loop
+- `class_image.hpp`: Image manipulation and drawing
+- `class_console.hpp`: Console/terminal interface
+- `class_canvas.hpp`: Drawing context
+- `mod_event.hpp`: Event system (mouse, keyboard, text input)
+- `mod_key.hpp`: Key constants and input handling
+- `mod_color.hpp`: Color utilities
+
+### Platform Support
+
+- **Desktop**: GLFW + OpenGL (Windows, macOS, Linux)
+- **Raspberry Pi**: EGL + OpenGL ES
+- **Web**: Emscripten + WebGL
+
+## Key Development Patterns
+
+### Image System
+Images are OpenGL texture references with UV coordinates, making cropping and sub-image operations very efficient. The `ImageView` class provides a lightweight view into texture data.
+
+### Console System
+The console uses a tile-based approach where each character/tile is stored in a texture atlas. It supports both text and custom graphics tiles.
+
+### Event Handling
+Events are queued and processed through the Machine singleton. The Python interface provides both polling (`is_pressed`) and event-driven (`all_events`) approaches.
+
+## Testing
+
+Examples serve as integration tests and are located in `examples/`. Key test files:
+- `hello_world.py`: Basic rendering
+- `editor.py`: Text editing with console
+- `paint.py`: Mouse input and drawing
+- `sokoban.py`: Tile-based game example
+
+No formal test suite exists - testing is done through examples and manual verification.
+
+### Headless Testing and Graphics Logging
+
+PIX supports headless mode with drawing command logging for automated testing and verification:
+
+```bash
+
+# To check that a pixpy python script runs:
+PIX_CHECK=1 python3 script.py
+
+# Run in headless mode with drawing command logging
+PIX_HEADLESS=1 PIX_DRAWLOG=output.log PIX_RUNFRAMES=60 python3 script.py
+
+# Log drawing commands while showing graphics
+PIX_DRAWLOG=debug.log python3 examples/hello_world.py
+```
+
+**Environment Variables:**
+- `PIX_CHECK=1`: Run one frame in headless, to test the code 
+- `PIX_HEADLESS=1`: Run without graphics window
+- `PIX_DRAWLOG=filename.log`: Log all drawing commands to specified file
+- `PIX_RUNFRAMES=N`: Automatically exit after N frames
+
+**Logged Commands Include:**
+- `filled_rect`, `rect`, `line`, `circle`, `filled_circle`
+- `draw image=<id>` operations with position/rotation
+- `swap` to indicate one full frame has been rendered
+
+Use this for verifying graphics code changes: "Run this in headless mode with draw logging"
+
+## Dependencies
+
+- **FreeType**: Font rendering
+- **GLFW**: Window management (desktop)
+- **PyBind11**: Python bindings
+- **Tree-sitter**: Code parsing (for editor features)
+- **LibTess2**: Polygon tessellation
+- **LodePNG**: PNG loading
