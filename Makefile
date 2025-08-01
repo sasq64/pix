@@ -40,10 +40,15 @@ stubs: all
 	python3 ./stubfix.py
 	rm -rf stubs
 
-test: all
+test:
 	PYTHONPATH=python python -m pytest tests/
 
-test-verbose: all
+test-verbose:
 	PYTHONPATH=python python -m pytest tests/ -v -s
+
+test-coverage:
+	PYTHONPATH=python coverage run -m pytest tests/
+	coverage report
+	coverage html
 
 

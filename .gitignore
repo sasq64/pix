@@ -4,6 +4,7 @@ _skbuild/
 .cache/
 .idea/
 .vscode/
+.coverage
 dist/
 stubs/
 .DS_Store
