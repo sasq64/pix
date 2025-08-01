@@ -22,7 +22,6 @@ class FullConsole
     Vec2i edit_start{0, 0};
     int xpos = 0;
     std::u32string line;
-    bool reading_line = false;
     void refresh();
     int listener = -1;
     int device = 0;
@@ -41,6 +40,7 @@ public:
         device = dev;
     }
 
+    bool reading_line = false;
     bool wrap = true;
     void set_wrap(bool on) { wrap = on; }
 

@@ -50,6 +50,7 @@ def main():
     current_dev = 0
 
     def click_handler(event: pix.event.AnyEvent) -> bool:
+        nonlocal split
         if isinstance(event, pix.event.Click):
             new_dev = -1
             nonlocal current_dev
@@ -66,6 +67,13 @@ def main():
                 chat.con.cursor_on = current_dev == 1
                 return False
             return current_dev == 0
+        elif isinstance(event, pix.event.Resize):
+            split = screen.split((2, 1))
+            ide.screen = split[0]
+            ide.tool_bar.canvas = split[0]
+            ide.resize()
+            chat.canvas = split[1]
+            chat.resize()
         return True
 
     pix.add_event_listener(click_handler, 0)
@@ -75,6 +83,7 @@ def main():
 
     print("RUN")
     while pix.run_loop():
+        screen.clear()
         ide.render()
         chat.render()
         screen.swap()

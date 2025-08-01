@@ -41,22 +41,7 @@ std::string PixConsole::fragment_shader{R"gl(
               vec4 col = texture2D(in_tex, uv);
               gl_FragColor = vec4(fg_color * col.rgb * col.a + bg_color * (1.0 - col.a), col.a);
         })gl"};
-/*
-PixConsole::PixConsole(int w, int h, std::string const& font_file, int size)
-    : font_ptr{std::make_shared<TileSet>(font_file, size)}, font{*font_ptr},
-      cols(w), rows(h)
-{
-    init();
-}
 
-PixConsole::PixConsole(int w, int h, FreetypeFont& ftfont)
-    : font_ptr{std::make_shared<TileSet>(ftfont)}, font{*font_ptr}, cols(w),
-      rows(h)
-
-{
-    init();
-}
-*/
 PixConsole::PixConsole(int _cols, int _rows, std::shared_ptr<TileSet> const& _tile_set)
     : tile_set{_tile_set},  cols{_cols}, rows{_rows}
 {

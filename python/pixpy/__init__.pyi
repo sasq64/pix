@@ -301,6 +301,11 @@ class Console:
         Get number cols and rows.
         """
     @property
+    def reading_line(self) -> bool:
+        """
+        True if console is in read_line mode at the moment.
+        """
+    @property
     def size(self) -> Int2:
         """
         Get size of consoles in pixels (tile_size * grid_size).

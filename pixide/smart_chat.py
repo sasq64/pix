@@ -1,11 +1,10 @@
-import builtins
 from concurrent.futures import Future, ThreadPoolExecutor
 import json
 import os
 import inspect
 from pathlib import Path
 import subprocess
-from typing import Literal, Protocol, Callable
+from typing import Literal, Protocol, Callable, TypeGuard
 
 from openai.types.responses import (
     FunctionToolParam,
@@ -13,11 +12,23 @@ from openai.types.responses import (
     ResponseFunctionToolCall,
     ResponseFunctionToolCallParam,
     ResponseInputItemParam,
-    ResponseReasoningItemParam,
 )
 from openai.types.responses.easy_input_message_param import EasyInputMessageParam
 from openai.types.responses.response_input_item_param import FunctionCallOutput
 from openai import OpenAI
+
+
+def is_function_call(
+    msg: ResponseInputItemParam,
+) -> TypeGuard[ResponseFunctionToolCallParam]:
+    return msg.get("type") == "function_call"
+
+
+def is_function_call_output(
+    msg: ResponseInputItemParam,
+) -> TypeGuard[FunctionCallOutput]:
+    return msg.get("type") == "function_call_output"
+
 
 import pixpy as pix
 
@@ -89,9 +100,6 @@ class Console(Protocol):
 class SmartChat:
 
     def run(self) -> str:
-        import sys
-
-        screen = pix.get_display()
         current_file = self.ide.current_file
         file_name = current_file.as_posix()
         print(file_name)
@@ -104,7 +112,6 @@ class SmartChat:
         new_env["PIX_CHECK"] = "1"
         new_env["PYTHONPATH"] = file_dir + os.pathsep + new_env.get("PYTHONPATH", "")
 
-        res = "OK"
         pr = subprocess.run(
             ["python3", (Path.home() / ".pixwork.py").as_posix()],
             capture_output=True,
@@ -137,6 +144,9 @@ class SmartChat:
         self.con.set_device_no(1)
         pix.add_event_listener(self.handle_events, 0)
 
+        key_file = (Path.home() / ".openai.key")
+        if not key_file.exists():
+            raise FileNotFoundError("Can not find .openai.key in $HOME!")
         key = (Path.home() / ".openai.key").read_text().rstrip()
         self.client = OpenAI(api_key=key)
 
@@ -149,6 +159,15 @@ class SmartChat:
 
         self.add_function(self.read_users_program)
         self.add_function(self.run_users_program)
+
+    def resize(self):
+        con_size = self.canvas.size.toi() / self.ts.tile_size
+        was_reading_line = self.con.reading_line
+        self.con = pix.Console(con_size.x, con_size.y - 1, self.ts)
+        self.con.set_device_no(1)
+        self.write("Hello and welcome!\n> ")
+        if was_reading_line:
+            self.con.read_line()
 
     def add_function(
         self,
@@ -199,6 +218,15 @@ answer the question.
 If a user problem is not obvious, you *should* run the program and parse the error messages.
 
 Give *short* answers, normally a single sentence will do.
+
+*Always* read the program if a user comment or question seems to refer to anything related to the program.
+
+## Examples of questions where you *must* read the program
+
+User: What does this do?
+
+User: Explain this
+
 """,
             input=messages,
             tools=self.tools,
@@ -215,10 +243,10 @@ Give *short* answers, normally a single sentence will do.
         for msg in self.messages:
             if "type" in msg:
                 print(msg)
-                if msg["type"] == "function_call":
+                if is_function_call(msg):
                     if msg["name"] == "read_users_program":
                         read_id = msg["call_id"]
-                if msg["type"] == "function_call_output":
+                if is_function_call_output(msg):
                     if msg["call_id"] == read_id:
                         msg["output"] = self.editor.get_text()
 

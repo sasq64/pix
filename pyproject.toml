@@ -26,6 +26,30 @@ cmake.args=[
     "-DMACOSX_DEPLOYMENT_TARGET=10.15",
 ]
 
+[tool.black]
+line-length = 80
+
+[tool.coverage.run]
+source = ["pixide"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/build/*",
+    "*/stubs/*"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError"
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

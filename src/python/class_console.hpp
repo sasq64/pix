@@ -95,6 +95,8 @@ inline void add_console_functions(auto& cls)
                                "Get number cols and rows.")
         .def_property_readonly("tile_size", &FullConsole::get_tile_size,
                                "Get size of a single tile.")
+        .def_readonly("reading_line", &FullConsole::reading_line,
+                      "True if console is in read_line mode at the moment.")
         .def_property_readonly(
             "size", &FullConsole::get_pixel_size,
             "Get size of consoles in pixels (tile_size * grid_size).")

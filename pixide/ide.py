@@ -3,11 +3,10 @@ import os.path
 import sys
 import traceback
 from pathlib import Path
-from typing import Final, Protocol
+from typing import Final
 
-from openai.types import image
 import pixpy as pix
-from .editor import TextEdit, dataclass
+from .editor import TextEdit
 from .utils.wrap import wrap_text
 from .utils.tool_bar import ToolBar, ToolbarEvent
 from .utils.nerd import Nerd
@@ -65,7 +64,7 @@ class ErrorBox:
 class PixIDE:
     def __init__(self, screen: pix.Screen, font_size: int = 24):
         self.do_run: bool = False
-        self.screen: Final = screen
+        self.screen: pix.Screen = screen
         self.font_size: int = font_size
         self.font: pix.Font = pix.load_font(hack_font)
         self.ts: pix.TileSet = pix.TileSet(self.font, size=self.font_size)
@@ -75,7 +74,7 @@ class PixIDE:
         self.comp_enabled: bool = False
         self.con: pix.Console = pix.Console(con_size.x, con_size.y - 1, self.ts)
         self.con.wrapping = False
-        self.title_bg: int = 0x205020
+        self.title_bg: int = 0x2050ff
         self.running: bool = False
         tool_ts = pix.TileSet(self.font, tile_size=(50, 50))
         self.tool_bar: Final = (
@@ -125,7 +124,7 @@ class PixIDE:
         return True
 
     def draw_title(self):
-        self.screen.draw_color = pix.color.LIGHT_GREEN
+        self.screen.draw_color = self.title_bg
         self.screen.filled_rect((0, 0), size=(self.screen.size.x, self.toolbar_height))
 
         self.tool_bar.render()
@@ -301,10 +300,7 @@ class PixIDE:
         keep: list[pix.event.AnyEvent] = []
         should_update = len(events) > 0
         for e in events:
-            if isinstance(e, pix.event.Resize):
-                print("RESIZE")
-                self.resize()
-            elif isinstance(e, pix.event.Key):
+            if isinstance(e, pix.event.Key):
                 self.error_box = None
                 if ctrl and e.key == ord("u"):
                     self.treesitter.select_parent_node()
