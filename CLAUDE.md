@@ -18,6 +18,12 @@ make dist
 
 # Generate documentation
 make mkdoc
+
+# Run Python tests
+make test
+
+# Run tests with verbose output
+make test-verbose
 ```
 ## Architecture
 
@@ -81,6 +87,36 @@ PIX_DRAWLOG=debug.log python3 examples/hello_world.py
 - `swap` to indicate one full frame has been rendered
 
 Use this for verifying graphics code changes: "Run this in headless mode with draw logging"
+
+## Testing
+
+### Python Tests
+All Python tests are located in the `tests/` directory. The project uses pytest for testing with the following structure:
+
+- `tests/test_edit_cmd.py`: Tests for editor command functionality
+- `tests/test_editor.py`: Tests for editor components
+- `tests/test_clipboard.py`: Tests for clipboard operations
+- `tests/test_create_function.py`: Tests for function creation utilities
+
+**Running Tests:**
+```bash
+# Run all tests (requires build first)
+make test
+
+# Run tests with detailed output
+make test-verbose
+
+# Run tests directly with pytest
+PYTHONPATH=python python -m pytest tests/
+```
+
+**Pre-commit Hook:**
+A pre-commit hook automatically runs all tests before each commit. If any tests fail, the commit is aborted. This ensures code quality and prevents broken code from being committed.
+
+To bypass the pre-commit hook (not recommended):
+```bash
+git commit --no-verify
+```
 
 ## Dependencies
 

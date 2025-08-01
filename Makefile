@@ -40,4 +40,10 @@ stubs: all
 	python3 ./stubfix.py
 	rm -rf stubs
 
+test: all
+	PYTHONPATH=python python -m pytest tests/
+
+test-verbose: all
+	PYTHONPATH=python python -m pytest tests/ -v -s
+
 
