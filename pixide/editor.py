@@ -64,38 +64,22 @@ Char = tuple[int, int]
 """A `Char` holds a character and a color index"""
 
 
-class TextEdit:
+class TextViewer:
     """
-    Text editor using a `pix.Console`.
+    Non-interactive text viewer using a `pix.Console`.
+    Handles text display, scrolling, highlighting, and color management.
     """
 
     def __init__(self, con: pix.Console):
         self.lines: list[list[Char]] = [[]]
-        # self.line: list[Char] = self.lines[0]
         self.scroll_pos: int = 0
-        self.last_scroll: int = -1
-        self.last_scrollx: int = -1
-        self.xpos: int = 0
-        self.ypos: int = 0
-        self.keepx: int = -1
-        self.yank: list[Char] = []
-        self.cmd_stack: CmdStack = CmdStack()
+        self.scrollx: int = 0
+        self.dirty: bool = True
+        """Indicate that the console text need to be updated"""
 
         self.cols: int = con.grid_size.x
         self.rows: int = con.grid_size.y
         self.con: pix.Console = con
-        self.dirty: bool = True
-        """Indicate that the console text need to be updated"""
-
-        self.selection = TextRange(Int2.ZERO, Int2.ZERO)
-        self.mark_enabled: bool = False
-        self.last_clicked: pix.Int2 | None = None
-
-        self.con.cursor_on = True
-        self.con.wrapping = False
-        self.start_pos: pix.Int2 | None = None
-
-        self.scrollx: int = 0
 
         self.fg: int = pix.color.GREEN
         self.bg: int = 0x202330
@@ -104,6 +88,174 @@ class TextEdit:
 
         self.mark_color = 100
         self.palette[100] = (pix.color.WHITE, pix.color.LIGHT_BLUE)
+
+        self.con.cursor_on = True
+        self.con.wrapping = False
+
+    def get_text(self, lines: list[list[Char]] | None = None):
+        if lines is None:
+            lines = self.lines
+        return "\n".join(["".join([chr(c[0]) for c in line]) for line in lines])
+
+    def get_codepoints(self) -> list[int]:
+        eol = 10
+        return list(
+            [
+                codepoint
+                for line in self.lines
+                for codepoint in ([c[0] for c in line] + [eol])
+            ]
+        )
+
+    def highlight(self, tranges: list[TextRange]):
+        """Set the color of all passed textranges, using `arg` as color"""
+        for trange in tranges:
+            color = trange.arg
+            for ln, col0, col1 in trange.lines():
+                if ln >= len(self.lines):
+                    break
+                line = self.lines[ln]
+                if col1 == -1:
+                    col1 = len(line)
+                for j in range(col0, col1):
+                    line[j] = (line[j][0], color)
+
+    def set_text(self, text: str):
+        lines = text.split("\n")
+        self.lines = []
+        for line in lines:
+            self.lines.append([(ord(c), 1) for c in line])
+        self.dirty = True
+
+    def set_console(self, console: pix.Console):
+        self.con = console
+        self.con.cursor_on = True
+        self.con.wrapping = False
+        self.fg = pix.color.GREEN
+        self.cols = self.con.grid_size.x
+        self.rows = self.con.grid_size.y
+        self.dirty = True
+
+    def set_color(self, fg: int, bg: int):
+        self.fg = fg
+        self.bg = bg
+
+    def set_palette(self, colors: list[int]):
+        """Set palette. 0 = default bg, 1 = default text"""
+        self.bg = (colors[0] << 8) | 0xFF
+        self.fg = (colors[1] << 8) | 0xFF
+        for i, c in enumerate(colors):
+            self.palette[i] = ((c << 8) | 0xFF, self.bg)
+        self.con.set_color(self.fg, self.bg)
+
+    def scroll_screen(self, y: int):
+        self.scroll_pos -= y
+        y = self.rows - 1
+        l = len(self.lines)
+        if self.scroll_pos < 0:
+            self.scroll_pos = 0
+        if self.scroll_pos > l - y:
+            self.scroll_pos = l - y
+
+    def render(self, selection: TextRange | None = None, cursor_pos: pix.Int2 | None = None):
+        """
+        Update the characters in the Console from the internal text state.
+        Needs to be done when text, highlighting or scroll position changes.
+        """
+        if self.dirty:
+            self.render_editor(selection)
+
+        # If cursor position provided and visible, show cursor
+        if cursor_pos is not None:
+            if (
+                cursor_pos.y >= self.scroll_pos
+                and cursor_pos.y <= self.scroll_pos + self.con.size.y
+            ):
+                self.con.cursor_on = True
+                self.con.cursor_pos = pix.Int2(
+                    cursor_pos.x - self.scrollx, cursor_pos.y - self.scroll_pos
+                )
+            else:
+                self.con.cursor_on = False
+
+    def render_editor(self, selection: TextRange | None = None):
+        self.dirty = False
+        self.con.set_color(self.fg, self.bg)
+        self.con.clear()
+        for y in range(self.rows):
+            i = y + self.scroll_pos
+            if i >= len(self.lines):
+                break
+            left_cropped = False
+            right_cropped = False
+            mark_startx = -1
+            mark_endx = -1
+            if selection is not None:
+                # Figure if parts of this line should be marked
+                my0 = i - selection.start.y
+                my1 = selection.end.y - i
+                if my0 == 0:
+                    mark_startx = selection.start.x
+                elif my0 > 0:
+                    mark_startx = 0
+                if my1 == 0:
+                    mark_endx = selection.end.x - 1
+                elif my1 > 0:
+                    mark_endx = 999999
+                else:
+                    mark_startx = -1
+
+            for x, (t, c) in enumerate(self.lines[i], -self.scrollx):
+                if x < 0:
+                    if t != 0x20:
+                        left_cropped = True
+                elif x >= self.cols - 1:
+                    if t != 0x20:
+                        right_cropped = True
+                else:
+                    if mark_startx >= 0 and x >= mark_startx and x <= mark_endx:
+                        fg, bg = self.palette[self.mark_color]
+                    else:
+                        fg, bg = self.palette[c]
+                    self.con.put((x, y), t, fg, bg)
+
+            if left_cropped:
+                self.con.put(
+                    (0, y),
+                    ord("$"),
+                    pix.color.LIGHT_RED,
+                    pix.color.BLACK,
+                )
+            if right_cropped:
+                self.con.put(
+                    (self.cols - 1, y),
+                    ord("$"),
+                    pix.color.LIGHT_RED,
+                    pix.color.BLACK,
+                )
+
+
+class TextEdit(TextViewer):
+    """
+    Text editor using a `pix.Console`.
+    """
+
+    def __init__(self, con: pix.Console):
+        super().__init__(con)
+        
+        # Additional editor-specific properties
+        self.last_scroll: int = -1
+        self.last_scrollx: int = -1
+        self.xpos: int = 0
+        self.ypos: int = 0
+        self.keepx: int = -1
+        self.yank: list[Char] = []
+        self.cmd_stack: CmdStack = CmdStack()
+
+        self.selection = TextRange(Int2.ZERO, Int2.ZERO)
+        self.mark_enabled: bool = False
+        self.last_clicked: pix.Int2 | None = None
+        self.start_pos: pix.Int2 | None = None
 
         self.moves: Final = {
             pix.key.LEFT: lambda: (self.xpos - 1, self.ypos),
@@ -142,15 +294,8 @@ class TextEdit:
         self.mark_enabled = False
 
     def set_console(self, console: pix.Console):
-        self.con = console
-        self.con.cursor_on = True
-        self.con.wrapping = False
-        self.fg = pix.color.GREEN
-        # self.bg = 0x202330
-        self.cols = self.con.grid_size.x
-        self.rows = self.con.grid_size.y
+        super().set_console(console)
         self.wrap_cursor()
-        self.dirty = True
 
     def goto(self, xpos: int, ypos: int):
         self.xpos = xpos
@@ -175,34 +320,6 @@ class TextEdit:
         self.xpos = new_xpos
         return True
 
-    def get_text(self, lines: list[list[Char]] | None = None):
-        if lines is None:
-            lines = self.lines
-        return "\n".join(["".join([chr(c[0]) for c in line]) for line in lines])
-
-    def get_codepoints(self) -> list[int]:
-        eol = 10
-        return list(
-            [
-                codepoint
-                for line in self.lines
-                for codepoint in ([c[0] for c in line] + [eol])
-            ]
-        )
-
-    def highlight(self, tranges: list[TextRange]):
-        """Set the color of all passed textranges, using `arg` as color"""
-        for trange in tranges:
-            color = trange.arg
-            for ln, col0, col1 in trange.lines():
-                if ln >= len(self.lines):
-                    break
-                line = self.lines[ln]
-                if col1 == -1:
-                    col1 = len(line)
-                for j in range(col0, col1):
-                    line[j] = (line[j][0], color)
-
     def get_location(self):
         return self.xpos, self.ypos
 
@@ -210,13 +327,9 @@ class TextEdit:
         return self.current_line[x][0]
 
     def set_text(self, text: str):
-        lines = text.split("\n")
-        self.lines = []
-        for line in lines:
-            self.lines.append([(ord(c), 1) for c in line])
+        super().set_text(text)
         self.ypos = 0
         self.xpos = 0
-        self.dirty = True
 
     def next_word(self) -> int:
         x = self.xpos
@@ -462,13 +575,7 @@ class TextEdit:
             self.scrollx = 0
 
     def scroll_screen(self, y: int):
-        self.scroll_pos -= y
-        y = self.rows - 1
-        l = len(self.lines)
-        if self.scroll_pos < 0:
-            self.scroll_pos = 0
-        if self.scroll_pos > l - y:
-            self.scroll_pos = l - y
+        super().scroll_screen(y)
 
     def click(self, x: int, y: int):
         """Handle mouse click to position cursor at clicked location."""
@@ -523,100 +630,27 @@ class TextEdit:
                 else:
                     self.last_clicked = None
 
-    def set_color(self, fg: int, bg: int):
-        self.fg = fg
-        self.bg = bg
-
-    def set_palette(self, colors: list[int]):
-        """Set palette. 0 = default bg, 1 = default text"""
-        self.bg = (colors[0] << 8) | 0xFF
-        self.fg = (colors[1] << 8) | 0xFF
-        for i, c in enumerate(colors):
-            self.palette[i] = ((c << 8) | 0xFF, self.bg)
-        self.con.set_color(self.fg, self.bg)
-
     def render(self):
         """
         Update the characters in the Console from the internal text state.
         Needs to be done when text, hihlighting or scroll position changes.
         """
+        # Update dirty flag based on scroll changes
         if (
-            self.dirty
-            or self.last_scroll != self.scroll_pos
+            self.last_scroll != self.scroll_pos
             or self.scrollx != self.last_scrollx
         ):
-            self.render_editor()
+            self.dirty = True
+            self.last_scroll = self.scroll_pos
+            self.last_scrollx = self.scrollx
 
-        # If current line is visible, move the cursor to the edit position
-        if (
-            self.ypos >= self.scroll_pos
-            and self.ypos <= self.scroll_pos + self.con.size.y
-        ):
-            self.con.cursor_on = True
-            self.con.cursor_pos = Int2(
-                self.xpos - self.scrollx, self.ypos - self.scroll_pos
-            )
-        else:
-            self.con.cursor_on = False
-
-    def render_editor(self):
-        self.last_scroll = self.scroll_pos
-        self.last_scrollx = self.scrollx
-        self.dirty = False
+        # Clamp cursor position
         self.xpos = clamp(self.xpos, 0, len(self.current_line) + 1)
-        self.con.set_color(self.fg, self.bg)
-        self.con.clear()
-        for y in range(self.rows):
-            i = y + self.scroll_pos
-            if i >= len(self.lines):
-                break
-            left_cropped = False
-            right_cropped = False
-            mark_startx = -1
-            mark_endx = -1
-            if self.mark_enabled:
-                # Figure if parts of this line should be marked
-                my0 = i - self.selection.start.y
-                my1 = self.selection.end.y - i
-                if my0 == 0:
-                    mark_startx = self.selection.start.x
-                elif my0 > 0:
-                    mark_startx = 0
-                if my1 == 0:
-                    mark_endx = self.selection.end.x - 1
-                elif my1 > 0:
-                    mark_endx = 999999
-                else:
-                    mark_startx = -1
-
-            for x, (t, c) in enumerate(self.lines[i], -self.scrollx):
-                if x < 0:
-                    if t != 0x20:
-                        left_cropped = True
-                elif x >= self.cols - 1:
-                    if t != 0x20:
-                        right_cropped = True
-                else:
-                    if mark_startx >= 0 and x >= mark_startx and x <= mark_endx:
-                        fg, bg = self.palette[self.mark_color]
-                    else:
-                        fg, bg = self.palette[c]
-                    self.con.put((x, y), t, fg, bg)
-
-            if left_cropped:
-                self.con.put(
-                    (0, y),
-                    ord("$"),
-                    pix.color.LIGHT_RED,
-                    pix.color.BLACK,
-                )
-            if right_cropped:
-                self.con.put(
-                    (self.cols - 1, y),
-                    ord("$"),
-                    pix.color.LIGHT_RED,
-                    pix.color.BLACK,
-                )
+        
+        # Call parent render with selection and cursor position
+        selection = self.selection if self.mark_enabled else None
+        cursor_pos = pix.Int2(self.xpos, self.ypos)
+        super().render(selection, cursor_pos)
 
 
 def main():
