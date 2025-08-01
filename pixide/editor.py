@@ -51,7 +51,7 @@ CMD = 0x10000000
 CTRL = 0x20000000
 
 
-def clamp[T: int | float](v: T, lo: T, hi: T) -> T:
+def clamp[T: (int, float)](v: T, lo: T, hi: T) -> T:
     "Clamp value between `lo` inclusive and `hi` exclusive."
     if v < lo:
         return lo
@@ -293,6 +293,7 @@ class TextEdit(TextViewer):
             self.dirty = True
         self.mark_enabled = False
 
+    @override
     def set_console(self, console: pix.Console):
         super().set_console(console)
         self.wrap_cursor()
@@ -326,6 +327,7 @@ class TextEdit(TextViewer):
     def get_char(self, x: int):
         return self.current_line[x][0]
 
+    @override
     def set_text(self, text: str):
         super().set_text(text)
         self.ypos = 0
@@ -574,6 +576,7 @@ class TextEdit(TextViewer):
         else:
             self.scrollx = 0
 
+    @override
     def scroll_screen(self, y: int):
         super().scroll_screen(y)
 
@@ -630,7 +633,8 @@ class TextEdit(TextViewer):
                 else:
                     self.last_clicked = None
 
-    def render(self):
+    @override
+    def render(self, selection: TextRange | None = None, cursor_pos: pix.Int2 | None = None):
         """
         Update the characters in the Console from the internal text state.
         Needs to be done when text, hihlighting or scroll position changes.
@@ -648,8 +652,11 @@ class TextEdit(TextViewer):
         self.xpos = clamp(self.xpos, 0, len(self.current_line) + 1)
         
         # Call parent render with selection and cursor position
-        selection = self.selection if self.mark_enabled else None
-        cursor_pos = pix.Int2(self.xpos, self.ypos)
+        # Use provided parameters or fall back to internal state
+        if selection is None:
+            selection = self.selection if self.mark_enabled else None
+        if cursor_pos is None:
+            cursor_pos = pix.Int2(self.xpos, self.ypos)
         super().render(selection, cursor_pos)
 
 
