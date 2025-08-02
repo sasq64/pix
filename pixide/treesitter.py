@@ -1,6 +1,7 @@
 from typing import Final
 import pixpy as pix
-from .editor import TextEdit, TextRange
+from .viewer import TextRange
+from .editor import TextEdit
 
 
 class TreeSitter:

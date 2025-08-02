@@ -10,11 +10,11 @@ class EditCmd:
     Represent an undoable editor command
     """
 
-    def apply(self, target: list[list[Char]]) -> Pos:
+    def apply(self, _target: list[list[Char]]) -> Pos:
         """Apply the command to the provided list of lines"""
         pass
 
-    def undo(self, target: list[list[Char]]) -> Pos:
+    def undo(self, _target: list[list[Char]]) -> Pos:
         """
         Undo the command from the provided list of lines.
         Returns recommended cursor position after undo, or None if undo

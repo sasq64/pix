@@ -1,5 +1,3 @@
-from collections.abc import Iterator
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, cast, override
 
@@ -14,37 +12,9 @@ from .edit_cmd import (
     EditSplit,
     CmdStack,
 )
+from .viewer import TextViewer, TextRange, Char
 
 Int2 = pix.Int2
-
-
-@dataclass
-class TextRange:
-    """Represent a range of text in list of strings"""
-
-    start: Int2
-    end: Int2
-    arg: int = -1
-
-    @override
-    def __repr__(self):
-        return f"{self.start} -> {self.end}"
-
-    def lines_reversed(self) -> Iterator[tuple[int, int, int]]:
-        msc, msl = self.start
-        mec, mel = self.end
-        for line_no in range(mel, msl - 1, -1):
-            col0 = msc if line_no == msl else 0
-            col1 = mec if line_no == mel else -1
-            yield (line_no, col0, col1)
-
-    def lines(self) -> Iterator[tuple[int, int, int]]:
-        msc, msl = self.start
-        mec, mel = self.end
-        for line_no in range(msl, mel + 1):
-            col0 = msc if line_no == msl else 0
-            col1 = mec if line_no == mel else -1
-            yield (line_no, col0, col1)
 
 
 CMD = 0x10000000
@@ -58,181 +28,6 @@ def clamp[T: (int, float)](v: T, lo: T, hi: T) -> T:
     if v >= hi:
         return cast(T, hi - 1)
     return v
-
-
-Char = tuple[int, int]
-"""A `Char` holds a character and a color index"""
-
-
-class TextViewer:
-    """
-    Non-interactive text viewer using a `pix.Console`.
-    Handles text display, scrolling, highlighting, and color management.
-    """
-
-    def __init__(self, con: pix.Console):
-        self.lines: list[list[Char]] = [[]]
-        self.scroll_pos: int = 0
-        self.scrollx: int = 0
-        self.dirty: bool = True
-        """Indicate that the console text need to be updated"""
-
-        self.cols: int = con.grid_size.x
-        self.rows: int = con.grid_size.y
-        self.con: pix.Console = con
-
-        self.fg: int = pix.color.GREEN
-        self.bg: int = 0x202330
-        self.palette: list[tuple[int, int]] = [(0, 0)] * 128
-        self.palette[0] = (self.bg, self.bg)
-
-        self.mark_color = 100
-        self.palette[100] = (pix.color.WHITE, pix.color.LIGHT_BLUE)
-
-        self.con.cursor_on = True
-        self.con.wrapping = False
-
-    def get_text(self, lines: list[list[Char]] | None = None):
-        if lines is None:
-            lines = self.lines
-        return "\n".join(["".join([chr(c[0]) for c in line]) for line in lines])
-
-    def get_codepoints(self) -> list[int]:
-        eol = 10
-        return list(
-            [
-                codepoint
-                for line in self.lines
-                for codepoint in ([c[0] for c in line] + [eol])
-            ]
-        )
-
-    def highlight(self, tranges: list[TextRange]):
-        """Set the color of all passed textranges, using `arg` as color"""
-        for trange in tranges:
-            color = trange.arg
-            for ln, col0, col1 in trange.lines():
-                if ln >= len(self.lines):
-                    break
-                line = self.lines[ln]
-                if col1 == -1:
-                    col1 = len(line)
-                for j in range(col0, col1):
-                    line[j] = (line[j][0], color)
-
-    def set_text(self, text: str):
-        lines = text.split("\n")
-        self.lines = []
-        for line in lines:
-            self.lines.append([(ord(c), 1) for c in line])
-        self.dirty = True
-
-    def set_console(self, console: pix.Console):
-        self.con = console
-        self.con.cursor_on = True
-        self.con.wrapping = False
-        self.fg = pix.color.GREEN
-        self.cols = self.con.grid_size.x
-        self.rows = self.con.grid_size.y
-        self.dirty = True
-
-    def set_color(self, fg: int, bg: int):
-        self.fg = fg
-        self.bg = bg
-
-    def set_palette(self, colors: list[int]):
-        """Set palette. 0 = default bg, 1 = default text"""
-        self.bg = (colors[0] << 8) | 0xFF
-        self.fg = (colors[1] << 8) | 0xFF
-        for i, c in enumerate(colors):
-            self.palette[i] = ((c << 8) | 0xFF, self.bg)
-        self.con.set_color(self.fg, self.bg)
-
-    def scroll_screen(self, y: int):
-        self.scroll_pos -= y
-        y = self.rows - 1
-        l = len(self.lines)
-        if self.scroll_pos < 0:
-            self.scroll_pos = 0
-        if self.scroll_pos > l - y:
-            self.scroll_pos = l - y
-
-    def render(self, selection: TextRange | None = None, cursor_pos: pix.Int2 | None = None):
-        """
-        Update the characters in the Console from the internal text state.
-        Needs to be done when text, highlighting or scroll position changes.
-        """
-        if self.dirty:
-            self.render_editor(selection)
-
-        # If cursor position provided and visible, show cursor
-        if cursor_pos is not None:
-            if (
-                cursor_pos.y >= self.scroll_pos
-                and cursor_pos.y <= self.scroll_pos + self.con.size.y
-            ):
-                self.con.cursor_on = True
-                self.con.cursor_pos = pix.Int2(
-                    cursor_pos.x - self.scrollx, cursor_pos.y - self.scroll_pos
-                )
-            else:
-                self.con.cursor_on = False
-
-    def render_editor(self, selection: TextRange | None = None):
-        self.dirty = False
-        self.con.set_color(self.fg, self.bg)
-        self.con.clear()
-        for y in range(self.rows):
-            i = y + self.scroll_pos
-            if i >= len(self.lines):
-                break
-            left_cropped = False
-            right_cropped = False
-            mark_startx = -1
-            mark_endx = -1
-            if selection is not None:
-                # Figure if parts of this line should be marked
-                my0 = i - selection.start.y
-                my1 = selection.end.y - i
-                if my0 == 0:
-                    mark_startx = selection.start.x
-                elif my0 > 0:
-                    mark_startx = 0
-                if my1 == 0:
-                    mark_endx = selection.end.x - 1
-                elif my1 > 0:
-                    mark_endx = 999999
-                else:
-                    mark_startx = -1
-
-            for x, (t, c) in enumerate(self.lines[i], -self.scrollx):
-                if x < 0:
-                    if t != 0x20:
-                        left_cropped = True
-                elif x >= self.cols - 1:
-                    if t != 0x20:
-                        right_cropped = True
-                else:
-                    if mark_startx >= 0 and x >= mark_startx and x <= mark_endx:
-                        fg, bg = self.palette[self.mark_color]
-                    else:
-                        fg, bg = self.palette[c]
-                    self.con.put((x, y), t, fg, bg)
-
-            if left_cropped:
-                self.con.put(
-                    (0, y),
-                    ord("$"),
-                    pix.color.LIGHT_RED,
-                    pix.color.BLACK,
-                )
-            if right_cropped:
-                self.con.put(
-                    (self.cols - 1, y),
-                    ord("$"),
-                    pix.color.LIGHT_RED,
-                    pix.color.BLACK,
-                )
 
 
 class TextEdit(TextViewer):
@@ -252,6 +47,7 @@ class TextEdit(TextViewer):
         self.yank: list[Char] = []
         self.cmd_stack: CmdStack = CmdStack()
 
+        self.indent_size = 4
         self.selection = TextRange(Int2.ZERO, Int2.ZERO)
         self.mark_enabled: bool = False
         self.last_clicked: pix.Int2 | None = None
@@ -406,8 +202,13 @@ class TextEdit(TextViewer):
             self.dirty = True
         return cut_data
 
-    def indent(self, dir: int):
+    def indent(self, shift: int):
+        """
+        Indent current line or selection by `shift` columns, in either
+        direction. Will stop at left edge.
+        """
         lines = [self.ypos]
+
         if self.mark_enabled:
             lines.clear()
             for line, _, _ in self.selection.lines():
@@ -418,18 +219,19 @@ class TextEdit(TextViewer):
 
         commands: list[EditCmd] = []
 
-        n = 4
-        if dir > 0:
+        if shift > 0:
             for line in lines:
-                commands.append(EditInsert(line, 0, [(0x20, 0)] * 4))
+                commands.append(EditInsert(line, 0, [(0x20, 0)] * shift))
         else:
+            n = -shift
             for line in lines:
                 n = self.get_leading_spaces(line)
-                if n > 4:
-                    n = 4
+                if n > -shift:
+                    n = -shift
                 commands.append(EditDelete(line, 0, n))
+            shift = -n
         if not self.mark_enabled:
-            self.xpos += dir * n
+            self.xpos += shift
         self.cmd_stack.apply(CombinedCmd(commands), self.lines)
         self.dirty = True
         if self.mark_enabled:
@@ -521,8 +323,8 @@ class TextEdit(TextViewer):
                     self.apply(EditJoin(self.ypos), True)
                 self.wrap_cursor()
         elif key == pix.key.TAB:
-            dir = -1 if mods & 1 != 0 else 1
-            self.indent(dir)
+            shift = -self.indent_size if mods & 1 != 0 else self.indent_size
+            self.indent(shift)
         elif key == pix.key.ENTER:
             i = self.get_leading_spaces(self.ypos)
             self.apply(EditSplit(self.ypos, self.xpos))
