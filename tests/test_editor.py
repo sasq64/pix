@@ -62,8 +62,8 @@ class TestEditor(unittest.TestCase):
 
         result = self.text_edit.get_text()
         self.assertEqual(result, "Hello XYZWorld")
-        self.assertEqual(self.text_edit.xpos, 9)  # Cursor after pasted content
-        self.assertEqual(self.text_edit.ypos, 0)
+        self.assertEqual(self.text_edit.cursor_col, 9)  # Cursor after pasted content
+        self.assertEqual(self.text_edit.cursor_line, 0)
         print("✓ Single line paste test passed")
 
     def test_paste_multi_line(self):
@@ -89,8 +89,8 @@ class TestEditor(unittest.TestCase):
         result = self.text_edit.get_text()
         expected = "Hello First\nSecond\nThirdWorld"
         self.assertEqual(result, expected)
-        self.assertEqual(self.text_edit.xpos, 5)  # Cursor after "Third"
-        self.assertEqual(self.text_edit.ypos, 2)  # On third line
+        self.assertEqual(self.text_edit.cursor_col, 5)  # Cursor after "Third"
+        self.assertEqual(self.text_edit.cursor_line, 2)  # On third line
         print("✓ Multi-line paste test passed")
 
     def test_cut_and_paste_roundtrip(self):

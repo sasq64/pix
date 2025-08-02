@@ -46,7 +46,7 @@ def main():
         ide,
     )
 
-    chat.con.set_device_no(1)
+    chat.console.set_device_no(1)
     current_dev = 0
 
     def click_handler(event: pix.event.AnyEvent) -> bool:
@@ -64,7 +64,7 @@ def main():
             if new_dev != current_dev:
                 current_dev = new_dev
                 ide.con.cursor_on = current_dev == 0
-                chat.con.cursor_on = current_dev == 1
+                chat.console.cursor_on = current_dev == 1
                 return False
             return current_dev == 0
         elif isinstance(event, pix.event.Resize):

@@ -138,12 +138,12 @@ class TestTextViewer(unittest.TestCase):
     def test_textviewer_initialization(self):
         """Test proper TextViewer initialization"""
         self.assertEqual(self.viewer.lines, [[]])
-        self.assertEqual(self.viewer.scroll_pos, 0)
-        self.assertEqual(self.viewer.scrollx, 0)
+        self.assertEqual(self.viewer.horizontal_scroll, 0)
+        self.assertEqual(self.viewer.vertical_scroll, 0)
         self.assertTrue(self.viewer.dirty)
         self.assertEqual(self.viewer.cols, 80)
         self.assertEqual(self.viewer.rows, 24)
-        self.assertEqual(self.viewer.con, self.console)
+        self.assertEqual(self.viewer.console, self.console)
         self.assertTrue(self.console.cursor_on)
         self.assertFalse(self.console.wrapping)
     
@@ -219,7 +219,7 @@ class TestTextViewer(unittest.TestCase):
         new_console = MockConsole(120, 30)
         self.viewer.set_console(new_console)
         
-        self.assertEqual(self.viewer.con, new_console)
+        self.assertEqual(self.viewer.console, new_console)
         self.assertEqual(self.viewer.cols, 120)
         self.assertEqual(self.viewer.rows, 30)
         self.assertTrue(new_console.cursor_on)
@@ -233,8 +233,8 @@ class TestTextViewer(unittest.TestCase):
         
         self.viewer.set_color(fg_color, bg_color)
         
-        self.assertEqual(self.viewer.fg, fg_color)
-        self.assertEqual(self.viewer.bg, bg_color)
+        self.assertEqual(self.viewer.fg_color, fg_color)
+        self.assertEqual(self.viewer.bg_color, bg_color)
     
     def test_set_palette(self):
         """Test setting color palette"""
@@ -244,8 +244,8 @@ class TestTextViewer(unittest.TestCase):
         # Check that background and foreground were set
         expected_bg = (colors[0] << 8) | 0xFF
         expected_fg = (colors[1] << 8) | 0xFF
-        self.assertEqual(self.viewer.bg, expected_bg)
-        self.assertEqual(self.viewer.fg, expected_fg)
+        self.assertEqual(self.viewer.bg_color, expected_bg)
+        self.assertEqual(self.viewer.fg_color, expected_fg)
         
         # Check palette entries
         for i, color in enumerate(colors):
@@ -259,19 +259,19 @@ class TestTextViewer(unittest.TestCase):
         
         # Scroll down by 10 lines
         self.viewer.scroll_screen(-10)
-        self.assertEqual(self.viewer.scroll_pos, 10)
+        self.assertEqual(self.viewer.horizontal_scroll, 10)
         
         # Scroll up by 5 lines
         self.viewer.scroll_screen(5)
-        self.assertEqual(self.viewer.scroll_pos, 5)
+        self.assertEqual(self.viewer.horizontal_scroll, 5)
     
     def test_scroll_screen_bounds_top(self):
         """Test scrolling boundary at top"""
         # Set up enough lines to allow scrolling
         self.viewer.lines = [[(ord('A'), 1)] for _ in range(50)]
-        self.viewer.scroll_pos = 5
+        self.viewer.horizontal_scroll = 5
         self.viewer.scroll_screen(10)  # Try to scroll past top
-        self.assertEqual(self.viewer.scroll_pos, 0)
+        self.assertEqual(self.viewer.horizontal_scroll, 0)
     
     def test_scroll_screen_bounds_bottom(self):
         """Test scrolling boundary at bottom"""
@@ -280,7 +280,7 @@ class TestTextViewer(unittest.TestCase):
         # Try to scroll past bottom
         self.viewer.scroll_screen(-50)
         expected_max = 30 - (self.viewer.rows - 1)  # 30 - 23 = 7
-        self.assertEqual(self.viewer.scroll_pos, expected_max)
+        self.assertEqual(self.viewer.horizontal_scroll, expected_max)
     
     def test_highlight_textranges(self):
         """Test highlighting text ranges with colors"""
@@ -366,7 +366,7 @@ class TestTextViewer(unittest.TestCase):
         """Test rendering with cursor outside visible area"""
         # Set up many lines of text
         self.viewer.lines = [[(ord(str(i % 10)), 1)] for i in range(50)]
-        self.viewer.scroll_pos = 10  # Scroll down
+        self.viewer.horizontal_scroll = 10  # Scroll down
         
         cursor_pos = Int2(0, 5)  # Cursor above visible area
         self.viewer.render(cursor_pos=cursor_pos)
@@ -404,7 +404,7 @@ class TestTextViewer(unittest.TestCase):
         # Create a long line with different characters to test scrolling
         long_text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" * 4  # 104 characters
         self.viewer.set_text(long_text)
-        self.viewer.scrollx = 10  # Scroll right by 10 characters
+        self.viewer.vertical_scroll = 10  # Scroll right by 10 characters
         
         self.viewer.render()
         
@@ -417,7 +417,7 @@ class TestTextViewer(unittest.TestCase):
         # Create text longer than console width
         long_text = "X" * 100
         self.viewer.set_text(long_text)
-        self.viewer.scrollx = 10  # Scroll to show cropping
+        self.viewer.vertical_scroll = 10  # Scroll to show cropping
         
         self.viewer.render()
         
@@ -462,7 +462,7 @@ class TestTextViewer(unittest.TestCase):
         self.viewer.scroll_screen(-50)
         
         # Should be able to scroll and stay within bounds
-        self.assertTrue(0 <= self.viewer.scroll_pos <= len(self.viewer.lines))
+        self.assertTrue(0 <= self.viewer.horizontal_scroll <= len(self.viewer.lines))
 
 
 if __name__ == "__main__":

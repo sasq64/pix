@@ -41,37 +41,37 @@ class TextEdit(TextViewer):
         # Additional editor-specific properties
         self.last_scroll: int = -1
         self.last_scrollx: int = -1
-        self.xpos: int = 0
-        self.ypos: int = 0
-        self.keepx: int = -1
-        self.yank: list[Char] = []
+        self.cursor_col: int = 0
+        self.cursor_line: int = 0
+        self.preserved_col: int = -1
+        self.yank_buffer: list[Char] = []
         self.cmd_stack: CmdStack = CmdStack()
 
         self.indent_size = 4
         self.selection = TextRange(Int2.ZERO, Int2.ZERO)
-        self.mark_enabled: bool = False
+        self.selection_active: bool = False
         self.last_clicked: pix.Int2 | None = None
         self.start_pos: pix.Int2 | None = None
 
         self.moves: Final = {
-            pix.key.LEFT: lambda: (self.xpos - 1, self.ypos),
-            pix.key.RIGHT: lambda: (self.xpos + 1, self.ypos),
-            CMD | pix.key.RIGHT: lambda: (self.next_word(), self.ypos),
-            CMD | pix.key.LEFT: lambda: (self.pre_word(), self.ypos),
-            pix.key.END: lambda: (len(self.lines[self.ypos]), self.ypos),
-            pix.key.HOME: lambda: (int(0), self.ypos),
-            pix.key.UP: lambda: (self.xpos, self.ypos - 1),
-            pix.key.DOWN: lambda: (self.xpos, self.ypos + 1),
-            pix.key.PAGEUP: lambda: (self.xpos, self.ypos - self.rows),
-            pix.key.PAGEDOWN: lambda: (self.xpos, self.ypos + self.rows),
-            CMD | pix.key.UP: lambda: (self.xpos, int(0)),
-            CMD | pix.key.DOWN: lambda: (self.xpos, len(self.lines)),
+            pix.key.LEFT: lambda: (self.cursor_col - 1, self.cursor_line),
+            pix.key.RIGHT: lambda: (self.cursor_col + 1, self.cursor_line),
+            CMD | pix.key.RIGHT: lambda: (self.next_word(), self.cursor_line),
+            CMD | pix.key.LEFT: lambda: (self.pre_word(), self.cursor_line),
+            pix.key.END: lambda: (len(self.lines[self.cursor_line]), self.cursor_line),
+            pix.key.HOME: lambda: (int(0), self.cursor_line),
+            pix.key.UP: lambda: (self.cursor_col, self.cursor_line - 1),
+            pix.key.DOWN: lambda: (self.cursor_col, self.cursor_line + 1),
+            pix.key.PAGEUP: lambda: (self.cursor_col, self.cursor_line - self.rows),
+            pix.key.PAGEDOWN: lambda: (self.cursor_col, self.cursor_line + self.rows),
+            CMD | pix.key.UP: lambda: (self.cursor_col, int(0)),
+            CMD | pix.key.DOWN: lambda: (self.cursor_col, len(self.lines)),
         }
-        "Key bindings for keys that move the cursor."
+        """Key bindings for keys that move the cursor."""
 
     @property
     def current_line(self) -> list[Char]:
-        return self.lines[self.ypos]
+        return self.lines[self.cursor_line]
 
     def select(self, start: pix.Int2, end: pix.Int2):
 
@@ -82,12 +82,12 @@ class TextEdit(TextViewer):
         if m != self.selection:
             self.selection = m
             self.dirty = True
-            self.mark_enabled = True
+            self.selection_active = True
 
     def deselect(self):
-        if self.mark_enabled:
+        if self.selection_active:
             self.dirty = True
-        self.mark_enabled = False
+        self.selection_active = False
 
     @override
     def set_console(self, console: pix.Console):
@@ -95,42 +95,39 @@ class TextEdit(TextViewer):
         self.wrap_cursor()
 
     def goto(self, xpos: int, ypos: int):
-        self.xpos = xpos
-        self.ypos = ypos
+        self.cursor_col = xpos
+        self.cursor_line = ypos
         self.wrap_cursor()
 
-    def goto_line(self, y: int):
+    def goto_line(self, line_no: int):
         """Goto line, try to keep X-position. Return `False` if cursor did not move"""
 
-        if y < 0:
-            y = 0
-        elif y >= len(self.lines):
-            y = len(self.lines) - 1
-        if self.ypos == y:
+        if line_no < 0:
+            line_no = 0
+        elif line_no >= len(self.lines):
+            line_no = len(self.lines) - 1
+        if self.cursor_line == line_no:
             return False
-        self.ypos = y
-        if self.keepx >= 0:
-            self.xpos = self.keepx
-        new_xpos = clamp(self.xpos, 0, len(self.current_line) + 1)
-        if new_xpos != self.xpos:
-            self.keepx = self.xpos
-        self.xpos = new_xpos
+        self.cursor_line = line_no
+        if self.preserved_col >= 0:
+            self.cursor_col = self.preserved_col
+        new_xpos = clamp(self.cursor_col, 0, len(self.current_line) + 1)
+        if new_xpos != self.cursor_col:
+            self.preserved_col = self.cursor_col
+        self.cursor_col = new_xpos
         return True
 
     def get_location(self):
-        return self.xpos, self.ypos
-
-    def get_char(self, x: int):
-        return self.current_line[x][0]
+        return self.cursor_col, self.cursor_line
 
     @override
     def set_text(self, text: str):
         super().set_text(text)
-        self.ypos = 0
-        self.xpos = 0
+        self.cursor_line = 0
+        self.cursor_col = 0
 
     def next_word(self) -> int:
-        x = self.xpos
+        x = self.cursor_col
         length = len(self.current_line)
         while x < length and self.current_line[x][0] != 0x20:
             x += 1
@@ -139,7 +136,7 @@ class TextEdit(TextViewer):
         return x
 
     def pre_word(self) -> int:
-        x = self.xpos
+        x = self.cursor_col
         while x > 0 and self.current_line[x - 1][0] == 0x20:
             x -= 1
         while x > 0 and self.current_line[x - 1][0] != 0x20:
@@ -154,20 +151,20 @@ class TextEdit(TextViewer):
     def undo(self):
         pos = self.cmd_stack.undo(self.lines)
         if pos is not None:
-            self.ypos, self.xpos = pos
+            self.cursor_line, self.cursor_col = pos
             self.dirty = True
 
     def redo(self):
         pos = self.cmd_stack.redo(self.lines)
         if pos is not None:
-            self.ypos, self.xpos = pos
+            self.cursor_line, self.cursor_col = pos
         self.dirty = True
 
     def insert(self, text: list[Char], join_prev: bool = False):
-        self.apply(EditInsert(self.ypos, self.xpos, text), join_prev)
+        self.apply(EditInsert(self.cursor_line, self.cursor_col, text), join_prev)
 
     def remove(self, count: int):
-        self.apply(EditDelete(self.ypos, self.xpos, count))
+        self.apply(EditDelete(self.cursor_line, self.cursor_col, count))
 
     def copy(self):
         data: list[list[Char]] = []
@@ -196,9 +193,9 @@ class TextEdit(TextViewer):
         if commands:
             self.apply(CombinedCmd(commands))
             # Position cursor at the start of the selection
-            self.xpos = self.selection.start.x
-            self.ypos = self.selection.start.y
-            self.mark_enabled = False
+            self.cursor_col = self.selection.start.x
+            self.cursor_line = self.selection.start.y
+            self.selection_active = False
             self.dirty = True
         return cut_data
 
@@ -207,9 +204,9 @@ class TextEdit(TextViewer):
         Indent current line or selection by `shift` columns, in either
         direction. Will stop at left edge.
         """
-        lines = [self.ypos]
+        lines = [self.cursor_line]
 
-        if self.mark_enabled:
+        if self.selection_active:
             lines.clear()
             for line, _, _ in self.selection.lines():
                 lines.append(line)
@@ -230,11 +227,11 @@ class TextEdit(TextViewer):
                     n = -shift
                 commands.append(EditDelete(line, 0, n))
             shift = -n
-        if not self.mark_enabled:
-            self.xpos += shift
+        if not self.selection_active:
+            self.cursor_col += shift
         self.cmd_stack.apply(CombinedCmd(commands), self.lines)
         self.dirty = True
-        if self.mark_enabled:
+        if self.selection_active:
             self.selection.start = Int2(0, self.selection.start[1])
             self.selection.end = Int2(
                 len(self.lines[self.selection.end[1]]), self.selection.end[1]
@@ -256,19 +253,19 @@ class TextEdit(TextViewer):
 
         commands: list[EditCmd] = []
 
-        x = self.xpos
+        x = self.cursor_col
         for i, line in enumerate(lines):
-            commands.append(EditInsert(self.ypos + i, x, line))
+            commands.append(EditInsert(self.cursor_line + i, x, line))
             # Split after this line content unless it's the last line
             if i < len(lines) - 1:
-                commands.append(EditSplit(self.ypos + i, x + len(line)))
+                commands.append(EditSplit(self.cursor_line + i, x + len(line)))
                 x = 0
 
         if commands:
             self.apply(CombinedCmd(commands))
             # Position cursor at end of pasted content
-            self.xpos = x + len(lines[-1])
-            self.ypos = self.ypos + len(lines) - 1
+            self.cursor_col = x + len(lines[-1])
+            self.cursor_line = self.cursor_line + len(lines) - 1
             self.dirty = True
 
     def handle_key(self, key: int, mods: int):
@@ -277,16 +274,16 @@ class TextEdit(TextViewer):
         if k in self.moves:
             # Cursor movement action
             (x, y) = self.moves[k]()
-            prev = pix.Int2(self.xpos, self.ypos)
-            if self.xpos != x:
-                self.keepx = -1
-                self.xpos = x
-            if self.ypos != y:
+            prev = pix.Int2(self.cursor_col, self.cursor_line)
+            if self.cursor_col != x:
+                self.preserved_col = -1
+                self.cursor_col = x
+            if self.cursor_line != y:
                 _ = self.goto_line(y)
             if shift:
                 if not self.start_pos:
                     self.start_pos = prev
-                self.select(self.start_pos, pix.Int2(self.xpos, self.ypos))
+                self.select(self.start_pos, pix.Int2(self.cursor_col, self.cursor_line))
             else:
                 self.deselect()
                 self.start_pos = None
@@ -309,74 +306,74 @@ class TextEdit(TextViewer):
                 lines: list[list[Char]] = []
                 for line in clipboard.splitlines():
                     lines.append([(ord(c), 1) for c in line])
-                if self.mark_enabled:
+                if self.selection_active:
                     self.cut()
                 self.paste(lines)
             elif key == ord("k"):
-                length = len(self.current_line) - self.xpos
-                self.apply(EditDelete(self.ypos, self.xpos, length))
+                length = len(self.current_line) - self.cursor_col
+                self.apply(EditDelete(self.cursor_line, self.cursor_col, length))
             elif key == ord("d"):
-                self.yank[:] = self.current_line
+                self.yank_buffer[:] = self.current_line
                 length = len(self.current_line)
-                self.apply(EditDelete(self.ypos, 0, length))
-                if self.ypos < len(self.lines) - 1:
-                    self.apply(EditJoin(self.ypos), True)
+                self.apply(EditDelete(self.cursor_line, 0, length))
+                if self.cursor_line < len(self.lines) - 1:
+                    self.apply(EditJoin(self.cursor_line), True)
                 self.wrap_cursor()
         elif key == pix.key.TAB:
-            shift = -self.indent_size if mods & 1 != 0 else self.indent_size
-            self.indent(shift)
+            shiftx = -self.indent_size if (mods & 1 != 0) else self.indent_size
+            self.indent(shiftx)
         elif key == pix.key.ENTER:
-            i = self.get_leading_spaces(self.ypos)
-            self.apply(EditSplit(self.ypos, self.xpos))
-            _ = self.goto_line(self.ypos + 1)
-            self.xpos = 0
+            i = self.get_leading_spaces(self.cursor_line)
+            self.apply(EditSplit(self.cursor_line, self.cursor_col))
+            _ = self.goto_line(self.cursor_line + 1)
+            self.cursor_col = 0
             if i:
                 self.insert([(0x20, 0)] * i, join_prev=True)
-                self.xpos = i
+                self.cursor_col = i
             self.wrap_cursor()
         elif key == pix.key.BACKSPACE:
-            if self.mark_enabled:
+            if self.selection_active:
                 self.cut()
             else:
-                if self.xpos > 0:
-                    self.xpos -= 1
+                if self.cursor_col > 0:
+                    self.cursor_col -= 1
                     self.remove(1)
-                elif self.ypos > 0:
+                elif self.cursor_line > 0:
                     # Handle backspace at beginning of line
-                    ll = len(self.lines[self.ypos - 1])
-                    self.apply(EditJoin(self.ypos - 1))
-                    _ = self.goto_line(self.ypos - 1)
-                    self.xpos = ll
-        self.keepx = -1
+                    ll = len(self.lines[self.cursor_line - 1])
+                    self.apply(EditJoin(self.cursor_line - 1))
+                    _ = self.goto_line(self.cursor_line - 1)
+                    self.cursor_col = ll
+        self.preserved_col = -1
 
     def wrap_cursor(self):
         """Check if cursor is out of bounds and move it to a correct position"""
-        if self.xpos < 0:
+        if self.cursor_col < 0:
             # Wrap to end of previous line
-            if self.goto_line(self.ypos - 1):
-                self.xpos = len(self.current_line)
+            if self.goto_line(self.cursor_line - 1):
+                self.cursor_col = len(self.current_line)
             else:
-                self.xpos = 0
+                self.cursor_col = 0
 
-        if self.xpos > len(self.current_line):
+        if self.cursor_col > len(self.current_line):
             # Wrap to beginning of next line
-            if self.goto_line(self.ypos + 1):
-                self.xpos = 0
+            if self.goto_line(self.cursor_line + 1):
+                self.cursor_col = 0
             else:
-                self.xpos = len(self.current_line)
+                self.cursor_col = len(self.current_line)
 
         # Scroll screen if ypos not visible
-        if self.ypos < self.scroll_pos:
-            self.scroll_pos = self.ypos
+        if self.cursor_line < self.horizontal_scroll:
+            self.horizontal_scroll = self.cursor_line
         y = self.rows - 1
-        if self.ypos >= self.scroll_pos + y:
-            self.scroll_pos = self.ypos - y
+        if self.cursor_line >= self.horizontal_scroll + y:
+            self.horizontal_scroll = self.cursor_line - y
 
         # The current line needs to be scrolled so the cursor is visible
-        if self.xpos > self.cols - 2:
-            self.scrollx = self.xpos - self.cols + 2
+        if self.cursor_col > self.cols - 2:
+            self.vertical_scroll = self.cursor_col - self.cols + 2
         else:
-            self.scrollx = 0
+            self.vertical_scroll = 0
 
     @override
     def scroll_screen(self, y: int):
@@ -388,17 +385,17 @@ class TextEdit(TextViewer):
         if x < 0 or y < 0:
             return
         # Reset horizontal position tracking
-        self.keepx = -1
-        grid_pos = Int2(x, y) // self.con.tile_size
-        text_pos = grid_pos + (0, self.scroll_pos)
+        self.preserved_col = -1
+        grid_pos = Int2(x, y) // self.console.tile_size
+        text_pos = grid_pos + (0, self.horizontal_scroll)
         self.last_clicked = text_pos
 
-        self.xpos = text_pos.x
-        if self.ypos != text_pos.y:
+        self.cursor_col = text_pos.x
+        if self.cursor_line != text_pos.y:
             _ = self.goto_line(text_pos.y)
-        if self.xpos > len(self.current_line):
-            self.xpos = len(self.current_line)
-        self.con.cursor_pos = Int2(self.xpos, self.ypos)
+        if self.cursor_col > len(self.current_line):
+            self.cursor_col = len(self.current_line)
+        self.console.cursor_pos = Int2(self.cursor_col, self.cursor_line)
 
     def update(self, events: list[pix.event.AnyEvent]):
         for e in events:
@@ -408,15 +405,15 @@ class TextEdit(TextViewer):
                 code = ord(e.text)
                 if code > 0xFFFF:
                     continue
-                if self.mark_enabled:
+                if self.selection_active:
                     self.cut()
                     self.start_pos = None
-                    self.mark_enabled = False
+                    self.selection_active = False
                 self.insert([(code, 1)])
-                self.xpos += len(e.text)
+                self.cursor_col += len(e.text)
                 self.wrap_cursor()
                 self.dirty = True
-                self.keepx = -1
+                self.preserved_col = -1
             elif isinstance(e, pix.event.Scroll):
                 self.scroll_screen(int(e.y * 3))
             elif isinstance(e, pix.event.Key):
@@ -427,8 +424,8 @@ class TextEdit(TextViewer):
                 self.click(int(e.x), int(e.y))
             elif isinstance(e, pix.event.Move):
                 if e.buttons and self.last_clicked:
-                    grid_pos = Int2(e.x, e.y) // self.con.tile_size
-                    text_pos = grid_pos + (0, self.scroll_pos)
+                    grid_pos = Int2(e.x, e.y) // self.console.tile_size
+                    text_pos = grid_pos + (0, self.horizontal_scroll)
                     if text_pos != self.selection.end:
                         # print(f"{self.last_clicked} to {text_pos}")
                         self.select(self.last_clicked, text_pos)
@@ -443,22 +440,22 @@ class TextEdit(TextViewer):
         """
         # Update dirty flag based on scroll changes
         if (
-            self.last_scroll != self.scroll_pos
-            or self.scrollx != self.last_scrollx
+            self.last_scroll != self.horizontal_scroll
+            or self.vertical_scroll != self.last_scrollx
         ):
             self.dirty = True
-            self.last_scroll = self.scroll_pos
-            self.last_scrollx = self.scrollx
+            self.last_scroll = self.horizontal_scroll
+            self.last_scrollx = self.vertical_scroll
 
         # Clamp cursor position
-        self.xpos = clamp(self.xpos, 0, len(self.current_line) + 1)
-        
+        self.cursor_col = clamp(self.cursor_col, 0, len(self.current_line) + 1)
+
         # Call parent render with selection and cursor position
         # Use provided parameters or fall back to internal state
         if selection is None:
-            selection = self.selection if self.mark_enabled else None
+            selection = self.selection if self.selection_active else None
         if cursor_pos is None:
-            cursor_pos = pix.Int2(self.xpos, self.ypos)
+            cursor_pos = pix.Int2(self.cursor_col, self.cursor_line)
         super().render(selection, cursor_pos)
 
 

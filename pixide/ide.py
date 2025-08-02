@@ -163,7 +163,7 @@ class PixIDE:
         # self.update_pos()
 
     def update_pos(self):
-        col, line = self.edit.xpos + 1, self.edit.ypos + 1
+        col, line = self.edit.cursor_col + 1, self.edit.cursor_line + 1
         self.title.cursor_pos = pix.Int2(self.title.grid_size.x - 18, 0)
         self.title.write(f"Ln {line:<3} Col {col:<3}  ")
 
@@ -193,7 +193,7 @@ class PixIDE:
 
         # Calculate thumb position (avoid division by zero)
         max_scroll = max(1, total_lines - visible_lines)
-        thumb_y = (self.edit.scroll_pos / max_scroll) * (
+        thumb_y = (self.edit.horizontal_scroll / max_scroll) * (
             scrollbar_height - thumb_height
         )
 
@@ -216,10 +216,10 @@ class PixIDE:
 
     def show_error(self, text: str, source_pos: pix.Int2):
         print(f"ERROR AT {source_pos}")
-        self.edit.scroll_pos = source_pos.y - 2
+        self.edit.horizontal_scroll = source_pos.y - 2
 
         # self.edit.dirty = True
-        pos = pix.Float2(source_pos.x - 0.5, source_pos.y - self.edit.scroll_pos)
+        pos = pix.Float2(source_pos.x - 0.5, source_pos.y - self.edit.horizontal_scroll)
         pos = pos * self.con.tile_size + (0, self.toolbar_height)
         self.error_box = ErrorBox(self.screen, pos, text, self.font, 20)
         print(f"ERROR BOX at {pos}")

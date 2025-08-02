@@ -56,25 +56,25 @@ class TextViewer:
 
     def __init__(self, con: pix.Console):
         self.lines: list[list[Char]] = [[]]
-        self.scroll_pos: int = 0
-        self.scrollx: int = 0
+        self.horizontal_scroll: int = 0
+        self.vertical_scroll: int = 0
         self.dirty: bool = True
         """Indicate that the console text need to be updated"""
 
         self.cols: int = con.grid_size.x
         self.rows: int = con.grid_size.y
-        self.con: pix.Console = con
+        self.console: pix.Console = con
 
-        self.fg: int = pix.color.GREEN
-        self.bg: int = 0x202330
+        self.fg_color: int = pix.color.GREEN
+        self.bg_color: int = 0x202330
         self.palette: list[tuple[int, int]] = [(0, 0)] * 128
-        self.palette[0] = (self.bg, self.bg)
+        self.palette[0] = (self.bg_color, self.bg_color)
 
-        self.mark_color = 100
+        self.selection_color = 100
         self.palette[100] = (pix.color.WHITE, pix.color.LIGHT_BLUE)
 
-        self.con.cursor_on = True
-        self.con.wrapping = False
+        self.console.cursor_on = True
+        self.console.wrapping = False
 
     def get_text(self, lines: list[list[Char]] | None = None):
         if lines is None:
@@ -112,34 +112,34 @@ class TextViewer:
         self.dirty = True
 
     def set_console(self, console: pix.Console):
-        self.con = console
-        self.con.cursor_on = True
-        self.con.wrapping = False
-        self.fg = pix.color.GREEN
-        self.cols = self.con.grid_size.x
-        self.rows = self.con.grid_size.y
+        self.console = console
+        self.console.cursor_on = True
+        self.console.wrapping = False
+        self.fg_color = pix.color.GREEN
+        self.cols = self.console.grid_size.x
+        self.rows = self.console.grid_size.y
         self.dirty = True
 
     def set_color(self, fg: int, bg: int):
-        self.fg = fg
-        self.bg = bg
+        self.fg_color = fg
+        self.bg_color = bg
 
     def set_palette(self, colors: list[int]):
         """Set palette. 0 = default bg, 1 = default text"""
-        self.bg = (colors[0] << 8) | 0xFF
-        self.fg = (colors[1] << 8) | 0xFF
+        self.bg_color = (colors[0] << 8) | 0xFF
+        self.fg_color = (colors[1] << 8) | 0xFF
         for i, c in enumerate(colors):
-            self.palette[i] = ((c << 8) | 0xFF, self.bg)
-        self.con.set_color(self.fg, self.bg)
+            self.palette[i] = ((c << 8) | 0xFF, self.bg_color)
+        self.console.set_color(self.fg_color, self.bg_color)
 
     def scroll_screen(self, y: int):
-        self.scroll_pos -= y
+        self.horizontal_scroll -= y
         y = self.rows - 1
         l = len(self.lines)
-        if self.scroll_pos < 0:
-            self.scroll_pos = 0
-        if self.scroll_pos > l - y:
-            self.scroll_pos = l - y
+        if self.horizontal_scroll < 0:
+            self.horizontal_scroll = 0
+        if self.horizontal_scroll > l - y:
+            self.horizontal_scroll = l - y
 
     def render(self, selection: TextRange | None = None, cursor_pos: pix.Int2 | None = None):
         """
@@ -152,22 +152,22 @@ class TextViewer:
         # If cursor position provided and visible, show cursor
         if cursor_pos is not None:
             if (
-                cursor_pos.y >= self.scroll_pos
-                and cursor_pos.y <= self.scroll_pos + self.con.size.y
+                cursor_pos.y >= self.horizontal_scroll
+                and cursor_pos.y <= self.horizontal_scroll + self.console.size.y
             ):
-                self.con.cursor_on = True
-                self.con.cursor_pos = pix.Int2(
-                    cursor_pos.x - self.scrollx, cursor_pos.y - self.scroll_pos
+                self.console.cursor_on = True
+                self.console.cursor_pos = pix.Int2(
+                    cursor_pos.x - self.vertical_scroll, cursor_pos.y - self.horizontal_scroll
                 )
             else:
-                self.con.cursor_on = False
+                self.console.cursor_on = False
 
     def render_editor(self, selection: TextRange | None = None):
         self.dirty = False
-        self.con.set_color(self.fg, self.bg)
-        self.con.clear()
+        self.console.set_color(self.fg_color, self.bg_color)
+        self.console.clear()
         for y in range(self.rows):
-            i = y + self.scroll_pos
+            i = y + self.horizontal_scroll
             if i >= len(self.lines):
                 break
             left_cropped = False
@@ -189,7 +189,7 @@ class TextViewer:
                 else:
                     mark_startx = -1
 
-            for x, (t, c) in enumerate(self.lines[i], -self.scrollx):
+            for x, (t, c) in enumerate(self.lines[i], -self.vertical_scroll):
                 if x < 0:
                     if t != 0x20:
                         left_cropped = True
@@ -198,20 +198,20 @@ class TextViewer:
                         right_cropped = True
                 else:
                     if mark_startx >= 0 and x >= mark_startx and x <= mark_endx:
-                        fg, bg = self.palette[self.mark_color]
+                        fg, bg = self.palette[self.selection_color]
                     else:
                         fg, bg = self.palette[c]
-                    self.con.put((x, y), t, fg, bg)
+                    self.console.put((x, y), t, fg, bg)
 
             if left_cropped:
-                self.con.put(
+                self.console.put(
                     (0, y),
                     ord("$"),
                     pix.color.LIGHT_RED,
                     pix.color.BLACK,
                 )
             if right_cropped:
-                self.con.put(
+                self.console.put(
                     (self.cols - 1, y),
                     ord("$"),
                     pix.color.LIGHT_RED,

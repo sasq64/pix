@@ -56,7 +56,7 @@ class TreeSitter:
         self.edit.set_palette(self.palette)
 
     def highlight(self):
-        if not self.edit.mark_enabled:
+        if not self.edit.selection_active:
             self.node = None
         self.treesitter.set_source_utf16(self.edit.get_codepoints())
         highlights = [
@@ -74,7 +74,7 @@ class TreeSitter:
         Select node of cursor position, or if selection is already active, the parent node
         """
         if self.node is None:
-            self.node = self.treesitter.find_node(self.edit.xpos * 2, self.edit.ypos)
+            self.node = self.treesitter.find_node(self.edit.cursor_col * 2, self.edit.cursor_line)
         if self.node is not None:
             start = pix.Int2(self.node.start[0] / 2, self.node.start[1])
             end = pix.Int2(self.node.end[0] / 2, self.node.end[1])
