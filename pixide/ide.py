@@ -78,8 +78,8 @@ class PixIDE:
         con_size = screen.size.toi() / self.ts.tile_size
 
         self.comp_enabled: bool = False
-        self.con: pix.Console = pix.Console(con_size.x, con_size.y - 1, self.ts)
-        self.con.wrapping = False
+        self.console: pix.Console = pix.Console(con_size.x, con_size.y - 1, self.ts)
+        self.console.wrapping = False
         self.title_bg: int = 0x2050FF
         self.running: bool = False
         tool_ts = pix.TileSet(self.font, tile_size=(50, 50))
@@ -107,7 +107,7 @@ class PixIDE:
         )
 
         self.current_file: Path
-        self.edit: Final = TextEdit(self.con)
+        self.edit: Final = TextEdit(self.console)
         self.treesitter: TreeSitter = TreeSitter(self.edit)
         self.load(self.files[1])
         self.treesitter.highlight()
@@ -160,7 +160,7 @@ class PixIDE:
             self.screen.target_size.toi() - (0, self.toolbar_height)
         ) / self.ts.tile_size
         print(f"CON SIZE {con_size.x} {con_size.y}")
-        self.con = pix.Console(con_size.x, con_size.y, self.ts)
+        self.console = pix.Console(con_size.x, con_size.y, self.ts)
         self.title = pix.Console(
             con_size.x - (self.tool_bar.size.x // self.ts.tile_size.x),
             1,
@@ -168,7 +168,7 @@ class PixIDE:
             font_size=self.font_size,
         )
         self.set_title(self.current_file.name)
-        self.edit.set_console(self.con)
+        self.edit.set_console(self.console)
 
     def set_title(self, name: str):
         self.title.set_color(pix.color.WHITE, self.title_bg)
@@ -238,7 +238,7 @@ class PixIDE:
         pos = pix.Float2(
             source_pos.x - 0.5, source_pos.y - self.edit.horizontal_scroll
         )
-        pos = pos * self.con.tile_size + (0, self.toolbar_height)
+        pos = pos * self.console.tile_size + (0, self.toolbar_height)
         self.error_box = ErrorBox(self.screen, pos, text, self.font, 20)
         print(f"ERROR BOX at {pos}")
 
@@ -371,7 +371,7 @@ class PixIDE:
                 )
                 continue
             keep.append(e)
-        # self.comp.set_pos(self.con.cursor_pos * self.con.tile_size)
+        # self.comp.set_pos(self.console.cursor_pos * self.console.tile_size)
         self.edit.update(keep)
         if should_update:
             self.update_pos()
@@ -385,7 +385,7 @@ class PixIDE:
         screen.clear(pix.color.DARK_GREY)
         # size = screen.size - (0, self.toolbar_height)
         screen.draw(
-            self.con, top_left=(0, self.toolbar_height), size=self.con.size
+            self.console, top_left=(0, self.toolbar_height), size=self.console.size
         )
 
         # Draw scrollbar

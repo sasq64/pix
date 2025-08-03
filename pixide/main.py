@@ -53,6 +53,9 @@ def main():
     current_dev = 0
 
     def activate(what: int):
+        nonlocal current_dev
+        print(f"ACIVATE {what}")
+        current_dev = what
         if what == IDE:
             pix.set_keyboard_device(0)
             chat.activate(False)
@@ -63,7 +66,7 @@ def main():
             pix.set_keyboard_device(1)
 
     def event_handler(event: pix.event.AnyEvent) -> bool:
-        nonlocal split
+        nonlocal split, current_dev
         if isinstance(event, pix.event.Click):
             new_dev = -1
             nonlocal current_dev
@@ -92,13 +95,14 @@ def main():
             chat.resize()
         elif isinstance(event, pix.event.Key):
             if event.key == pix.key.ESCAPE:
-                activate(SMART_CHAT)
+                activate(current_dev^1)
         return True
 
     pix.add_event_listener(event_handler, 0)
 
     chat.write("Hello and welcome!\n> ")
     chat.read_line()
+    chat.activate(False)
 
     print("RUN")
     while pix.run_loop():

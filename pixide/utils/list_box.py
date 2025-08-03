@@ -9,7 +9,7 @@ class ListBox:
     """
 
     def __init__(self, console: pix.Console):
-        self.con: Final = console
+        self.console: Final = console
         self.xy: pix.Int2 = pix.Int2(0, 0)
         self.selected: int = 0
         self.scroll: int = 0
@@ -31,21 +31,21 @@ class ListBox:
 
     def update(self):
         pos = pix.Int2(0, 0)
-        self.con.set_color(pix.color.WHITE, pix.color.BLACK)
-        self.con.clear()
-        for i in range(self.scroll, self.scroll + self.con.grid_size.y):
+        self.console.set_color(pix.color.WHITE, pix.color.BLACK)
+        self.console.clear()
+        for i in range(self.scroll, self.scroll + self.console.grid_size.y):
             if i >= 0 and i < len(self.lines):
                 line = self.lines[i]
-                self.con.cursor_pos = pos
+                self.console.cursor_pos = pos
                 if self.selected == i:
-                    self.con.set_color(pix.color.WHITE, pix.color.BLUE)
+                    self.console.set_color(pix.color.WHITE, pix.color.BLUE)
                 else:
-                    self.con.set_color(pix.color.WHITE, pix.color.BLACK)
-                self.con.write(line)
+                    self.console.set_color(pix.color.WHITE, pix.color.BLACK)
+                self.console.write(line)
             pos += (0, 1)
 
     def move(self, dy: int):
-        h = self.con.grid_size.y
+        h = self.console.grid_size.y
         self.selected += dy
         if self.selected < 0:
             self.selected = 0
@@ -60,8 +60,8 @@ class ListBox:
 
     def render(self, screen: pix.Canvas, xy: pix.Float2):
         screen.draw_color = 0xFFFFFFFF
-        screen.filled_rect(top_left=xy, size=self.con.size + (8, 8))
-        screen.draw(self.con, top_left=xy + (4, 4))
+        screen.filled_rect(top_left=xy, size=self.console.size + (8, 8))
+        screen.draw(self.console, top_left=xy + (4, 4))
 
     def get_selection(self) -> str | None:
         if len(self.lines) > self.selected:
