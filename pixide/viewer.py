@@ -73,6 +73,8 @@ class TextViewer:
         self.selection_color = 100
         self.palette[100] = (pix.color.WHITE, pix.color.LIGHT_BLUE)
 
+        self.show_cursor = True
+
         self.console.cursor_on = True
         self.console.wrapping = False
 
@@ -113,7 +115,7 @@ class TextViewer:
 
     def set_console(self, console: pix.Console):
         self.console = console
-        self.console.cursor_on = True
+        self.console.cursor_on = self.show_cursor
         self.console.wrapping = False
         self.fg_color = pix.color.GREEN
         self.cols = self.console.grid_size.x
@@ -141,7 +143,11 @@ class TextViewer:
         if self.horizontal_scroll > l - y:
             self.horizontal_scroll = l - y
 
-    def render(self, selection: TextRange | None = None, cursor_pos: pix.Int2 | None = None):
+    def render(
+        self,
+        selection: TextRange | None = None,
+        cursor_pos: pix.Int2 | None = None,
+    ):
         """
         Update the characters in the Console from the internal text state.
         Needs to be done when text, highlighting or scroll position changes.
@@ -155,7 +161,7 @@ class TextViewer:
                 cursor_pos.y >= self.horizontal_scroll
                 and cursor_pos.y <= self.horizontal_scroll + self.console.size.y
             ):
-                self.console.cursor_on = True
+                self.console.cursor_on = self.show_cursor
                 self.console.cursor_pos = pix.Int2(
                     cursor_pos.x - self.vertical_scroll, cursor_pos.y - self.horizontal_scroll
                 )

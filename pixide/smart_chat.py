@@ -13,7 +13,9 @@ from openai.types.responses import (
     ResponseFunctionToolCallParam,
     ResponseInputItemParam,
 )
-from openai.types.responses.easy_input_message_param import EasyInputMessageParam
+from openai.types.responses.easy_input_message_param import (
+    EasyInputMessageParam,
+)
 from openai.types.responses.response_input_item_param import FunctionCallOutput
 from openai import OpenAI
 
@@ -99,6 +101,37 @@ class Console(Protocol):
 
 class SmartChat:
 
+    def __init__(self, canvas: pix.Canvas, font: pix.Font, ide: PixIDE):
+        self.canvas = canvas
+        self.font_size: int = 20
+        self.font = font
+        self.editor = ide.edit
+        self.ide = ide
+        self.active: bool = False
+        self.executor = ThreadPoolExecutor(max_workers=2)
+        self.ts: pix.TileSet = pix.TileSet(self.font, size=self.font_size)
+        con_size = canvas.size.toi() / self.ts.tile_size
+        self.con: pix.Console = pix.Console(con_size.x, con_size.y - 1, self.ts)
+        self.con.set_device_no(1)
+        self.con.cursor_on = False
+        pix.add_event_listener(self.handle_events, 0)
+
+        key_file = Path.home() / ".openai.key"
+        if not key_file.exists():
+            raise FileNotFoundError("Can not find .openai.key in $HOME!")
+        key = (Path.home() / ".openai.key").read_text().rstrip()
+        self.client = OpenAI(api_key=key)
+
+        self.responses: list[Future[Response]] = []
+
+        self.messages: list[ResponseInputItemParam] = []
+        self.code: str | None = None
+        self.tools: list[FunctionToolParam] = []
+        self.functions: dict[str, Callable[..., object]] = {}
+
+        self.add_function(self.read_users_program)
+        self.add_function(self.run_users_program)
+
     def run(self) -> str:
         current_file = self.ide.current_file
         file_name = current_file.as_posix()
@@ -110,7 +143,9 @@ class SmartChat:
 
         new_env = os.environ.copy()
         new_env["PIX_CHECK"] = "1"
-        new_env["PYTHONPATH"] = file_dir + os.pathsep + new_env.get("PYTHONPATH", "")
+        new_env["PYTHONPATH"] = (
+            file_dir + os.pathsep + new_env.get("PYTHONPATH", "")
+        )
 
         pr = subprocess.run(
             ["python3", (Path.home() / ".pixwork.py").as_posix()],
@@ -130,44 +165,14 @@ class SmartChat:
     def run_users_program(self) -> str:
         """Run the users program in headless mode for one frame. Use this function to see which errors (if any) the program contains. Will return 'OK' if no errors detected, otherwise the error in string form."""
         return self.run()
-
-    def __init__(self, canvas: pix.Canvas, font: pix.Font, ide: PixIDE):
-        self.canvas = canvas
-        self.font_size: int = 20
-        self.font = font
-        self.editor = ide.edit
-        self.ide = ide
-        self.executor = ThreadPoolExecutor(max_workers=2)
-        self.tile_set: pix.TileSet = pix.TileSet(self.font, size=self.font_size)
-        con_size = canvas.size.toi() / self.tile_set.tile_size
-        self.console: pix.Console = pix.Console(con_size.x, con_size.y - 1, self.tile_set)
-        self.console.set_device_no(1)
-        pix.add_event_listener(self.handle_events, 0)
-
-        key_file = (Path.home() / ".openai.key")
-        if not key_file.exists():
-            raise FileNotFoundError("Can not find .openai.key in $HOME!")
-        key = (Path.home() / ".openai.key").read_text().rstrip()
-        self.client = OpenAI(api_key=key)
-
-        self.responses: list[Future[Response]] = []
-
-        self.messages: list[ResponseInputItemParam] = []
-        self.code: str | None = None
-        self.tools: list[FunctionToolParam] = []
-        self.functions: dict[str, Callable[..., object]] = {}
-
-        self.add_function(self.read_users_program)
-        self.add_function(self.run_users_program)
-
     def resize(self):
-        con_size = self.canvas.size.toi() / self.tile_set.tile_size
-        was_reading_line = self.console.reading_line
-        self.console = pix.Console(con_size.x, con_size.y - 1, self.tile_set)
-        self.console.set_device_no(1)
+        con_size = self.canvas.size.toi() / self.ts.tile_size
+        was_reading_line = self.con.reading_line
+        self.con = pix.Console(con_size.x, con_size.y - 1, self.ts)
+        self.con.set_device_no(1)
         self.write("Hello and welcome!\n> ")
         if was_reading_line:
-            self.console.read_line()
+            self.con.read_line()
 
     def add_function(
         self,
@@ -204,7 +209,9 @@ class SmartChat:
     def set_code(self, code: str):
         self.code = code
 
-    def get_ai_response(self, messages: list[ResponseInputItemParam]) -> Response:
+    def get_ai_response(
+        self, messages: list[ResponseInputItemParam]
+    ) -> Response:
         response = self.client.responses.create(
             model="gpt-4o-mini",
             instructions="""
@@ -264,23 +271,32 @@ User: Explain this
                 return
 
         self.messages.append(
-            EasyInputMessageParam(role="assistant", content=response.output_text)
+            EasyInputMessageParam(
+                role="assistant", content=response.output_text
+            )
         )
-        self.console.write(response.output_text)
-        self.console.write("\n> ")
+        self.con.write(response.output_text)
+        self.con.write("\n> ")
         self.read_line()
 
     def handle_events(self, event: object) -> bool:
         if isinstance(event, pix.event.Text):
             if event.device == 1:
                 print(event.text)
-                self.console.write("\n")
+                self.con.write("\n")
                 self.add_line(event.text)
                 return False
         return True
 
     def write(self, text: str):
-        self.console.write(text)
+        self.con.write(text)
+
+    def activate(self, on: bool):
+        self.active = on
+        if on:
+            self.con.cursor_on = True
+        else:
+            self.con.cursor_on = False
 
     def render(self):
 
@@ -291,7 +307,7 @@ User: Explain this
                 self.responses.pop(0)
                 self.handle_response(r.result())
 
-        self.canvas.draw(self.console, top_left=(0, 0), size=self.console.size)
+        self.canvas.draw(self.con, top_left=(0, 0), size=self.con.size)
 
     def read_line(self):
-        self.console.read_line()
+        self.con.read_line()
