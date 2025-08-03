@@ -14,6 +14,9 @@ class IdeArgs:
 fwd = Path(__file__).parent
 hack_font = fwd / "data" / "HackNerdFont-Regular.ttf"
 
+IDE = 0
+SMART_CHAT = 1
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -49,22 +52,35 @@ def main():
     chat.con.set_device_no(1)
     current_dev = 0
 
-    def click_handler(event: pix.event.AnyEvent) -> bool:
+    def activate(what: int):
+        if what == IDE:
+            pix.set_keyboard_device(0)
+            chat.activate(False)
+            ide.activate(True)
+        else:
+            chat.activate(True)
+            ide.activate(False)
+            pix.set_keyboard_device(1)
+
+    def event_handler(event: pix.event.AnyEvent) -> bool:
         nonlocal split
         if isinstance(event, pix.event.Click):
             new_dev = -1
             nonlocal current_dev
-            if event.pos.inside(split[0].offset, split[0].offset + split[0].size):
+            if event.pos.inside(
+                split[0].offset, split[0].offset + split[0].size
+            ):
                 new_dev = 0
-            elif event.pos.inside(split[1].offset, split[1].offset + split[1].size):
+            elif event.pos.inside(
+                split[1].offset, split[1].offset + split[1].size
+            ):
                 new_dev = 1
             pix.set_keyboard_device(new_dev)
 
             print(f"{new_dev} {current_dev}")
             if new_dev != current_dev:
                 current_dev = new_dev
-                ide.con.cursor_on = current_dev == 0
-                chat.con.cursor_on = current_dev == 1
+                activate(current_dev)
                 return False
             return current_dev == 0
         elif isinstance(event, pix.event.Resize):
@@ -74,9 +90,12 @@ def main():
             ide.resize()
             chat.canvas = split[1]
             chat.resize()
+        elif isinstance(event, pix.event.Key):
+            if event.key == pix.key.ESCAPE:
+                activate(SMART_CHAT)
         return True
 
-    pix.add_event_listener(click_handler, 0)
+    pix.add_event_listener(event_handler, 0)
 
     chat.write("Hello and welcome!\n> ")
     chat.read_line()

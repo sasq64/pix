@@ -34,13 +34,19 @@ class ErrorBox:
         lines: list[str] = []
         for line in text.splitlines():
             lines += wrap_text(line, font, size, canvas.size.x - margin * 2)
-        self.lines = [font.make_image(line, size, pix.color.BLACK) for line in lines]
+        self.lines = [
+            font.make_image(line, size, pix.color.BLACK) for line in lines
+        ]
         self.rect_size = pix.Float2(
             canvas.size.x - 2, len(lines) * self.lines[0].size.y + margin * 2
         )
         sz = pix.Float2(32, 24)
         self.triangle = pix.Image(size=sz)
-        points: list[pix.Float2] = [pix.Float2(sz.x / 2, 0), sz, pix.Float2(0, sz.y)]
+        points: list[pix.Float2] = [
+            pix.Float2(sz.x / 2, 0),
+            sz,
+            pix.Float2(0, sz.y),
+        ]
         self.triangle.draw_color = pix.color.LIGHT_RED
         self.triangle.polygon(points, True)
 
@@ -74,7 +80,7 @@ class PixIDE:
         self.comp_enabled: bool = False
         self.con: pix.Console = pix.Console(con_size.x, con_size.y - 1, self.ts)
         self.con.wrapping = False
-        self.title_bg: int = 0x2050ff
+        self.title_bg: int = 0x2050FF
         self.running: bool = False
         tool_ts = pix.TileSet(self.font, tile_size=(50, 50))
         self.tool_bar: Final = (
@@ -92,7 +98,12 @@ class PixIDE:
         self.set_title("example.py")
 
         self.files: Final = sorted(
-            [p for p in Path("examples").iterdir() if p.is_file() if p.suffix == ".py"]
+            [
+                p
+                for p in Path("examples").iterdir()
+                if p.is_file()
+                if p.suffix == ".py"
+            ]
         )
 
         self.current_file: Path
@@ -106,6 +117,9 @@ class PixIDE:
         self.resize()
 
         pix.run_every_frame(self.draw_title)
+
+    def activate(self, on: bool):
+        self.edit.show_cursor = on
 
     def get_text(self) -> str:
         """Get the current editor text content"""
@@ -125,7 +139,9 @@ class PixIDE:
 
     def draw_title(self):
         self.screen.draw_color = self.title_bg
-        self.screen.filled_rect((0, 0), size=(self.screen.size.x, self.toolbar_height))
+        self.screen.filled_rect(
+            (0, 0), size=(self.screen.size.x, self.toolbar_height)
+        )
 
         self.tool_bar.render()
         sz = self.tool_bar.size
@@ -219,7 +235,9 @@ class PixIDE:
         self.edit.scroll_pos = source_pos.y - 2
 
         # self.edit.dirty = True
-        pos = pix.Float2(source_pos.x - 0.5, source_pos.y - self.edit.scroll_pos)
+        pos = pix.Float2(
+            source_pos.x - 0.5, source_pos.y - self.edit.scroll_pos
+        )
         pos = pos * self.con.tile_size + (0, self.toolbar_height)
         self.error_box = ErrorBox(self.screen, pos, text, self.font, 20)
         print(f"ERROR BOX at {pos}")
@@ -229,7 +247,9 @@ class PixIDE:
         self.running = True
         self.run2()
         self.running = False
-        self.tool_bar.set_button(0, Nerd.nf_fa_play_circle, pix.color.LIGHT_GREEN)
+        self.tool_bar.set_button(
+            0, Nerd.nf_fa_play_circle, pix.color.LIGHT_GREEN
+        )
 
     def run2(self):
         screen = self.screen
@@ -270,7 +290,9 @@ class PixIDE:
         except SyntaxError as se:
             screen.swap()
             print(f"{se.lineno} {se.offset}")
-            self.show_error(se.msg, pix.Int2((se.offset or 1) - 1, se.lineno or 0))
+            self.show_error(
+                se.msg, pix.Int2((se.offset or 1) - 1, se.lineno or 0)
+            )
             events = pix.all_events()
             return
         except Exception as e:
@@ -344,7 +366,9 @@ class PixIDE:
                     continue
             elif isinstance(e, pix.event.Move):
                 self.error_box = None
-                keep.append(pix.event.Move(e.x, e.y - self.toolbar_height, e.buttons))
+                keep.append(
+                    pix.event.Move(e.x, e.y - self.toolbar_height, e.buttons)
+                )
                 continue
             keep.append(e)
         # self.comp.set_pos(self.con.cursor_pos * self.con.tile_size)
@@ -360,7 +384,9 @@ class PixIDE:
         self.edit.render()
         screen.clear(pix.color.DARK_GREY)
         # size = screen.size - (0, self.toolbar_height)
-        screen.draw(self.con, top_left=(0, self.toolbar_height), size=self.con.size)
+        screen.draw(
+            self.con, top_left=(0, self.toolbar_height), size=self.con.size
+        )
 
         # Draw scrollbar
         self.draw_scrollbar()
@@ -373,4 +399,3 @@ class PixIDE:
         if self.do_run:
             self.do_run = False
             self.run()
-
