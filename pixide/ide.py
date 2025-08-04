@@ -250,7 +250,8 @@ class PixIDE:
         )
 
     def run2(self):
-        screen = self.screen
+        screen = pix.get_display()
+        screen.draw_color = pix.color.WHITE
         source = self.edit.get_text()
         file_name = self.current_file.name
         print(file_name)
@@ -258,8 +259,8 @@ class PixIDE:
         text = self.edit.get_text()
         with open(Path.home() / ".pixwork.py", "w") as f:
             _ = f.write(text)
-        col = 0xB1B1B3
-        screen.draw_color = (col << 8) | 0xFF
+        #col = 0xB1B1B3
+        #screen.draw_color = (col << 8) | 0xFF
         fc = screen.frame_counter
 
         # Save current working directory and sys.path to restore later

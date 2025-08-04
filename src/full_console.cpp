@@ -10,9 +10,7 @@ template <typename T, typename S = int> static constexpr S len(T&& t)
 
 System::Propagate FullConsole::put_event(const KeyEvent& event)
 {
-    if (event.device != device) {
-        return System::Propagate::Pass;
-    }
+    if (event.device != device) { return System::Propagate::Pass; }
     auto key = static_cast<Key>(event.key);
     if (key == Key::RIGHT) {
         xpos++;
@@ -41,25 +39,57 @@ System::Propagate FullConsole::put_event(const KeyEvent& event)
 
     if (xpos < 0) { xpos = 0; }
     if (xpos > len(line)) { xpos = len(line); }
+
+    // Update scroll position when cursor comes within 2 characters of border
+    auto available_width = console->get_size().first - edit_start.x;
+    auto cursor_screen_pos = xpos - scroll_pos;
+
+    if (cursor_screen_pos < 2 && scroll_pos > 0) {
+        // Scroll left when cursor is within 2 chars of left edge
+        scroll_pos = std::max(0, xpos - 2);
+    } else if (cursor_screen_pos >= available_width - 2) {
+        // Scroll right when cursor is within 2 chars of right edge
+        scroll_pos = std::max(0, xpos - available_width + 3);
+    }
+
     return System::Propagate::Stop;
 }
 System::Propagate FullConsole::put_event(const TextEvent& te)
 {
-    if (te.device != device) {
-        return System::Propagate::Pass;
-    }
+    if (te.device != device) { return System::Propagate::Pass; }
     for (auto&& c : utf8::utf8_decode(te.text)) {
         line.insert(xpos, 1, c);
         xpos++;
     }
+
+    // Update scroll position after text insertion
+    auto available_width = console->get_size().first - edit_start.x;
+    auto cursor_screen_pos = xpos - scroll_pos;
+
+    if (cursor_screen_pos >= available_width - 2) {
+        // Scroll right when cursor is within 2 chars of right edge
+        scroll_pos = std::max(0, xpos - available_width + 3);
+    }
+
     return System::Propagate::Stop;
 }
 void FullConsole::refresh()
 {
-    auto w = console->get_size().second;
-    console->clear_area(edit_start.x, edit_start.y, w - edit_start.x, 1,
+    auto w = console->get_size().first;
+    auto available_width = w - edit_start.x;
+
+    console->clear_area(edit_start.x, edit_start.y, available_width, 1,
                         color::white, color::black);
-    console->text(edit_start.x, edit_start.y, line, fg, bg);
+
+    // Extract visible portion of line based on scroll position
+    auto line_start = std::min(scroll_pos, static_cast<int>(line.length()));
+    auto visible_length =
+        std::min(available_width, static_cast<int>(line.length()) - line_start);
+
+    if (visible_length > 0) {
+        std::u32string visible_line = line.substr(line_start, visible_length);
+        console->text(edit_start.x, edit_start.y, visible_line, fg, bg);
+    }
 }
 FullConsole::FullConsole(const std::shared_ptr<PixConsole>& con,
                          const std::shared_ptr<System>& sys)
@@ -108,6 +138,7 @@ void FullConsole::read_line()
     cursor_on = true;
     edit_start = cursor;
     reading_line = true;
+    scroll_pos = 0;
 }
 
 void FullConsole::write(char32_t ch)
@@ -166,10 +197,11 @@ void FullConsole::render2(pix::Context* context, Vec2f xy, Vec2f sz)
         auto cw = sz.x / cols;
         auto ch = sz.y / rows;
 
-        xy = Vec2f{(cursor.x + xpos) * cw, cursor.y * ch} + xy;
+        xy = Vec2f{(cursor.x + xpos - scroll_pos) * cw, cursor.y * ch} + xy;
         context->set_color(color::orange);
         context->filled_rect(xy, {cw, ch});
-        auto const c = console->get_char(cursor.x + xpos, cursor.y);
+        auto const c =
+            console->get_char(cursor.x + xpos - scroll_pos, cursor.y);
         auto const tex = console->get_texture_for_char(c);
         gl::ProgramCache::get_instance()
             .get_program<gl::ProgramCache::Textured>()
@@ -183,4 +215,11 @@ void FullConsole::set_line(const std::string& text)
 {
     line = utf8::utf8_decode(text);
     xpos = len(line);
+    scroll_pos = 0;
+
+    // Adjust scroll position if cursor is beyond visible area
+    auto available_width = console->get_size().second - edit_start.x;
+    if (xpos >= available_width - 2) {
+        scroll_pos = std::max(0, xpos - available_width + 3);
+    }
 }

@@ -13,6 +13,7 @@ class IdeArgs:
 
 fwd = Path(__file__).parent
 hack_font = fwd / "data" / "HackNerdFont-Regular.ttf"
+chat_font = fwd / "data" / "3270.ttf"
 
 IDE = 0
 SMART_CHAT = 1
@@ -45,7 +46,7 @@ def main():
     ide = PixIDE(split[0], font_size=args.font_size)
     chat = SmartChat(
         split[1].crop((10, 10), split[1].size - (20, 20)),
-        pix.load_font(hack_font),
+        pix.load_font(chat_font),
         ide,
     )
 

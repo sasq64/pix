@@ -21,6 +21,7 @@ class FullConsole
 
     Vec2i edit_start{0, 0};
     int xpos = 0;
+    int scroll_pos = 0;
     std::u32string line;
     void refresh();
     int listener = -1;

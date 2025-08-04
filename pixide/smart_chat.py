@@ -4,6 +4,7 @@ import os
 import inspect
 from pathlib import Path
 import subprocess
+from textwrap import wrap
 from typing import Literal, Protocol, Callable, TypeGuard
 
 import pixpy as pix
@@ -103,7 +104,7 @@ class SmartChat:
 
     def __init__(self, canvas: pix.Canvas, font: pix.Font, ide: PixIDE):
         self.canvas = canvas
-        self.font_size: int = 20
+        self.font_size: int = 24
         self.font = font
         self.editor = ide.edit
         self.ide = ide
@@ -166,7 +167,7 @@ class SmartChat:
         return self.run()
 
     def resize(self):
-        con_size = self.canvas.size.toi() / self.tile_set.tile_size
+        con_size = self.canvas.size.toi() // self.tile_set.tile_size
         self.console = pix.Console(con_size.x, con_size.y - 1, self.tile_set)
         self.console.set_device_no(1)
         self.write("Let me know if you need help.\n")
@@ -283,6 +284,7 @@ User: Explain this
         if isinstance(event, pix.event.Text):
             if event.device == 1:
                 print(event.text)
+                self.write(event.text, pix.color.LIGHT_BLUE)
                 self.console.write("\n")
                 self.add_line(event.text)
                 return False
@@ -290,7 +292,17 @@ User: Explain this
 
     def write(self, text: str, color: int = pix.color.WHITE):
         self.console.set_color(color, pix.color.BLACK)
-        self.console.write(text)
+        x = self.console.cursor_pos.x
+        lines = wrap(text, self.console.grid_size.x - x)
+        if len(lines) == 0:
+            self.console.write(text)
+            return
+        self.console.write(lines[0])
+        self.console.write("\n")
+        pre = " " * x
+        for line in lines[1:]:
+            self.console.write(pre + line)
+            self.console.write("\n")
 
     def activate(self, on: bool):
         self.active = on
@@ -311,6 +323,7 @@ User: Explain this
         self.canvas.draw(self.console, top_left=(0, 0), size=self.console.size)
 
     def read_line(self):
-        self.write("\n> ", pix.color.YELLOW)
+        self.console.set_color(pix.color.YELLOW, pix.color.BLACK)
+        self.console.write("\n> ")
         self.console.set_color(pix.color.LIGHT_BLUE, pix.color.BLACK)
         self.console.read_line()
