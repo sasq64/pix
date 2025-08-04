@@ -1,12 +1,14 @@
 from collections.abc import Iterator
-from typing import cast, override
+from typing import cast, override, TypeVar
 
 import pixpy as pix
 
 Int2 = pix.Int2
 
 
-def clamp[T: (int, float)](v: T, lo: T, hi: T) -> T:
+T = TypeVar('T', int, float)
+
+def clamp(v: T, lo: T, hi: T) -> T:
     "Clamp value between `lo` inclusive and `hi` exclusive."
     if v < lo:
         return lo
@@ -137,11 +139,11 @@ class TextViewer:
     def scroll_screen(self, y: int):
         self.horizontal_scroll -= y
         y = self.rows - 1
-        l = len(self.lines)
+        line_count = len(self.lines)
         if self.horizontal_scroll < 0:
             self.horizontal_scroll = 0
-        if self.horizontal_scroll > l - y:
-            self.horizontal_scroll = l - y
+        if self.horizontal_scroll > line_count - y:
+            self.horizontal_scroll = line_count - y
 
     def render(
         self,

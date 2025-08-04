@@ -1,7 +1,7 @@
 
 import pixpy as pix
 import math
-from typing import Callable, Generator, Protocol, Self
+from typing import Callable, Generator, Protocol, Self, TypeVar
 
 class Ease:
     @staticmethod
@@ -144,7 +144,9 @@ class Tweenable(Protocol):
     def __add__(self, arg0: Self, /) -> Self: ...
     def __mul__(self, arg0: float, /) -> Self: ...
 
-def tween[T: Tweenable](start: T, stop: T, steps: int, ease: Callable[[float], float] = Ease.out_sine) -> Generator[T, None, None] :
+T = TypeVar('T', bound=Tweenable)
+
+def tween(start: T, stop: T, steps: int, ease: Callable[[float], float] = Ease.out_sine) -> Generator[T, None, None]:
     x = start
     for i in range(steps):
         x = (stop - start) * ease(i / steps) + start

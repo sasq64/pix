@@ -99,9 +99,6 @@ def main():
         return True
 
     pix.add_event_listener(event_handler, 0)
-
-    chat.write("Hello and welcome!\n> ")
-    chat.read_line()
     chat.activate(False)
 
     print("RUN")

@@ -6,6 +6,10 @@ from pathlib import Path
 import subprocess
 from typing import Literal, Protocol, Callable, TypeGuard
 
+import pixpy as pix
+
+from .ide import PixIDE
+
 from openai.types.responses import (
     FunctionToolParam,
     Response,
@@ -31,10 +35,6 @@ def is_function_call_output(
 ) -> TypeGuard[FunctionCallOutput]:
     return msg.get("type") == "function_call_output"
 
-
-import pixpy as pix
-
-from .ide import PixIDE
 
 
 def create_function(
@@ -109,10 +109,9 @@ class SmartChat:
         self.ide = ide
         self.active: bool = False
         self.executor = ThreadPoolExecutor(max_workers=2)
-        self.ts: pix.TileSet = pix.TileSet(self.font, size=self.font_size)
-        con_size = canvas.size.toi() / self.ts.tile_size
-        self.console: pix.Console = pix.Console(con_size.x, con_size.y - 1, self.ts)
-        self.console.set_device_no(1)
+        self.tile_set: pix.TileSet = pix.TileSet(self.font, size=self.font_size)
+        self.reading_line : bool = True
+        self.resize()
         self.console.cursor_on = False
         pix.add_event_listener(self.handle_events, 0)
 
@@ -165,14 +164,14 @@ class SmartChat:
     def run_users_program(self) -> str:
         """Run the users program in headless mode for one frame. Use this function to see which errors (if any) the program contains. Will return 'OK' if no errors detected, otherwise the error in string form."""
         return self.run()
+
     def resize(self):
-        con_size = self.canvas.size.toi() / self.ts.tile_size
-        was_reading_line = self.console.reading_line
-        self.console = pix.Console(con_size.x, con_size.y - 1, self.ts)
+        con_size = self.canvas.size.toi() / self.tile_set.tile_size
+        self.console = pix.Console(con_size.x, con_size.y - 1, self.tile_set)
         self.console.set_device_no(1)
-        self.write("Hello and welcome!\n> ")
-        if was_reading_line:
-            self.console.read_line()
+        self.write("Let me know if you need help.\n")
+        if self.reading_line:
+            self.read_line()
 
     def add_function(
         self,
@@ -275,8 +274,9 @@ User: Explain this
                 role="assistant", content=response.output_text
             )
         )
-        self.console.write(response.output_text)
-        self.console.write("\n> ")
+        self.write("\n")
+        self.write(response.output_text)
+        self.write("\n")
         self.read_line()
 
     def handle_events(self, event: object) -> bool:
@@ -288,7 +288,8 @@ User: Explain this
                 return False
         return True
 
-    def write(self, text: str):
+    def write(self, text: str, color: int = pix.color.WHITE):
+        self.console.set_color(color, pix.color.BLACK)
         self.console.write(text)
 
     def activate(self, on: bool):
@@ -310,4 +311,6 @@ User: Explain this
         self.canvas.draw(self.console, top_left=(0, 0), size=self.console.size)
 
     def read_line(self):
+        self.write("\n> ", pix.color.YELLOW)
+        self.console.set_color(pix.color.LIGHT_BLUE, pix.color.BLACK)
         self.console.read_line()

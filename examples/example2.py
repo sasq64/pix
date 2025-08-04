@@ -4,7 +4,8 @@ import pixpy as pix
 from utils.tween import tween, Ease
 
 pwd = Path(__file__).absolute().parent
-
+print(__file__)
+print(pwd)
 Float2 = pix.Float2
 
 screen = pix.open_display(size=(1280, 720))

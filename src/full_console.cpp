@@ -59,7 +59,7 @@ void FullConsole::refresh()
     auto w = console->get_size().second;
     console->clear_area(edit_start.x, edit_start.y, w - edit_start.x, 1,
                         color::white, color::black);
-    console->text(edit_start.x, edit_start.y, line, color::white, color::black);
+    console->text(edit_start.x, edit_start.y, line, fg, bg);
 }
 FullConsole::FullConsole(const std::shared_ptr<PixConsole>& con,
                          const std::shared_ptr<System>& sys)

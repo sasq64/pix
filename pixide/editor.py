@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Final, cast, override
+from typing import Final, cast, override, TypeVar
 
 import pixpy as pix
 
@@ -21,7 +21,9 @@ CMD = 0x10000000
 CTRL = 0x20000000
 
 
-def clamp[T: (int, float)](v: T, lo: T, hi: T) -> T:
+T = TypeVar('T', int, float)
+
+def clamp(v: T, lo: T, hi: T) -> T:
     "Clamp value between `lo` inclusive and `hi` exclusive."
     if v < lo:
         return lo
@@ -427,7 +429,6 @@ class TextEdit(TextViewer):
                     grid_pos = Int2(e.x, e.y) // self.console.tile_size
                     text_pos = grid_pos + (0, self.horizontal_scroll)
                     if text_pos != self.selection.end:
-                        # print(f"{self.last_clicked} to {text_pos}")
                         self.select(self.last_clicked, text_pos)
                 else:
                     self.last_clicked = None
