@@ -89,6 +89,8 @@ class PixIDE:
             .add_button(Nerd.nf_fa_question_circle, pix.color.LIGHT_BLUE)
         )
         self.toolbar_height: int = self.tool_bar.console.size.y
+        self.scrollbar_width: int = 8
+
         con_size = (screen.size.toi() - self.tool_bar.size) / self.ts.tile_size
         self.title: pix.Console = pix.Console(con_size.x, 1, self.ts)
 
@@ -154,12 +156,10 @@ class PixIDE:
         return True
 
     def resize(self):
-        # self.ts = pix.TileSet(self.font)
-        # self.font_size: int = 20
         con_size = (
-            self.screen.target_size.toi() - (0, self.toolbar_height)
+            self.screen.size.toi() - (self.scrollbar_width+2, self.toolbar_height)
         ) / self.ts.tile_size
-        print(f"CON SIZE {con_size.x} {con_size.y}")
+        print(f"TARGET SIZE {self.screen.target_size} CON SIZE {con_size}")
         self.console = pix.Console(con_size.x, con_size.y, self.ts)
         self.title = pix.Console(
             con_size.x - (self.tool_bar.size.x // self.ts.tile_size.x),
@@ -189,9 +189,8 @@ class PixIDE:
             return  # No scrollbar needed if all content fits
 
         # Scrollbar dimensions
-        scrollbar_width = 8
         scrollbar_pos = pix.Float2(
-            self.screen.size.x - scrollbar_width - 2, self.toolbar_height
+            self.screen.size.x - self.scrollbar_width - 2, self.toolbar_height
         )
         scrollbar_height = self.screen.size.y - self.toolbar_height
 
@@ -199,7 +198,7 @@ class PixIDE:
         self.screen.draw_color = pix.color.DARK_GREY
         self.screen.filled_rect(
             top_left=scrollbar_pos,
-            size=pix.Float2(scrollbar_width, scrollbar_height),
+            size=pix.Float2(self.scrollbar_width, scrollbar_height),
         )
 
         # Calculate thumb position and size
@@ -217,7 +216,7 @@ class PixIDE:
         self.screen.draw_color = pix.color.LIGHT_GREY
         self.screen.filled_rect(
             top_left=scrollbar_pos + (0, thumb_y),
-            size=pix.Float2(scrollbar_width, thumb_height),
+            size=pix.Float2(self.scrollbar_width, thumb_height),
         )
 
     def load(self, path: Path):
@@ -234,7 +233,6 @@ class PixIDE:
         print(f"ERROR AT {source_pos}")
         self.edit.horizontal_scroll = source_pos.y - 2
 
-        # self.edit.dirty = True
         pos = pix.Float2(
             source_pos.x - 0.5, source_pos.y - self.edit.horizontal_scroll
         )
@@ -253,9 +251,8 @@ class PixIDE:
 
     def run2(self):
         screen = self.screen
-        # run(self.edit.get_text(), self.current_file.as_posix())
         source = self.edit.get_text()
-        file_name = self.current_file.as_posix()
+        file_name = self.current_file.name
         print(file_name)
         file_dir = str(self.current_file.parent.absolute())
         text = self.edit.get_text()
@@ -265,10 +262,14 @@ class PixIDE:
         screen.draw_color = (col << 8) | 0xFF
         fc = screen.frame_counter
 
-        # Save current sys.path to restore later
+        # Save current working directory and sys.path to restore later
+        original_cwd = os.getcwd()
         original_sys_path = sys.path[:]
 
         try:
+            # Change to the file's directory
+            os.chdir(file_dir)
+            
             # Add the current file's directory to sys.path so imports work
             if file_dir not in sys.path:
                 sys.path.insert(0, file_dir)
@@ -304,7 +305,8 @@ class PixIDE:
             events = pix.all_events()
             return
         finally:
-            # Restore original sys.path
+            # Restore original working directory and sys.path
+            os.chdir(original_cwd)
             sys.path[:] = original_sys_path
         screen.swap()
         leave = False
@@ -315,7 +317,6 @@ class PixIDE:
                     leave = True
 
     def render(self):
-        # print(self.xxx)
         screen = self.screen
         ctrl = pix.is_pressed(pix.key.RCTRL) or pix.is_pressed(pix.key.LCTRL)
         events = pix.all_events()
