@@ -79,9 +79,6 @@ inline auto add_image_class(py::module_ const& mod, auto ctx_class)
                                                           &length)) {
                         throw std::runtime_error("Failed to extract bytes");
                     }
-                    if (length > img.get_tex().tex->size()) {
-                        throw std::runtime_error("Data too large!");
-                    }
                     img.get_tex().tex->update((uint32_t*)buffer);
                 },
                 "pixels"_a,

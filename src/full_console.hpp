@@ -40,8 +40,9 @@ public:
     void set_device(int dev) { device = dev; }
 
     bool reading_line = false;
-    bool wrap = true;
-    void set_wrap(bool on) { wrap = on; }
+    bool wrap_lines = true;
+    bool autoscroll = true;
+    void set_wrap(bool on) { reading_line = autoscroll = on; }
 
     Vec2i get_cursor() const { return cursor; }
     // void set_cursor(int x, int y) { cursor = {x,y}; }

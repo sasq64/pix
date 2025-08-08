@@ -147,7 +147,7 @@ void FullConsole::write(char32_t ch)
         cursor.x = 0;
         cursor.y++;
         if (cursor.y >= rows) {
-            if (wrap) {
+            if (autoscroll) {
                 console->scroll(-1, 0);
                 console->clear_area(0, rows - 1, cols, 1, fg, bg);
             }
@@ -155,11 +155,11 @@ void FullConsole::write(char32_t ch)
         }
         return;
     }
-    if (!wrap && cursor.x >= cols) { return; }
+    if (!wrap_lines && cursor.x >= cols) { return; }
 
     console->put(cursor.x, cursor.y, fg, bg, ch);
     cursor.x++;
-    if (cursor.x >= cols && wrap) {
+    if (cursor.x >= cols && wrap_lines) {
         cursor.x = 0;
         cursor.y++;
         if (cursor.y >= rows) {

@@ -78,7 +78,7 @@ class TextViewer:
         self.show_cursor = True
 
         self.console.cursor_on = True
-        self.console.wrapping = False
+        self.console.wrap_lines = self.console.autoscroll = False
 
     def get_text(self, lines: list[list[Char]] | None = None):
         if lines is None:
@@ -118,7 +118,7 @@ class TextViewer:
     def set_console(self, console: pix.Console):
         self.console = console
         self.console.cursor_on = self.show_cursor
-        self.console.wrapping = False
+        self.console.wrap_lines = self.console.autoscroll = False
         self.fg_color = pix.color.GREEN
         self.cols = self.console.grid_size.x
         self.rows = self.console.grid_size.y

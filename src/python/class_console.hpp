@@ -74,12 +74,14 @@ inline void add_console_functions(auto& cls)
             "Put `tile` at given position, optionally setting a specific foreground and/or background color")
         .def("get", &FullConsole::get, "Get tile at position")
         .def_readwrite("fg_color", &FullConsole::fg, "Foreground color.")
-        .def_readwrite("bg_color", &FullConsole::fg, "Background color.")
+        .def_readwrite("bg_color", &FullConsole::bg, "Background color.")
         .def_readwrite("cursor_on", &FullConsole::cursor_on,
                        "Determine if the cursor should be visible.")
+        .def_readwrite("wrap_lines", &FullConsole::wrap_lines,
+                       "Should we wrap when writing passing right edge?")
         .def_readwrite(
-            "wrapping", &FullConsole::wrap,
-            "Should we wrap when passing right edge (and scroll when passing bottom edge) ?")
+            "autoscroll", &FullConsole::autoscroll,
+            "Should we scroll console upwards when writes pass bottom edge?")
         .def_property(
             "cursor_pos", &FullConsole::get_cursor, &FullConsole::set_cursor,
             "The current location of the cursor. This will be used when calling `write()`.")

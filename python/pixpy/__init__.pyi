@@ -268,6 +268,14 @@ class Console:
         Write text to the console at the current cursor position and using the current colors. Will advance cursor position, and wrap if it passes the right border of the console.
         """
     @property
+    def autoscroll(self) -> bool:
+        """
+        Should we scroll console upwards when writes pass bottom edge?
+        """
+    @autoscroll.setter
+    def autoscroll(self, arg0: bool) -> None:
+        ...
+    @property
     def bg_color(self) -> int:
         """
         Background color.
@@ -320,12 +328,12 @@ class Console:
         Get size of a single tile.
         """
     @property
-    def wrapping(self) -> bool:
+    def wrap_lines(self) -> bool:
         """
-        Should we wrap when passing right edge (and scroll when passing bottom edge) ?
+        Should we wrap when writing passing right edge?
         """
-    @wrapping.setter
-    def wrapping(self, arg0: bool) -> None:
+    @wrap_lines.setter
+    def wrap_lines(self, arg0: bool) -> None:
         ...
 class Float2:
     """

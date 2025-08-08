@@ -79,7 +79,7 @@ class PixIDE:
 
         self.comp_enabled: bool = False
         self.console: pix.Console = pix.Console(con_size.x, con_size.y - 1, self.ts)
-        self.console.wrapping = False
+        self.console.wrap_lines = self.console.autoscroll = False
         self.title_bg: int = 0x2050FF
         self.running: bool = False
         tool_ts = pix.TileSet(self.font, tile_size=(50, 50))

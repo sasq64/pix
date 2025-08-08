@@ -9,6 +9,8 @@ from typing import Literal, Protocol, Callable, TypeGuard
 
 import pixpy as pix
 
+from pixide.markdown import MarkdownRenderer, render_markdown
+
 from .ide import PixIDE
 
 from openai.types.responses import (
@@ -261,6 +263,7 @@ class SmartChat:
         self.tools: list[FunctionToolParam] = []
         self.functions: dict[str, Callable[..., object]] = {}
 
+
         self.add_function(self.read_users_program)
         self.add_function(self.run_users_program)
         self.add_function(get_pixpy_information)
@@ -302,7 +305,10 @@ class SmartChat:
     def resize(self):
         con_size = self.canvas.size.toi() // self.tile_set.tile_size
         self.console = pix.Console(con_size.x, con_size.y - 1, self.tile_set)
+        self.console.wrap_lines = False
+        self.console.autoscroll = True
         self.console.set_device_no(1)
+        self.markdown_renderer = MarkdownRenderer(self.console)
         self.write("Let me know if you need help.\n")
         if self.reading_line:
             self.read_line()
@@ -344,7 +350,7 @@ class SmartChat:
         self, messages: list[ResponseInputItemParam]
     ) -> Response:
         response = self.client.responses.create(
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             instructions="""
 You are an AI programming teacher. You try to help the user with their programming problems, but you want them to learn so you avoid directly solving their problems, instead give pointers so they can move forward.
 
@@ -356,6 +362,8 @@ answer the question.
 If a user problem is not obvious, you *should* run the program and parse the error messages.
 
 Give *short* answers, normally a single sentence will do.
+
+Use markdown to emphasize key points.
 
 *Always* read the program if a user comment or question seems to refer to anything related to the program.
 
@@ -413,7 +421,8 @@ If the user asks about anything related to _graphics_ or _pix_ or _pixpy_, you *
             )
         )
         self.write("\n")
-        self.write(response.output_text)
+        self.markdown_renderer.render(response.output_text)
+        #self.write(response.output_text)
         self.write("\n")
         self.read_line()
 
