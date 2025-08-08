@@ -54,7 +54,7 @@ must happen through parents or teachers.
 
 But:
 
-I think a none-trivial set of persons who starts playing with this kind of
+I think a none-trivial number of persons who starts playing with this kind of
 environment _will_ enjoy it and learn through it.
 
 === Additional Hooks
