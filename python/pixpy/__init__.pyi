@@ -201,6 +201,10 @@ class Console:
         """
         Clear the console.
         """
+    def clear_area(self, x: int, y: int, w: int, h: int) -> None:
+        """
+        Clear the given rectangle, setting the current foreground and background colors.
+        """
     def colorize_section(self, x: int, y: int, width: int) -> None:
         """
         Colorize the given area with the current foreground and background color, without changing the characters
@@ -564,6 +568,10 @@ class Image(Canvas):
     def split(self, size: Union[Float2, Int2, Tuple[float, float]]) -> list[Image]:
         """
         Split the image into exactly size.x * size.y images.
+        """
+    def update(self, pixels: bytes) -> None:
+        """
+        Update the texture with a raw buffer that must fit the texture format.
         """
     @property
     def height(self) -> float:

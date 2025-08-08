@@ -6,8 +6,8 @@
 #include "pixel_console.hpp"
 #include "system.hpp"
 
-#include <optional>
 #include <functional>
+#include <optional>
 
 class FullConsole
 {
@@ -37,9 +37,7 @@ public:
 
     ~FullConsole();
 
-    void set_device(int dev) {
-        device = dev;
-    }
+    void set_device(int dev) { device = dev; }
 
     bool reading_line = false;
     bool wrap = true;
@@ -104,6 +102,11 @@ public:
         }
     }
 
+    void clear_area(int32_t x, int32_t y, int32_t w, int32_t h)
+    {
+        console->clear_area(x, y, w, h, fg, bg);
+    }
+
     void clear() { console->fill(fg, bg); }
 
     pix::ImageView get_texture_for_char(int32_t c)
@@ -122,7 +125,8 @@ public:
 
     bool cursor_on = false;
 
-    void set_readline_callback(std::function<void(std::string, int)> const& cb) {
+    void set_readline_callback(std::function<void(std::string, int)> const& cb)
+    {
         readline_cb = cb;
     }
 };

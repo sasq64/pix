@@ -108,6 +108,9 @@ inline void add_console_functions(auto& cls)
              "Change the edited line.")
         .def("get_font_image", &FullConsole::get_font_texture)
         .def(
+            "clear_area", &FullConsole::clear_area, "x"_a, "y"_a, "w"_a, "h"_a,
+            "Clear the given rectangle, setting the current foreground and background colors.")
+        .def(
             "set_device_no", &FullConsole::set_device, "devno"_a,
             "Set the device number that will be reported for TextEvents from this console.")
         .def(

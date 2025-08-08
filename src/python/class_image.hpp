@@ -70,6 +70,22 @@ inline auto add_image_class(py::module_ const& mod, auto ctx_class)
                 "Splits the image into as many _width_ * _height_ images as possible, first going left to right, then top to bottom.")
             .def("split", &split_size, "size"_a,
                  "Split the image into exactly size.x * size.y images.")
+            .def(
+                "update",
+                [](pix::ImageView& img, py::bytes pixels) {
+                    char* buffer;
+                    ssize_t length;
+                    if (PYBIND11_BYTES_AS_STRING_AND_SIZE(pixels.ptr(), &buffer,
+                                                          &length)) {
+                        throw std::runtime_error("Failed to extract bytes");
+                    }
+                    if (length > img.get_tex().tex->size()) {
+                        throw std::runtime_error("Data too large!");
+                    }
+                    img.get_tex().tex->update((uint32_t*)buffer);
+                },
+                "pixels"_a,
+                "Update the texture with a raw buffer that must fit the texture format.")
             .def("set_texture_filter", &pix::ImageView::set_texture_filter,
                  "min"_a, "max"_a,
                  "Set whether the texture should apply linear filtering.")
