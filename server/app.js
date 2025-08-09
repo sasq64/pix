@@ -17,7 +17,7 @@ app.use(express.json());
 
 // Basic health check
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'Chat server running',
     clients: clients.size,
     rooms: rooms.size
@@ -48,7 +48,9 @@ wss.on('connection', (ws) => {
 });
 
 function handleMessage(ws, message) {
+  console.log('Got message');
   const { type, userId, roomId, content } = message;
+  console.log(`type ${type}`);
 
   switch (type) {
     case 'join':
@@ -68,7 +70,7 @@ function handleMessage(ws, message) {
 function handleJoin(ws, userId, roomId = null) {
   // If no roomId provided, use userId as default room
   const targetRoom = roomId || userId;
-  
+
   // Remove from previous room if connected
   if (clients.has(ws)) {
     leaveCurrentRoom(ws);
@@ -77,7 +79,7 @@ function handleJoin(ws, userId, roomId = null) {
   // Join new room
   clients.set(ws, { userId, roomId: targetRoom });
   userRooms.set(userId, targetRoom);
-  
+
   if (!rooms.has(targetRoom)) {
     rooms.set(targetRoom, new Set());
   }
@@ -125,7 +127,7 @@ function handleChatMessage(ws, userId, content) {
 function handleSwitchRoom(ws, userId, newRoomId) {
   // Leave current room
   leaveCurrentRoom(ws);
-  
+
   // Join new room
   handleJoin(ws, userId, newRoomId);
 }
@@ -136,10 +138,10 @@ function leaveCurrentRoom(ws) {
 
   const { userId, roomId } = client;
   const roomClients = rooms.get(roomId);
-  
+
   if (roomClients) {
     roomClients.delete(ws);
-    
+
     // Clean up empty rooms
     if (roomClients.size === 0) {
       rooms.delete(roomId);

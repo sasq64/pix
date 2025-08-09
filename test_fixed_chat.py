@@ -5,19 +5,19 @@ import sys
 import time
 from typing import Dict, Any, List
 
-from fixed_chat import FixedChat
+from pixide.chat import Chat
 
 
-class TestFixedChat:
+class TestChat:
     def __init__(self):
-        self.received_messages: List[Dict[str, Any]] = []
+        self.received_messages: list[dict[str, Any]] = []
         
-    def message_handler(self, message: Dict[str, Any]):
+    def message_handler(self, message: dict[str, Any]):
         """Handle incoming messages during testing"""
         self.received_messages.append(message)
         print(f"📨 Received: {message.get('type')} - {message.get('content', message.get('message', ''))}")
     
-    async def wait_for_message(self, timeout: float = 3.0, message_type: str = None) -> Dict[str, Any]:
+    async def wait_for_message(self, timeout: float = 3.0, message_type: str | None = None) -> dict[str, Any]:
         """Wait for a specific type of message or any message"""
         start_time = time.time()
         
@@ -42,7 +42,7 @@ class TestFixedChat:
         """Test basic async connection to localhost:8080"""
         print("\n🔌 Testing fixed async connection...")
         
-        chat = FixedChat("ws://localhost:8080")
+        chat = Chat("ws://localhost:8080")
         chat.set_message_handler(self.message_handler)
         
         try:
@@ -74,7 +74,7 @@ class TestFixedChat:
         """Test async messaging"""
         print("\n💬 Testing fixed async messaging...")
         
-        chat = FixedChat("ws://localhost:8080")
+        chat = Chat("ws://localhost:8080")
         chat.set_message_handler(self.message_handler)
         
         try:
@@ -108,7 +108,7 @@ class TestFixedChat:
         """Test async room switching"""
         print("\n🏠 Testing fixed async room switching...")
         
-        chat = FixedChat("ws://localhost:8080")
+        chat = Chat("ws://localhost:8080")
         chat.set_message_handler(self.message_handler)
         
         try:
@@ -141,7 +141,7 @@ class TestFixedChat:
         """Test that multiple operations can run concurrently"""
         print("\n🔄 Testing concurrent operations...")
         
-        chat = FixedChat("ws://localhost:8080")
+        chat = Chat("ws://localhost:8080")
         chat.set_message_handler(self.message_handler)
         
         try:
@@ -214,7 +214,7 @@ class TestFixedChat:
 
 
 async def main():
-    tester = TestFixedChat()
+    tester = TestChat()
     success = await tester.run_all_tests()
     return success
 

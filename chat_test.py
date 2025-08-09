@@ -71,6 +71,7 @@ class ChatTestInterface:
         while self.running:
             try:
                 user_input = input().strip()
+                print(user_input)
                 
                 if not user_input:
                     continue
