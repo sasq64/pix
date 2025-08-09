@@ -4,14 +4,12 @@ import uuid
 import websockets
 from pathlib import Path
 from typing import Optional, Callable, Dict, Any
-import threading
-import time
 
 
-class Chat:
+class FixedChat:
     """
-    WebSocket chat client for PixIDE.
-    Handles connection to Fly.io chat server with room management.
+    Fixed version of the WebSocket chat client for PixIDE.
+    Handles connection to chat server with proper async management.
     """
     
     def __init__(self, server_url: str = "wss://pixide-chat-server.fly.dev"):
@@ -21,8 +19,7 @@ class Chat:
         self.websocket: Optional[websockets.WebSocketClientProtocol] = None
         self.connected = False
         self.message_handler: Optional[Callable[[Dict[str, Any]], None]] = None
-        self.loop: Optional[asyncio.AbstractEventLoop] = None
-        self._running = False
+        self.listener_task: Optional[asyncio.Task] = None
         
         # Load or generate user ID
         self._load_or_create_user_id()
@@ -47,7 +44,7 @@ class Chat:
             except Exception as e:
                 print(f"Error saving user ID: {e}")
     
-    def set_message_handler(self, handler: Callable[[Dict[str, Any]], None]):
+    def set_message_handler(self, handler: Callable[[dict[str, Any]], None]):
         """Set callback function to handle incoming messages."""
         self.message_handler = handler
     
@@ -66,8 +63,11 @@ class Chat:
             target_room = room_id or self.user_id
             await self._join_room(target_room)
             
-            # Start message listener
-            await self._listen_for_messages()
+            # Start message listener in background (KEY FIX!)
+            self.listener_task = asyncio.create_task(self._listen_for_messages())
+            
+            # Wait briefly for join confirmation
+            await asyncio.sleep(0.5)
             
         except Exception as e:
             print(f"Connection failed: {e}")
@@ -142,6 +142,8 @@ class Chat:
         except websockets.exceptions.ConnectionClosed:
             print("Connection closed by server")
             self.connected = False
+        except asyncio.CancelledError:
+            print("Message listener cancelled")
         except Exception as e:
             print(f"Error receiving message: {e}")
             self.connected = False
@@ -179,6 +181,15 @@ class Chat:
     async def disconnect(self):
         """Disconnect from the chat server."""
         self.connected = False
+        
+        # Cancel listener task (KEY FIX!)
+        if self.listener_task:
+            self.listener_task.cancel()
+            try:
+                await self.listener_task
+            except asyncio.CancelledError:
+                pass
+        
         if self.websocket:
             await self.websocket.close()
         print("Disconnected from chat server")
@@ -194,59 +205,3 @@ class Chat:
     def is_connected(self) -> bool:
         """Check if connected to the server."""
         return self.connected
-
-
-# Synchronous wrapper for easier use
-class SyncChat:
-    """Synchronous wrapper for the Chat class."""
-    
-    def __init__(self, server_url: str = "wss://pixide-chat-server.fly.dev"):
-        self.chat = Chat(server_url)
-        self.thread: Optional[threading.Thread] = None
-        self.loop: Optional[asyncio.AbstractEventLoop] = None
-    
-    def connect(self, room_id: Optional[str] = None) -> bool:
-        """Connect to chat server synchronously."""
-        def run_chat():
-            self.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.loop)
-            self.loop.run_until_complete(self.chat.connect(room_id))
-        
-        self.thread = threading.Thread(target=run_chat, daemon=True)
-        self.thread.start()
-        
-        # Wait a moment for connection
-        time.sleep(1)
-        return self.chat.is_connected()
-    
-    def send_message(self, content: str):
-        """Send message synchronously."""
-        if self.loop:
-            asyncio.run_coroutine_threadsafe(
-                self.chat.send_chat_message(content), self.loop
-            )
-    
-    def switch_room(self, room_id: str):
-        """Switch room synchronously."""
-        if self.loop:
-            asyncio.run_coroutine_threadsafe(
-                self.chat.switch_room(room_id), self.loop
-            )
-    
-    def disconnect(self):
-        """Disconnect synchronously."""
-        if self.loop:
-            asyncio.run_coroutine_threadsafe(self.chat.disconnect(), self.loop)
-    
-    def set_message_handler(self, handler: Callable[[Dict[str, Any]], None]):
-        """Set message handler."""
-        self.chat.set_message_handler(handler)
-    
-    def get_user_id(self) -> str:
-        return self.chat.get_user_id()
-    
-    def get_current_room(self) -> Optional[str]:
-        return self.chat.get_current_room()
-    
-    def is_connected(self) -> bool:
-        return self.chat.is_connected()
