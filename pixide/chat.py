@@ -3,10 +3,10 @@ import json
 import uuid
 import websockets
 from pathlib import Path
-from typing import Optional, Callable, Dict, Any
+from typing import Callable, Dict, Any
 
 
-class FixedChat:
+class Chat:
     """
     Fixed version of the WebSocket chat client for PixIDE.
     Handles connection to chat server with proper async management.
@@ -14,41 +14,40 @@ class FixedChat:
     
     def __init__(self, server_url: str = "wss://pixide-chat-server.fly.dev"):
         self.server_url = server_url
-        self.user_id: Optional[str] = None
-        self.current_room: Optional[str] = None
-        self.websocket: Optional[websockets.WebSocketClientProtocol] = None
+        self.user_id: str = self._load_or_create_user_id()
+        self.current_room: str | None = None
+        self.websocket: websockets.ClientConnection | None = None
         self.connected = False
-        self.message_handler: Optional[Callable[[Dict[str, Any]], None]] = None
-        self.listener_task: Optional[asyncio.Task] = None
+        self.message_handler: Callable[[dict[str, Any]], None] | None = None
+        self.listener_task: asyncio.Task[None] | None = None
         
-        # Load or generate user ID
-        self._load_or_create_user_id()
     
-    def _load_or_create_user_id(self):
+    def _load_or_create_user_id(self) -> str:
         """Load user ID from file or create a new one."""
         user_file = Path.home() / ".pixide_user_id"
+        id : str | None = None
         
         if user_file.exists():
             try:
-                self.user_id = user_file.read_text().strip()
-                print(f"Loaded user ID: {self.user_id}")
+                id = user_file.read_text().strip()
+                print(f"Loaded user ID: {id}")
             except Exception as e:
                 print(f"Error loading user ID: {e}")
-                self.user_id = None
         
-        if not self.user_id:
-            self.user_id = f"user_{uuid.uuid4().hex[:8]}"
+        if not id:
+            id = f"user_{uuid.uuid4().hex[:8]}"
             try:
-                user_file.write_text(self.user_id)
-                print(f"Created new user ID: {self.user_id}")
+                user_file.write_text(id)
+                print(f"Created new user ID: {id}")
             except Exception as e:
                 print(f"Error saving user ID: {e}")
+        return id
     
     def set_message_handler(self, handler: Callable[[dict[str, Any]], None]):
         """Set callback function to handle incoming messages."""
         self.message_handler = handler
     
-    async def connect(self, room_id: Optional[str] = None) -> bool:
+    async def connect(self, room_id: str | None = None) -> bool:
         """
         Connect to the chat server and join a room.
         If no room_id provided, joins user's own room.
@@ -120,7 +119,7 @@ class FixedChat:
         await self._send_message(message)
         return True
     
-    async def _send_message(self, message: Dict[str, Any]):
+    async def _send_message(self, message: dict[str, Any]):
         """Send a message through the WebSocket."""
         if self.websocket and self.connected:
             await self.websocket.send(json.dumps(message))
@@ -148,7 +147,7 @@ class FixedChat:
             print(f"Error receiving message: {e}")
             self.connected = False
     
-    async def _handle_message(self, message: Dict[str, Any]):
+    async def _handle_message(self, message: dict[str, Any]):
         """Handle incoming messages internally."""
         msg_type = message.get("type")
         
@@ -198,7 +197,7 @@ class FixedChat:
         """Get the current user ID."""
         return self.user_id or "unknown"
     
-    def get_current_room(self) -> Optional[str]:
+    def get_current_room(self) -> str | None:
         """Get the current room ID."""
         return self.current_room
     
