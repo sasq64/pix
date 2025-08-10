@@ -173,7 +173,7 @@ class Chat:
 
         elif msg_type == "user_left":
             user = message.get("userId")
-            print(f"- {user} left the room"
+            print(f"- {user} left the room")
 
         elif msg_type == "chat_message":
             user = message.get("userId")

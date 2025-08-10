@@ -57,10 +57,10 @@ function handleMessage(ws, message) {
       handleJoin(ws, userId, roomId);
       break;
     case 'chat_message':
-      handleChatMessage(ws, userId, content);
+      handleChatMessage(ws, content);
       break;
     case 'switch_room':
-      handleSwitchRoom(ws, userId, roomId);
+      handleSwitchRoom(ws, roomId);
       break;
     default:
       sendError(ws, `Unknown message type: ${type}`);
@@ -104,14 +104,14 @@ function handleJoin(ws, userId, roomId = null) {
   console.log(`User ${userId} joined room ${targetRoom}`);
 }
 
-function handleChatMessage(ws, userId, content) {
+function handleChatMessage(ws, content) {
   const client = clients.get(ws);
   if (!client) {
     sendError(ws, 'Not connected to any room');
     return;
   }
 
-  const { roomId } = client;
+  const { userId, roomId } = client;
   const message = {
     type: 'chat_message',
     userId: userId,
@@ -124,7 +124,15 @@ function handleChatMessage(ws, userId, content) {
   console.log(`Message from ${userId} in room ${roomId}: ${content}`);
 }
 
-function handleSwitchRoom(ws, userId, newRoomId) {
+function handleSwitchRoom(ws, newRoomId) {
+  const client = clients.get(ws);
+  if (!client) {
+    sendError(ws, 'Not connected to any room');
+    return;
+  }
+
+  const { userId } = client;
+
   // Leave current room
   leaveCurrentRoom(ws);
 
