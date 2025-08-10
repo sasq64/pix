@@ -9,6 +9,7 @@ from .smart_chat import SmartChat
 class IdeArgs:
     fullscreen: bool = False
     font_size: int = 24
+    ai: bool = False
 
 
 fwd = Path(__file__).parent
@@ -34,6 +35,11 @@ def main():
         "--font-size",
         type=int,
         help="Set the font size",
+    )
+    parser.add_argument(
+        "--ai",
+        type=bool,
+        help="Use the AI chat.",
     )
 
     args = parser.parse_args(namespace=IdeArgs())
