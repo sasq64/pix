@@ -109,6 +109,8 @@ class TextViewer:
                     line[j] = (line[j][0], color)
 
     def set_text(self, text: str):
+        self.horizontal_scroll = 0
+        self.vertical_scroll = 0
         lines = text.split("\n")
         self.lines = []
         for line in lines:
@@ -140,10 +142,10 @@ class TextViewer:
         self.horizontal_scroll -= y
         y = self.rows - 1
         line_count = len(self.lines)
-        if self.horizontal_scroll < 0:
-            self.horizontal_scroll = 0
         if self.horizontal_scroll > line_count - y:
             self.horizontal_scroll = line_count - y
+        if self.horizontal_scroll < 0:
+            self.horizontal_scroll = 0
 
     def render(
         self,

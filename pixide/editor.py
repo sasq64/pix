@@ -39,7 +39,7 @@ class TextEdit(TextViewer):
 
     def __init__(self, con: pix.Console):
         super().__init__(con)
-        
+
         # Additional editor-specific properties
         self.last_scroll: int = -1
         self.last_scrollx: int = -1
