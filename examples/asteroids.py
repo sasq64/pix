@@ -15,7 +15,7 @@ from pixpy import Float2
 
 INVINCIBLE = True
 BULLET_SIZE = 6
-SCORE_COLOR = 0xFF000FF
+SCORE_COLOR = 0xFF00FF
 SCORE_SIZE = 32
 
 LAUNCH_CHANGE_COUNT = 0
@@ -99,7 +99,6 @@ class Sprite:
         for point in points:
             image.rounded_line(p2 * point, r / 2)
         image.rounded_line(p2 * points[0], r / 2)
-        # image.lines(points + [points[0]])  # type: ignore
         image.set_texture_filter(True, True)
         return Sprite(image, pos=Float2.ZERO)
 
