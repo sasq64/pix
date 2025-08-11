@@ -57,6 +57,10 @@ class Canvas:
         """
         Draw a filled rectangle.
         """
+    def flood_fill(self, pos: Union[Int2, Tuple[int, int]], color: int) -> None:
+        """
+        Flood fill starting from the given position with the specified color.
+        """
     def flush(self) -> None:
         """
         Flush pixel operations

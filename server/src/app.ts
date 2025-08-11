@@ -20,24 +20,94 @@ interface AuthChallenge {
   timestamp: number;
 }
 
-interface Message {
-  type: 'join' | 'chat_message' | 'switch_room' | 'register' | 'authenticate' | 'get_challenge';
-  userId?: string;
-  roomId?: string;
-  content?: string;
-  publicKey?: string;
-  signature?: string;
+// Client message types
+interface GetChallengeMessage {
+  type: 'get_challenge';
 }
 
-interface ServerMessage {
-  type: 'joined' | 'chat_message' | 'user_joined' | 'user_left' | 'error' | 'challenge' | 'registered' | 'authenticated';
-  userId?: string;
-  roomId?: string;
-  content?: string;
-  message?: string;
-  timestamp?: string;
-  challenge?: string;
+interface RegisterMessage {
+  type: 'register';
+  userId: string;
+  publicKey: string;
 }
+
+interface AuthenticateMessage {
+  type: 'authenticate';
+  userId: string;
+  signature: string;
+}
+
+interface JoinMessage {
+  type: 'join';
+  userId: string;
+  roomId?: string;
+}
+
+interface ChatMessage {
+  type: 'chat_message';
+  content: string;
+}
+
+interface SwitchRoomMessage {
+  type: 'switch_room';
+  roomId: string;
+}
+
+type Message = GetChallengeMessage | RegisterMessage | AuthenticateMessage | JoinMessage | ChatMessage | SwitchRoomMessage;
+
+// Server message types
+interface ChallengeResponse {
+  type: 'challenge';
+  challenge: string;
+}
+
+interface RegisteredResponse {
+  type: 'registered';
+  userId: string;
+  message: string;
+}
+
+interface AuthenticatedResponse {
+  type: 'authenticated';
+  userId: string;
+  message: string;
+}
+
+interface JoinedResponse {
+  type: 'joined';
+  roomId: string;
+  userId: string;
+  message: string;
+}
+
+interface ChatMessageResponse {
+  type: 'chat_message';
+  userId: string;
+  roomId: string;
+  content: string;
+  timestamp: string;
+}
+
+interface UserJoinedResponse {
+  type: 'user_joined';
+  userId: string;
+  roomId: string;
+  message: string;
+}
+
+interface UserLeftResponse {
+  type: 'user_left';
+  userId: string;
+  roomId: string;
+  message: string;
+}
+
+interface ErrorResponse {
+  type: 'error';
+  message: string;
+}
+
+type ServerMessage = ChallengeResponse | RegisteredResponse | AuthenticatedResponse | JoinedResponse | ChatMessageResponse | UserJoinedResponse | UserLeftResponse | ErrorResponse;
 
 const app = express();
 const server = http.createServer(app);
@@ -100,50 +170,29 @@ wss.on('connection', (ws: WebSocket) => {
  */
 function handleMessage(ws: WebSocket, message: Message): void {
   console.log('Got message');
-  const { type, userId, roomId, content } = message;
-  console.log(`type ${type}`);
+  console.log(`type ${message.type}`);
 
-  switch (type) {
+  switch (message.type) {
     case 'get_challenge':
       handleGetChallenge(ws);
       break;
     case 'register':
-      if (userId && message.publicKey) {
-        handleRegister(ws, userId, message.publicKey);
-      } else {
-        sendError(ws, 'userId and publicKey are required for register message');
-      }
+      handleRegister(ws, message.userId, message.publicKey);
       break;
     case 'authenticate':
-      if (userId && message.signature) {
-        handleAuthenticate(ws, userId, message.signature);
-      } else {
-        sendError(ws, 'userId and signature are required for authenticate message');
-      }
+      handleAuthenticate(ws, message.userId, message.signature);
       break;
     case 'join':
-      if (userId) {
-        handleJoin(ws, userId, roomId);
-      } else {
-        sendError(ws, 'userId is required for join message');
-      }
+      handleJoin(ws, message.userId, message.roomId);
       break;
     case 'chat_message':
-      if (content) {
-        handleChatMessage(ws, content);
-      } else {
-        sendError(ws, 'content is required for chat_message');
-      }
+      handleChatMessage(ws, message.content);
       break;
     case 'switch_room':
-      if (roomId) {
-        handleSwitchRoom(ws, roomId);
-      } else {
-        sendError(ws, 'roomId is required for switch_room message');
-      }
+      handleSwitchRoom(ws, message.roomId);
       break;
     default:
-      sendError(ws, `Unknown message type: ${type}`);
+      sendError(ws, `Unknown message type: ${(message as any).type}`);
   }
 }
 
@@ -160,10 +209,11 @@ function handleGetChallenge(ws: WebSocket): void {
     timestamp: Date.now()
   });
   
-  sendMessage(ws, {
+  const response: ChallengeResponse = {
     type: 'challenge',
     challenge: challengeBase64
-  });
+  };
+  sendMessage(ws, response);
   
   console.log(`Challenge sent to client`);
 }
@@ -209,11 +259,12 @@ function handleRegister(ws: WebSocket, userId: string, publicKeyPem: string): vo
       registrationTime: new Date().toISOString()
     });
     
-    sendMessage(ws, {
+    const response: RegisteredResponse = {
       type: 'registered',
       userId: userId,
       message: 'Registration successful'
-    });
+    };
+    sendMessage(ws, response);
     
     console.log(`User ${userId} registered successfully`);
   } catch (error) {
@@ -265,11 +316,12 @@ function handleAuthenticate(ws: WebSocket, userId: string, signatureBase64: stri
       clients.set(ws, { userId, roomId: '', authenticated: true });
       activeChallenges.delete(ws);
       
-      sendMessage(ws, {
+      const response: AuthenticatedResponse = {
         type: 'authenticated',
         userId: userId,
         message: 'Authentication successful'
-      });
+      };
+      sendMessage(ws, response);
       
       console.log(`User ${userId} authenticated successfully`);
     } else {
@@ -320,20 +372,22 @@ function handleJoin(ws: WebSocket, userId: string, roomId: string | null = null)
   rooms.get(targetRoom)!.add(ws);
 
   // Notify user of successful join
-  sendMessage(ws, {
+  const joinResponse: JoinedResponse = {
     type: 'joined',
     roomId: targetRoom,
     userId: userId,
     message: `Joined room: ${targetRoom}`
-  });
+  };
+  sendMessage(ws, joinResponse);
 
   // Notify others in room
-  broadcastToRoom(targetRoom, {
+  const userJoinedResponse: UserJoinedResponse = {
     type: 'user_joined',
     userId: userId,
     roomId: targetRoom,
     message: `${userId} joined the room`
-  }, ws);
+  };
+  broadcastToRoom(targetRoom, userJoinedResponse, ws);
 
   console.log(`User ${userId} joined room ${targetRoom}`);
 }
@@ -356,7 +410,7 @@ function handleChatMessage(ws: WebSocket, content: string): void {
   }
 
   const { userId, roomId } = client;
-  const message: ServerMessage = {
+  const message: ChatMessageResponse = {
     type: 'chat_message',
     userId: userId,
     roomId: roomId,
@@ -409,12 +463,13 @@ function leaveCurrentRoom(ws: WebSocket): void {
       rooms.delete(roomId);
     } else {
       // Notify others in room
-      broadcastToRoom(roomId, {
+      const userLeftResponse: UserLeftResponse = {
         type: 'user_left',
         userId: userId,
         roomId: roomId,
         message: `${userId} left the room`
-      });
+      };
+      broadcastToRoom(roomId, userLeftResponse);
     }
   }
 
@@ -528,7 +583,11 @@ function cleanupExpiredChallenges(): void {
  * @param error - The error message text
  */
 function sendError(ws: WebSocket, error: string): void {
-  sendMessage(ws, { type: 'error', message: error });
+  const errorResponse: ErrorResponse = {
+    type: 'error',
+    message: error
+  };
+  sendMessage(ws, errorResponse);
 }
 
 /**

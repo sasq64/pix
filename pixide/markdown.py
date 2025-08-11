@@ -30,6 +30,9 @@ class MarkdownRenderer:
         else:
             self.colors = colors.copy()
 
+    def set_color(self, name: str, color: int):
+        self.colors[name] = color
+
     def render(self, markdown: str):
         """
         Parse and render markdown text to the console.

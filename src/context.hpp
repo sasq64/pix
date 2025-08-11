@@ -145,6 +145,7 @@ public:
         vpscale = scale;
     }
     void set_pixel(int x, int y, uint32_t col);
+    void flood_fill(int x, int y, uint32_t col);
 
     void flush_pixels();
 

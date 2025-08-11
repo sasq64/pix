@@ -5,7 +5,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pixide"))
 
-from pixide.smart_chat import create_function
+from pixide.openaiclient import create_function
 
 
 def test_basic_function():

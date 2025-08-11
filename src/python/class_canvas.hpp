@@ -173,6 +173,12 @@ inline void add_canvas_functions(auto& cls)
             self.set_pixel(pos.x, pos.y, color);
         },
         "pos"_a, "color"_a, "Write a pixel into the image.");
+    cls.def(
+        "flood_fill",
+        [](Context& self, Vec2i pos, uint32_t color) {
+            self.flood_fill(pos.x, pos.y, color);
+        },
+        "pos"_a, "color"_a, "Flood fill starting from the given position with the specified color.");
     cls.def("flush", &Context::flush, "Flush pixel operations");
     cls.def("to_image", &Context::to_image,
             "Create a new image from this canvas");

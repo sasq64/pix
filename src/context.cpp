@@ -736,7 +736,58 @@ void Context::set_pixel(int x, int y, uint32_t col)
                      pixels.get());
     }
     dirty = true;
-    pixels[x + width * y] = col;
+    pixels[x + width * (height-y)] = col;
+}
+
+void Context::flood_fill(int x, int y, uint32_t col)
+{
+    col = (col & 0x0000FFFF) << 16 | (col & 0xFFFF0000) >> 16;
+    col = (col & 0x00FF00FF) << 8 | (col & 0xFF00FF00) >> 8;
+
+    glBindFramebuffer(GL_FRAMEBUFFER, target);
+    auto const width = static_cast<int>(view_size.x);
+    auto const height = static_cast<int>(view_size.y);
+
+
+    if (x < 0 || x >= width || y < 0 || y >= height) {
+        return;
+    }
+    if (pixels == nullptr) {
+        pixels = std::unique_ptr<uint32_t[]>(new uint32_t[width * height]);
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE,
+                     pixels.get());
+    }
+
+    uint32_t target_color = pixels[x + width * (height - y)];
+    if (target_color == col) {
+        return;
+    }
+
+    std::vector<std::pair<int, int>> stack;
+    stack.push_back({x, y});
+
+    while (!stack.empty()) {
+        auto [px, py] = stack.back();
+        stack.pop_back();
+
+        if (px < 0 || px >= width || py < 0 || py >= height) {
+            continue;
+        }
+
+        if (pixels[px + width * (height - py)] != target_color) {
+            continue;
+        }
+
+        pixels[px + width * (height - py)] = col;
+
+        stack.push_back({px + 1, py});
+        stack.push_back({px - 1, py});
+        stack.push_back({px, py + 1});
+        stack.push_back({px, py - 1});
+    }
+
+    dirty = true;
+    flush_pixels();
 }
 
 pix::ImageView Context::to_image() const

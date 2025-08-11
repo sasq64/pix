@@ -6,104 +6,23 @@ from pathlib import Path
 import subprocess
 from textwrap import wrap
 from typing import Literal, Protocol, Callable, TypeGuard
-
 import pixpy as pix
 
+from pixide.voice_recorder import VoiceToText
 from pixide.markdown import MarkdownRenderer
 from pixide.chat import Chat, Message
 
 from .ide import PixIDE
 
-from openai.types.responses import (
-    FunctionToolParam,
-    Response,
-    ResponseFunctionToolCall,
-    ResponseFunctionToolCallParam,
-    ResponseInputItemParam,
-)
-from openai.types.responses.easy_input_message_param import (
-    EasyInputMessageParam,
-)
-from openai.types.responses.response_input_item_param import FunctionCallOutput
-from openai import OpenAI
-
+from pixide.openaiclient import OpenAIClient
 
 data_path = Path(os.path.abspath(__file__)).parent / "data"
 
 
-def is_function_call(
-    msg: ResponseInputItemParam,
-) -> TypeGuard[ResponseFunctionToolCallParam]:
-    return msg.get("type") == "function_call"
-
-
-def is_function_call_output(
-    msg: ResponseInputItemParam,
-) -> TypeGuard[FunctionCallOutput]:
-    return msg.get("type") == "function_call_output"
-
-
-def create_function(
-    fn: Callable[..., object],
-    desc: str | None = None,
-    arg_desc: dict[str, str] | None = None,
-) -> FunctionToolParam:
-    """Create an OpenAI function schema from a Python function using inspect.signature"""
-    sig = inspect.signature(fn)
-    properties = {}
-    required: list[str] = []
-
-    for param_name, param in sig.parameters.items():
-        param_type = "string"
-        if param.annotation != inspect.Parameter.empty:
-            if param.annotation is int:
-                param_type = "integer"
-            elif param.annotation is float:
-                param_type = "number"
-            elif param.annotation is bool:
-                param_type = "boolean"
-            elif param.annotation is list:
-                param_type = "array"
-            elif param.annotation is dict:
-                param_type = "object"
-
-        properties[param_name] = {"type": param_type}
-        if arg_desc:
-            if param_name in arg_desc:
-                properties[param_name]["description"] = arg_desc[param_name]
-
-        if param.default == inspect.Parameter.empty:
-            required.append(param_name)
-
-    description = desc or fn.__doc__ or f"Calls the {fn.__name__} function"
-
-    return {
-        "type": "function",
-        "strict": False,
-        "name": fn.__name__,
-        "description": description,
-        "parameters": {
-            "type": "object",
-            "properties": properties,
-            "required": required,
-        },
-    }
-
-
-Role = Literal["user", "assistant", "system", "developer"]
-
-
-def message(text: str, role: Role = "user") -> EasyInputMessageParam:
-    return {
-        "content": [{"text": text, "type": "input_text"}],
-        "role": role,
-        "type": "message",
-    }
-
 
 def get_pixpy_information() -> str:
     """Get an overview of the functions and usage that makes up the pixpy library."""
-    return (data_path / "pixpy_product.md").read_text()
+    return (data_path / "pixpy_prompt.md").read_text()
 
 
 class SmartChat:
@@ -119,27 +38,28 @@ class SmartChat:
         self.reading_line: bool = True
         self.resize()
         self.console.cursor_on = False
+        self.is_recording : bool = False
+        self.vtt_result: Future[str] | None = None
+
+        self.vtt = VoiceToText()
         pix.add_event_listener(self.handle_events, 0)
 
         key_file = Path.home() / ".openai.key"
         if not key_file.exists():
             raise FileNotFoundError("Can not find .openai.key in $HOME!")
         key = (Path.home() / ".openai.key").read_text().rstrip()
-        self.client = OpenAI(api_key=key)
+        self.client = OpenAIClient(api_key=key)
+        instructions = (data_path / "instructions.md").read_text()
+        self.client.instructions = instructions
 
-        self.responses: list[Future[Response]] = []
-
-        self.messages: list[ResponseInputItemParam] = []
         self.code: str | None = None
-        self.tools: list[FunctionToolParam] = []
-        self.functions: dict[str, Callable[..., object]] = {}
 
         # Chat integration
         self.chat = Chat("ws://localhost:8080")
 
-        self.add_function(self.read_users_program)
-        self.add_function(self.run_users_program)
-        self.add_function(get_pixpy_information)
+        self.client.add_function(self.read_users_program)
+        self.client.add_function(self.run_users_program)
+        self.client.add_function(get_pixpy_information)
 
         self.chat.start_threaded()
 
@@ -186,101 +106,22 @@ class SmartChat:
         if self.reading_line:
             self.read_line()
 
-    def add_function(
-        self,
-        fn: Callable[..., object],
-        desc: str | None = None,
-        arg_desc: dict[str, str] | None = None,
-    ):
-        fd = create_function(fn, desc, arg_desc)
-        self.tools.append(fd)
-        self.functions[fd["name"]] = fn
-
-    def handle_function_call(self, fcall: ResponseFunctionToolCall):
-        if fcall.name in self.functions:
-            msg: ResponseFunctionToolCallParam = {
-                "name": fcall.name,
-                "arguments": fcall.arguments,
-                "call_id": fcall.call_id,
-                "type": "function_call",
-            }
-            self.messages.append(msg)
-            fn = self.functions[fcall.name]
-            args = json.loads(fcall.arguments)
-            print(args)
-            ret = fn(**args)
-            fr: FunctionCallOutput = {
-                "call_id": fcall.call_id,
-                "output": str(ret),
-                "type": "function_call_output",
-            }
-            self.add_message(fr)
-
     def set_code(self, code: str):
         self.code = code
 
-    def add_line(self, line: str) -> None:
-        self.add_message(message(line))
-
-    def add_message(self, message: ResponseInputItemParam):
-        """Add a message to the AI chat and send it to GPT"""
-
-        # If program is among AI messages, update it
-        read_id = ""
-        for msg in self.messages:
-            if "type" in msg:
-                print(msg)
-                if is_function_call(msg):
-                    if msg["name"] == "read_users_program":
-                        read_id = msg["call_id"]
-                if is_function_call_output(msg):
-                    if msg["call_id"] == read_id:
-                        msg["output"] = self.editor.get_text()
-
-        self.messages.append(message)
-        self.code = self.editor.get_text()
-        messages = self.messages.copy()
-
-        # Run GPT query in thread
-        def _get_ai_response(messages: list[ResponseInputItemParam]) -> Response:
-            instructions = (data_path / "instructions.md").read_text()
-            response = self.client.responses.create(
-                model="gpt-5-mini",
-                instructions=instructions,
-                input=messages,
-                tools=self.tools,
-            )
-            return response
-
-        future = self.executor.submit(_get_ai_response, messages)
-        self.responses.append(future)
-
-    def handle_response(self, response: Response):
-        print(response.output)
-        for output in response.output:
-            if output.type == "function_call":
-                self.handle_function_call(output)
-                return
-
-        self.messages.append(
-            EasyInputMessageParam(role="assistant", content=response.output_text)
-        )
-        self.write("\n")
-        self.markdown_renderer.render(response.output_text)
-        # self.write(response.output_text)
-        self.write("\n")
-        self.read_line()
-
     def handle_events(self, event: object) -> bool:
-        if isinstance(event, pix.event.Text):
-            if event.device == 1:
+        if isinstance(event, pix.event.Text) and event.device == 1:
+            if self.reading_line:
+                self.reading_line = False
+                # User entered a line of text
                 print(event.text)
                 xy = self.console.cursor_pos
                 self.console.clear_area(xy.x, xy.y, self.console.grid_size.x - 2, 1)
-                self.write(event.text, pix.color.LIGHT_BLUE)
-                self.console.write("\n")
-                self.add_line(event.text)
-                return False
+                self.markdown_renderer.set_color("normal", pix.color.LIGHT_BLUE)
+                self.markdown_renderer.render(event.text)
+                self.markdown_renderer.set_color("normal", pix.color.WHITE)
+                self.client.add_line(event.text)
+            return False
         return True
 
     def write(self, text: str, color: int = pix.color.WHITE):
@@ -305,15 +146,32 @@ class SmartChat:
             self.console.cursor_on = False
 
     def render(self):
-        # Process any pending chat messages
-        self.process_chat_messages()
 
-        if len(self.responses) > 0:
-            r = self.responses[0]
-            if r.done():
-                print("GOT RESULT")
-                self.responses.pop(0)
-                self.handle_response(r.result())
+        if pix.is_pressed(pix.key.F7):
+            if not self.is_recording:
+                self.is_recording = True
+                self.vtt.start_transribe()
+            xy = self.canvas.size - (10,10)
+            self.canvas.draw_color = pix.color.LIGHT_GREEN
+            self.canvas.filled_circle(center=xy, radius=10)
+        elif self.is_recording:
+            self.is_recording = False
+            self.vtt_result = self.vtt.end_transcribe()
+
+        if self.vtt_result and self.vtt_result.done():
+            text = self.vtt_result.result()
+            print(f"TRANSCRIBE: {text}")
+            self.vtt_result = None
+            self.write(text)
+            self.write("\n")
+            self.client.add_line(text)
+
+        # Process any pending chat messages
+        response = self.client.update()
+        if response is not None:
+            #self.console.cancel_line()
+            self.markdown_renderer.render(response.text)
+            self.read_line()
 
         self.canvas.draw(self.console, top_left=(0, 0), size=self.console.size)
 
@@ -322,6 +180,7 @@ class SmartChat:
         self.console.write("\n> ")
         self.console.set_color(pix.color.LIGHT_BLUE, pix.color.BLACK)
         self.console.read_line()
+        self.reading_line = True
 
     def stop_chat(self):
         """Stop chat functionality."""
