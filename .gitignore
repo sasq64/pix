@@ -16,3 +16,6 @@ cmake-build-*/
 doc/*.html
 doc/*.pdf
 compile_commands.json
+attic/
+node_modules/
+

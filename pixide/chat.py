@@ -1,11 +1,16 @@
 import asyncio
 import json
+import queue
+import threading
 import uuid
 import websockets
 from pathlib import Path
 from typing import Callable, Literal, NotRequired, TypedDict
 
-MsgType = Literal["joined",  "error", "join", "user_joined", "user_left", "switch_room", "chat_message"]
+MsgType = Literal[
+    "joined", "error", "join", "user_joined", "user_left", "switch_room", "chat_message"
+]
+
 
 class Message(TypedDict):
     type: MsgType
@@ -29,11 +34,16 @@ class Chat:
         self.message_handler: Callable[[Message], None] | None = None
         self.listener_task: asyncio.Task[None] | None = None
 
+        # Threading support
+        self.message_queue: queue.Queue[Message] = queue.Queue()
+        self.chat_thread: threading.Thread | None = None
+        self.chat_loop: asyncio.AbstractEventLoop | None = None
+        self.threaded_enabled = False
 
     def _load_or_create_user_id(self) -> str:
         """Load user ID from file or create a new one."""
         user_file = Path.home() / ".pixide_user_id"
-        id : str | None = None
+        id: str | None = None
 
         if user_file.exists():
             try:
@@ -85,11 +95,7 @@ class Chat:
 
     async def _join_room(self, room_id: str):
         """Join a specific room."""
-        message : Message = {
-            "type": "join",
-            "userId": self.user_id,
-            "roomId": room_id
-        }
+        message: Message = {"type": "join", "userId": self.user_id, "roomId": room_id}
 
         await self._send_message(message)
         self.current_room = room_id
@@ -101,10 +107,10 @@ class Chat:
             print("Not connected to server")
             return False
 
-        message : Message = {
+        message: Message = {
             "type": "switch_room",
             "userId": self.user_id,
-            "roomId": room_id
+            "roomId": room_id,
         }
 
         await self._send_message(message)
@@ -118,10 +124,10 @@ class Chat:
             print("Not connected to server")
             return False
 
-        message : Message = {
+        message: Message = {
             "type": "chat_message",
             "userId": self.user_id,
-            "content": content
+            "content": content,
         }
 
         await self._send_message(message)
@@ -137,7 +143,7 @@ class Chat:
         try:
             while self.connected and self.websocket:
                 message_data = await self.websocket.recv()
-                message : Message = json.loads(message_data)
+                message: Message = json.loads(message_data)
 
                 # Handle message internally
                 await self._handle_message(message)
@@ -182,7 +188,7 @@ class Chat:
 
             # Don't echo our own messages
             if user != self.user_id:
-                time_str = timestamp.split('T')[1][:8] if timestamp else ""
+                time_str = timestamp.split("T")[1][:8] if timestamp else ""
                 print(f"[{time_str}] {user}: {content}")
 
     async def disconnect(self):
@@ -212,3 +218,115 @@ class Chat:
     def is_connected(self) -> bool:
         """Check if connected to the server."""
         return self.connected
+
+    # Threaded API methods
+    def start_threaded(self, room_id: str | None = None):
+        """Start chat functionality in a dedicated thread."""
+        if self.threaded_enabled:
+            return
+
+        self.threaded_enabled = True
+        self.chat_thread = threading.Thread(
+            target=self._run_chat_thread, args=(room_id,), daemon=True
+        )
+        self.chat_thread.start()
+
+    def stop_threaded(self):
+        """Stop threaded chat functionality and cleanup."""
+        if not self.threaded_enabled:
+            return
+
+        self.threaded_enabled = False
+
+        if self.chat_loop and not self.chat_loop.is_closed():
+            # Schedule disconnect in the chat thread's event loop
+            asyncio.run_coroutine_threadsafe(
+                self._threaded_disconnect(), self.chat_loop
+            )
+
+        if self.chat_thread:
+            self.chat_thread.join(timeout=2.0)
+
+    def send_message_threaded(self, content: str):
+        """Send a chat message from main thread when using threaded mode."""
+        if not self.threaded_enabled or not self.chat_loop:
+            print("Threaded chat not enabled")
+            return
+
+        # Schedule the async send in the chat thread
+        try:
+            future = asyncio.run_coroutine_threadsafe(
+                self._threaded_send_message(content), self.chat_loop
+            )
+            # Don't wait for result to avoid blocking main thread
+        except Exception as e:
+            print(f"Failed to send chat message: {e}")
+
+    def get_messages(self) -> list[Message]:
+        """Get all pending messages from the queue (non-blocking)."""
+        messages: list[Message] = []
+        while not self.message_queue.empty():
+            try:
+                message = self.message_queue.get_nowait()
+                messages.append(message)
+            except queue.Empty:
+                break
+        return messages
+
+    def _run_chat_thread(self, room_id: str | None):
+        """Run the chat functionality in a dedicated thread with its own event loop."""
+        try:
+            # Create new event loop for this thread
+            self.chat_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.chat_loop)
+
+            # Run the async chat logic
+            self.chat_loop.run_until_complete(self._threaded_main(room_id))
+        except Exception as e:
+            print(f"Chat thread error: {e}")
+        finally:
+            if self.chat_loop:
+                try:
+                    self.chat_loop.close()
+                except:
+                    pass
+
+    async def _threaded_main(self, room_id: str | None):
+        """Main chat async function - runs in dedicated thread."""
+        try:
+            # Set up a message handler that puts messages in the queue
+            original_handler = self.message_handler
+            self.set_message_handler(self._queue_message_handler)
+
+            # Connect to chat server
+            connected = await self.connect(room_id)
+            if not connected:
+                print("Failed to connect to chat server")
+                return
+
+            print(f"Connected to chat room: {self.get_current_room()}")
+
+            # Keep the connection alive while threaded mode is enabled
+            while self.threaded_enabled and self.is_connected():
+                await asyncio.sleep(0.1)
+
+            # Restore original handler
+            self.message_handler = original_handler
+
+        except Exception as e:
+            print(f"Chat connection error: {e}")
+
+    async def _threaded_disconnect(self):
+        """Disconnect from chat server in threaded mode."""
+        await self.disconnect()
+
+    async def _threaded_send_message(self, content: str):
+        """Send chat message in threaded mode."""
+        await self.send_chat_message(content)
+
+    def _queue_message_handler(self, message: Message):
+        """Message handler that puts messages in queue for main thread."""
+        try:
+            self.message_queue.put_nowait(message)
+        except queue.Full:
+            print("Chat message queue is full, dropping message")
