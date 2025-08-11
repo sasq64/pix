@@ -6,22 +6,28 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/app.js",
-    "dev": "ts-node src/app.ts"
+    "dev": "ts-node src/app.ts",
+    "test": "jest"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "uuid": "^9.0.1",
-    "ws": "^8.14.2"
+    "uuid": "^9.0.1"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.2.1",
+    "@types/node-forge": "^1.3.13",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
+    "jest": "^30.0.5",
+    "node-forge": "^1.3.1",
+    "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "ws": "^8.18.3"
   }
 }

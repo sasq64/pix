@@ -13,10 +13,14 @@ This is a WebSocket-based chat server for PixIDE, designed to run on Fly.io. It 
 # Install dependencies
 npm install
 
+# Build the server (from typescript)
+npm run build
+
 # Start the server (development or production)
 npm start
-# Alternative:
-node app.js
+
+# Run tests
+npm run test
 ```
 
 The server runs on port 8080 by default (configurable via PORT environment variable).
