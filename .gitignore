@@ -18,4 +18,4 @@ doc/*.pdf
 compile_commands.json
 attic/
 node_modules/
-
+node_modulesserver/

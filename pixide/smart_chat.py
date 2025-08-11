@@ -6,9 +6,9 @@ from pathlib import Path
 import subprocess
 from textwrap import wrap
 from typing import Literal, Protocol, Callable, TypeGuard
-
 import pixpy as pix
 
+from pixide.voice_recorder import VoiceToText
 from pixide.markdown import MarkdownRenderer
 from pixide.chat import Chat, Message
 
@@ -119,6 +119,10 @@ class SmartChat:
         self.reading_line: bool = True
         self.resize()
         self.console.cursor_on = False
+        self.is_recording : bool = False
+        self.vtt_result: Future[str] | None = None
+
+        self.vtt = VoiceToText()
         pix.add_event_listener(self.handle_events, 0)
 
         key_file = Path.home() / ".openai.key"
@@ -305,6 +309,26 @@ class SmartChat:
             self.console.cursor_on = False
 
     def render(self):
+
+        if pix.is_pressed(pix.key.F7):
+            if not self.is_recording:
+                self.is_recording = True
+                self.vtt.start_transribe()
+            xy = self.canvas.size - (10,10)
+            self.canvas.draw_color = pix.color.LIGHT_GREEN
+            self.canvas.filled_circle(center=xy, radius=10)
+        elif self.is_recording:
+            self.is_recording = False
+            self.vtt_result = self.vtt.end_transcribe()
+
+        if self.vtt_result and self.vtt_result.done():
+            text = self.vtt_result.result()
+            print(f"TRANSCRIBE: {text}")
+            self.vtt_result = None
+            self.write(text)
+            self.write("\n")
+            self.add_line(text)
+
         # Process any pending chat messages
         self.process_chat_messages()
 
