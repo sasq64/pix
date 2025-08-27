@@ -164,6 +164,28 @@ class SmartChat:
             self.vtt_result = None
             self.write(text)
             self.write("\n")
+            self.add_line(text)
+
+        # Process any pending chat messages
+        self.process_chat_messages()
+
+        if pix.is_pressed(pix.key.F7):
+            if not self.is_recording:
+                self.is_recording = True
+                self.vtt.start_transribe()
+            xy = self.canvas.size - (10,10)
+            self.canvas.draw_color = pix.color.LIGHT_GREEN
+            self.canvas.filled_circle(center=xy, radius=10)
+        elif self.is_recording:
+            self.is_recording = False
+            self.vtt_result = self.vtt.end_transcribe()
+
+        if self.vtt_result and self.vtt_result.done():
+            text = self.vtt_result.result()
+            print(f"TRANSCRIBE: {text}")
+            self.vtt_result = None
+            self.write(text)
+            self.write("\n")
             self.client.add_line(text)
 
         # Process any pending chat messages
