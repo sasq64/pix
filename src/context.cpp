@@ -2,6 +2,7 @@
 #include "colors.hpp"
 #include "gl/functions.hpp"
 #include "image_view.hpp"
+#include "vec2.hpp"
 
 #include <cmath>
 #include <tesselator.h>
@@ -152,8 +153,8 @@ std::array<float, 16> Context::rotated_quad_with_uvs(Vec2f center, Vec2f sz,
 void Context::filled_rect(Vec2f top_left, Vec2f size)
 {
     if (log_fp) {
-        fprintf(log_fp, "flled_rect top_left=%s size=%s\n", str(top_left).c_str(),
-                str(size).c_str());
+        fprintf(log_fp, "flled_rect top_left=%s size=%s\n",
+                str(top_left).c_str(), str(size).c_str());
         fflush(log_fp);
     }
     draw_filled(generate_quad(top_left, size), gl::Primitive::TriangleFan);
@@ -167,7 +168,8 @@ void Context::rect(Vec2f top_left, Vec2f size)
         fflush(log_fp);
     }
     glLineWidth(line_width);
-    draw_filled(generate_quad(top_left, size), gl::Primitive::LineLoop);
+    draw_filled(generate_quad(top_left + Vec2f{0.5, 0.5}, size),
+                gl::Primitive::LineLoop);
 }
 
 void Context::line(Vec2f from, Vec2f to)
@@ -178,7 +180,8 @@ void Context::line(Vec2f from, Vec2f to)
         fflush(log_fp);
     }
     glLineWidth(line_width);
-    draw_filled(generate_line(from, to), gl::Primitive::Lines);
+    draw_filled(generate_line(from + Vec2f{0.5, 0.5}, to + Vec2f{0.5, 0.5}),
+                gl::Primitive::Lines);
     last_point = to;
     last_rad = 1;
 }
@@ -191,7 +194,9 @@ void Context::line(Vec2f to)
     }
     if (last_rad > 0) {
         glLineWidth(line_width);
-        draw_filled(generate_line(last_point, to), gl::Primitive::Lines);
+        draw_filled(
+            generate_line(last_point + Vec2f{0.5, 0.5}, to + Vec2f{0.5, 0.5}),
+            gl::Primitive::Lines);
     }
     last_point = to;
     last_rad = 1;
@@ -204,7 +209,7 @@ void Context::lines(std::vector<Vec2f> const& points)
     std::vector<float> result;
     result.reserve(points.size() * 2);
     for (auto&& p : points) {
-        auto&& p2 = to_screen(p);
+        auto&& p2 = to_screen(p + Vec2f{0.5, 0.5});
         result.push_back(p2.x);
         result.push_back(p2.y);
     }
@@ -253,7 +258,8 @@ void Context::circle(Vec2f const& v, float r)
 void Context::filled_circle(Vec2f const& v, float r)
 {
     if (log_fp) {
-        fprintf(log_fp, "filled_circle center=%s radius=%.1f\n", str(v).c_str(), r);
+        fprintf(log_fp, "filled_circle center=%s radius=%.1f\n", str(v).c_str(),
+                r);
         fflush(log_fp);
     }
     draw_filled(generate_circle(v, r, true), gl::Primitive::TriangleFan);
@@ -736,7 +742,7 @@ void Context::set_pixel(int x, int y, uint32_t col)
                      pixels.get());
     }
     dirty = true;
-    pixels[x + width * (height-y)] = col;
+    pixels[x + width * (height - y)] = col;
 }
 
 void Context::flood_fill(int x, int y, uint32_t col)
@@ -748,10 +754,7 @@ void Context::flood_fill(int x, int y, uint32_t col)
     auto const width = static_cast<int>(view_size.x);
     auto const height = static_cast<int>(view_size.y);
 
-
-    if (x < 0 || x >= width || y < 0 || y >= height) {
-        return;
-    }
+    if (x < 0 || x >= width || y < 0 || y >= height) { return; }
     if (pixels == nullptr) {
         pixels = std::unique_ptr<uint32_t[]>(new uint32_t[width * height]);
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE,
@@ -759,9 +762,7 @@ void Context::flood_fill(int x, int y, uint32_t col)
     }
 
     uint32_t target_color = pixels[x + width * (height - y)];
-    if (target_color == col) {
-        return;
-    }
+    if (target_color == col) { return; }
 
     std::vector<std::pair<int, int>> stack;
     stack.push_back({x, y});
@@ -770,13 +771,9 @@ void Context::flood_fill(int x, int y, uint32_t col)
         auto [px, py] = stack.back();
         stack.pop_back();
 
-        if (px < 0 || px >= width || py < 0 || py >= height) {
-            continue;
-        }
+        if (px < 0 || px >= width || py < 0 || py >= height) { continue; }
 
-        if (pixels[px + width * (height - py)] != target_color) {
-            continue;
-        }
+        if (pixels[px + width * (height - py)] != target_color) { continue; }
 
         pixels[px + width * (height - py)] = col;
 

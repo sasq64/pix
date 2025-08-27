@@ -763,6 +763,10 @@ class Screen(Canvas):
         """
         Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This is normally the last thing you do in your render loop.
         """
+    def swap_async(self) -> typing.Any:
+        """
+        Async version of swap(). Returns an awaitable that completes when the swap is finished.
+        """
     @property
     def delta(self) -> float:
         """

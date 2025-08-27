@@ -92,7 +92,31 @@ inline auto add_screen_class(py::module_ const& mod, auto ctx_class)
                     screen->swap();
                 }
             },
-            "Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This is normally the last thing you do in your render loop.");
+            "Synchronize with the frame rate of the display and swap buffers so what you have drawn becomes visible. This is normally the last thing you do in your render loop.")
+        .def(
+            "swap_async",
+            [](std::shared_ptr<pix::Screen> const& screen) -> py::object {
+                static auto asyncio = py::module_::import("asyncio");
+                auto loop = asyncio.attr("get_running_loop")();
+
+                // Execute swap in thread pool to avoid blocking
+                return loop.attr("run_in_executor")(
+                    py::none(),  // Use default executor
+                    py::cpp_function([screen]() {
+                        screen->flush();
+                        auto& m = Machine::get_instance();
+                        auto& callbacks = m.sys->callbacks;
+                        auto it = callbacks.begin();
+                        while (it != callbacks.end()) {
+                            const auto keep_running = (*it)();
+                            it = keep_running ? it+1 : callbacks.erase(it);
+                        }
+                        screen->swap();
+                        return py::none();
+                    })
+                );
+            },
+            "Async version of swap(). Returns an awaitable that completes when the swap is finished.");
     screen.doc() =
         "The main window. Currently there can be only one instance of this class.";
 
