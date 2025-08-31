@@ -68,9 +68,10 @@ char32_t TileSet::get_char_from_uv(uint32_t uv)
 // }
 
 TileSet::TileSet(std::shared_ptr<FreetypeFont> freetype_font, int size,
-                 std::pair<int, int> tsize)
+                 std::pair<int, int> tsize, Vec2i dist)
     : font_ptr{std::move(freetype_font)}, pixel_size{size},
-      char_array{0xffffffff}, char_width{tsize.first}, char_height{tsize.second}
+      char_array{0xffffffff}, char_width{tsize.first}, char_height{tsize.second},
+    distance{dist}
 {
     init();
 }
@@ -89,9 +90,9 @@ void TileSet::init()
     if (char_width <= 0) {
         if (pixel_size < 0) { throw font_exception("Must specify size"); }
         font_ptr->set_pixel_size(pixel_size);
-        std::tie(char_width, char_height) = font_ptr->get_size(0x2588);
         if (char_width <= 0 || char_height <= 0) {
-            std::tie(char_width, char_height) = font_ptr->get_size('%');
+            std::tie(char_width, char_height) = font_ptr->get_mono_size();
+            //printf("%d %d\n", char_width, char_height);
         }
     }
     if (pixel_size == -1) {
@@ -99,12 +100,7 @@ void TileSet::init()
         // Start with large size, loop until it fits
         while (true) {
             font_ptr->set_pixel_size(s);
-            auto [w, h] = font_ptr->get_size(0x2588);
-            if (w <= 0 || h <= 0) {
-                std::tie(w, h) = font_ptr->get_size('%');
-            }
-            // printf("%d => %d,%d (vs %d,%d)\n", s, w, h, char_width,
-            //       char_height);
+            auto [w, h] = font_ptr->get_mono_size();
             if (w <= char_width && h <= char_height) {
                 pixel_size = s;
                 break;
@@ -113,6 +109,8 @@ void TileSet::init()
         }
     }
     font_ptr->set_pixel_size(pixel_size);
+    char_width += distance.x;
+    char_height += distance.y;
 
     std::ranges::fill(data, 0);
 

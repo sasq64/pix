@@ -78,8 +78,7 @@ void FullConsole::refresh()
     auto w = console->get_size().first;
     auto available_width = w - edit_start.x;
 
-    console->clear_area(edit_start.x, edit_start.y, available_width, 1,
-                        color::white, color::black);
+    console->clear_area(edit_start.x, edit_start.y, available_width, 1, fg, bg);
 
     // Extract visible portion of line based on scroll position
     auto line_start = std::min(scroll_pos, static_cast<int>(line.length()));

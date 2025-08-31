@@ -11,7 +11,6 @@ from .utils.wrap import wrap_text
 from .utils.tool_bar import ToolBar, ToolbarEvent
 from .utils.nerd import Nerd
 from .treesitter import TreeSitter
-
 Int2 = pix.Int2
 Float2 = pix.Float2
 

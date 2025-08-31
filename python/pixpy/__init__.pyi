@@ -820,12 +820,12 @@ class TileSet:
     A tileset is a texture split up into tiles for rendering. It is used by the `Console` class but can also be used directly.
     """
     @typing.overload
-    def __init__(self, font_file: str, size: int = -1, tile_size: Union[Int2, Tuple[int, int]] = ...) -> None:
+    def __init__(self, font_file: str, size: int = -1, tile_size: Union[Int2, Tuple[int, int]] = ..., distance: Union[Int2, Tuple[int, int]] = ...) -> None:
         """
         Create a TileSet from a ttf font with the given size. The tile size will be derived from the font size.
         """
     @typing.overload
-    def __init__(self, font: Font, size: int = -1, tile_size: Union[Int2, Tuple[int, int]] = ...) -> None:
+    def __init__(self, font: Font, size: int = -1, tile_size: Union[Int2, Tuple[int, int]] = ..., distance: Union[Int2, Tuple[int, int]] = ...) -> None:
         """
         Create a TileSet from an existing font. The tile size will be derived from the font size.
         """

@@ -13,7 +13,7 @@ class IdeArgs:
 
 
 fwd = Path(__file__).parent
-hack_font = fwd / "data" / "HackNerdFont-Regular.ttf"
+hack_font = fwd / "data" / "Jetbrains.ttf"
 chat_font = fwd / "data" / "3270.ttf"
 
 IDE = 0

@@ -1,20 +1,18 @@
 from concurrent.futures import Future, ThreadPoolExecutor
-import json
 import os
-import inspect
 from pathlib import Path
 import subprocess
 from textwrap import wrap
-from typing import Literal, Protocol, Callable, TypeGuard
 import pixpy as pix
+from openai import OpenAI
 
-from pixide.voice_recorder import VoiceToText
+from pixtools import VoiceToText
 from pixide.markdown import MarkdownRenderer
 from pixide.chat import Chat, Message
 
 from .ide import PixIDE
 
-from pixide.openaiclient import OpenAIClient
+from pixtools import OpenAIClient
 
 data_path = Path(os.path.abspath(__file__)).parent / "data"
 
@@ -41,14 +39,16 @@ class SmartChat:
         self.is_recording : bool = False
         self.vtt_result: Future[str] | None = None
 
-        self.vtt = VoiceToText()
-        pix.add_event_listener(self.handle_events, 0)
-
         key_file = Path.home() / ".openai.key"
         if not key_file.exists():
             raise FileNotFoundError("Can not find .openai.key in $HOME!")
         key = (Path.home() / ".openai.key").read_text().rstrip()
-        self.client = OpenAIClient(api_key=key)
+        openai = OpenAI(api_key=key)
+
+        self.vtt = VoiceToText(openai)
+        pix.add_event_listener(self.handle_events, 0)
+
+        self.client = OpenAIClient(openai)
         instructions = (data_path / "instructions.md").read_text()
         self.client.instructions = instructions
 

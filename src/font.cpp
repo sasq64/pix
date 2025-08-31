@@ -61,8 +61,9 @@ std::pair<int, int> FreetypeFont::render_text(std::string_view txt, T* target,
 }
 std::pair<int, int> FreetypeFont::get_mono_size() const
 {
-    int char_width = face->max_advance_width >> 6;
-    int char_height = face->size->metrics.height >> 6;
+    auto m = face->size->metrics;
+    int char_width = (m.max_advance + 32) >> 6;
+    int char_height = (m.height + 32) >> 6;
     return {char_width, char_height};
 }
 

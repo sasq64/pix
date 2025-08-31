@@ -28,6 +28,7 @@ public:
     std::shared_ptr<gl::Texture> tile_texture;
     int char_width = -1;
     int char_height = -1;
+    Vec2i distance;
 
     [[nodiscard]] gl::TexRef get_texture() const
     {
@@ -37,7 +38,7 @@ public:
     //TileSet(std::string const& font_file, int size = -1,
     //        std::pair<int, int> tile_size = {-1, -1});
     explicit TileSet(std::shared_ptr<FreetypeFont> freetype_font, int size = -1,
-                     std::pair<int, int> tile_size = {-1, -1});
+                     std::pair<int, int> tile_size = {-1, -1}, Vec2i distance = {0, 0});
     explicit TileSet(std::pair<int, int> tile_size);
     uint32_t get_offset(char32_t c);
 
