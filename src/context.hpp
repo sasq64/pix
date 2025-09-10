@@ -26,7 +26,11 @@ public:
     void log_to(fs::path const& target)
     {
         if (log_fp) fclose(log_fp);
+#ifdef _WIN32
+        log_fp = _wfopen(target.c_str(), L"w");
+#else
         log_fp = fopen(target.c_str(), "w");
+#endif
     }
 
     // The size of our view into the framebuffer
