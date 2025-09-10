@@ -1,6 +1,6 @@
 [project]
 name = "pixpy"
-version = "0.1.15"
+version = "0.2.0"
 description = "Graphics library"
 authors = [
     {name = "Jonas Minnberg", email="sasq64@gmail.com"}
