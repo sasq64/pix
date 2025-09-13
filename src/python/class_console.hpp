@@ -73,6 +73,7 @@ inline void add_console_functions(auto& cls)
             "bg"_a = std::nullopt,
             "Put `tile` at given position, optionally setting a specific foreground and/or background color")
         .def("get", &FullConsole::get, "Get tile at position")
+        .def_readwrite("cursor_color", &FullConsole::cursor_color, "Cursor color.")
         .def_readwrite("fg_color", &FullConsole::fg, "Foreground color.")
         .def_readwrite("bg_color", &FullConsole::bg, "Background color.")
         .def_readwrite("cursor_on", &FullConsole::cursor_on,

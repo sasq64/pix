@@ -37,6 +37,7 @@ public:
 
     ~FullConsole();
 
+    void set_cursor_color(uint32_t col);
     void set_device(int dev) { device = dev; }
 
     bool reading_line = false;
@@ -123,6 +124,7 @@ public:
 
     uint32_t fg = color::white;
     uint32_t bg = color::black;
+    uint32_t cursor_color = color::orange;
 
     bool cursor_on = false;
 

@@ -180,6 +180,12 @@ void FullConsole::set_color(uint32_t fg_, uint32_t bg_)
     fg = fg_;
     bg = bg_;
 }
+
+void FullConsole::set_cursor_color(uint32_t col)
+{
+    cursor_color = col;
+}
+
 void FullConsole::render2(pix::Context* context, Vec2f xy, Vec2f sz)
 {
     if (reading_line) { refresh(); }
@@ -197,7 +203,7 @@ void FullConsole::render2(pix::Context* context, Vec2f xy, Vec2f sz)
         auto ch = sz.y / rows;
 
         xy = Vec2f{(cursor.x + xpos - scroll_pos) * cw, cursor.y * ch} + xy;
-        context->set_color(color::orange);
+        context->set_color(cursor_color);
         context->filled_rect(xy, {cw, ch});
         auto const c =
             console->get_char(cursor.x + xpos - scroll_pos, cursor.y);

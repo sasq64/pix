@@ -288,6 +288,14 @@ class Console:
     def bg_color(self, arg0: int) -> None:
         ...
     @property
+    def cursor_color(self) -> int:
+        """
+        Cursor color.
+        """
+    @cursor_color.setter
+    def cursor_color(self, arg0: int) -> None:
+        ...
+    @property
     def cursor_on(self) -> bool:
         """
         Determine if the cursor should be visible.
