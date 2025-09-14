@@ -286,13 +286,13 @@ public:
 
         // TODO: It might be better to let Texture have its own program
         //       then to depend on ProgramCache.
-        auto& program = ProgramCache::get_instance()
+        auto program = ProgramCache::get_instance()
                             .get_program<ProgramCache::Textured,
                                          ProgramCache::NoTransform>();
         vbo.bind();
-        program.use();
-        auto pos = program.getAttribute("in_pos");
-        auto uv = program.getAttribute("in_uv");
+        program->use();
+        auto pos = program->getAttribute("in_pos");
+        auto uv = program->getAttribute("in_uv");
         pos.enable();
         uv.enable();
         gl::vertexAttrib(pos, 2, gl::Type::Float, 0 * sizeof(GLfloat), 0);

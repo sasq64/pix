@@ -210,7 +210,7 @@ void FullConsole::render2(pix::Context* context, Vec2f xy, Vec2f sz)
         auto const tex = console->get_texture_for_char(c);
         gl::ProgramCache::get_instance()
             .get_program<gl::ProgramCache::Textured>()
-            .use();
+            ->use();
         context->set_color(color::white);
         context->blit(tex, xy, {cw, ch});
     }

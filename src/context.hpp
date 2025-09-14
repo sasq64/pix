@@ -69,9 +69,9 @@ private:
     Vec2f last_point{0, 0};
     float last_rad = -1.0F;
 
-    gl::Program& colored;
-    gl::Program& textured;
-    gl::Program& filled;
+    std::shared_ptr<gl::Program> colored;
+    std::shared_ptr<gl::Program> textured;
+    std::shared_ptr<gl::Program> filled;
 
     template <typename CO>
     void draw_filled(CO const& container, gl::Primitive primitive);

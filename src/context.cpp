@@ -338,8 +338,8 @@ Context::Context(Vec2f _offset, Vec2f _view_size, Vec2f _target_size, GLuint fb)
                    .get_program<ProgramCache::Textured>()}, // NOLINT
       filled{ProgramCache::get_instance().get_program<>()} // NOLINT
 {
-    // auto in_color = textured.getUniformLocation("in_color");
-    // auto in_pos = textured.getAttribute("in_pos");
+    // auto in_color = textured->getUniformLocation("in_color");
+    // auto in_pos = textured->getAttribute("in_pos");
 }
 
 Context::Context(float w, float h, GLuint fb)
@@ -348,10 +348,10 @@ Context::Context(float w, float h, GLuint fb)
     static constexpr std::array<float, 16> mat{1, 0, 0, 0, 0, 1, 0, 0,
                                                0, 0, 1, 0, 0, 0, 0, 1};
     const gl::Color color = 0xffffffff;
-    filled.setUniform("frag_color", color);
-    filled.setUniform("in_transform", mat);
-    textured.setUniform("frag_color", color);
-    textured.setUniform("in_transform", mat);
+    filled->setUniform("frag_color", color);
+    filled->setUniform("in_transform", mat);
+    textured->setUniform("frag_color", color);
+    textured->setUniform("in_transform", mat);
 }
 
 template <typename CO>
@@ -359,9 +359,9 @@ void Context::draw_filled(const CO& container, gl::Primitive primitive)
 {
     set_target();
 
-    filled.use();
-    filled.setUniform("frag_color", fg);
-    auto pos = filled.getAttribute("in_pos");
+    filled->use();
+    filled->setUniform("frag_color", fg);
+    auto pos = filled->getAttribute("in_pos");
     pos.enable();
     gl::ArrayBuffer<GL_STREAM_DRAW> vbo{container};
     vbo.bind();
@@ -378,9 +378,9 @@ void Context::draw_indexed(const CO& container, std::vector<T> indices,
 {
     set_target();
 
-    filled.use();
-    filled.setUniform("frag_color", fg);
-    auto pos = filled.getAttribute("in_pos");
+    filled->use();
+    filled->setUniform("frag_color", fg);
+    auto pos = filled->getAttribute("in_pos");
     pos.enable();
     gl::ArrayBuffer<GL_STREAM_DRAW> vbo{container};
     gl::ElementBuffer<GL_STREAM_DRAW> elements{indices};
@@ -400,9 +400,9 @@ void Context::draw_indexed(F const* coords, size_t c_count, I const* indices,
 {
     set_target();
 
-    filled.use();
-    filled.setUniform("frag_color", fg);
-    auto pos = filled.getAttribute("in_pos");
+    filled->use();
+    filled->setUniform("frag_color", fg);
+    auto pos = filled->getAttribute("in_pos");
     pos.enable();
     gl::ArrayBuffer<GL_STREAM_DRAW> vbo{coords, c_count};
     gl::ElementBuffer<GL_STREAM_DRAW> elements{indices, i_count};
@@ -654,11 +654,11 @@ void Context::draw_textured(const CO& container, gl::Primitive primitive)
 {
     set_target();
 
-    textured.use();
-    textured.setUniform("frag_color", fg);
-    auto pos = textured.getAttribute("in_pos");
+    textured->use();
+    textured->setUniform("frag_color", fg);
+    auto pos = textured->getAttribute("in_pos");
     pos.enable();
-    auto uv = textured.getAttribute("in_uv");
+    auto uv = textured->getAttribute("in_uv");
     uv.enable();
     gl::ArrayBuffer<GL_STREAM_DRAW> vbo{container};
     vbo.bind();
@@ -703,9 +703,9 @@ void Context::draw_points()
 
     glPointSize(point_size);
 
-    colored.use();
-    auto pos = colored.getAttribute("in_pos");
-    auto cola = colored.getAttribute("in_color");
+    colored->use();
+    auto pos = colored->getAttribute("in_pos");
+    auto cola = colored->getAttribute("in_color");
     pos.enable();
     cola.enable();
     gl::ArrayBuffer<GL_STREAM_DRAW> vbo{point_cache};

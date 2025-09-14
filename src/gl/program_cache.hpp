@@ -111,7 +111,7 @@ struct ProgramCache
 
     template <typename... FLAGS> struct ProgramHolder
     {
-        static inline Program cached;
+        static inline std::shared_ptr<Program> cached;
     };
 
     template <typename... ARGS> std::string join(ARGS... args)
@@ -119,10 +119,12 @@ struct ProgramCache
         return (args + ... + "");
     }
 
-    template <typename... ARGS> Program& get_program()
+    template <typename... ARGS> std::shared_ptr<Program> get_program()
     {
         auto& program = ProgramHolder<ARGS...>::cached;
-        if (!program) { program = get_program(join(ARGS::code...)); }
+        if (!program) {
+            program = std::make_shared<Program>(get_program(join(ARGS::code...)));
+        }
         return program;
     }
 
