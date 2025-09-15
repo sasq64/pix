@@ -191,7 +191,7 @@ add_library(pix STATIC
     external/lodepng/lodepng.cpp)
 target_include_directories(pix PRIVATE external/lodepng external/earcut PUBLIC src)
 target_compile_options(pix PUBLIC -fvisibility=hidden)
-target_link_libraries(pix PRIVATE Warnings PUBLIC tess2
+target_link_libraries(pix PRIVATE Warnings PUBLIC tess2 treesitter
     Threads::Threads
     Graphics
     Freetype::Freetype)
@@ -207,9 +207,15 @@ if (PYTHON_MODULE)
     pybind11_add_module(_pixpy src/python.cpp src/treesitter.cpp)
     target_link_libraries(_pixpy PUBLIC treesitter Warnings pix Extra)
     target_compile_definitions(_pixpy PRIVATE PYTHON_MODULE)
+if (WIN32)
+    target_compile_options(_pixpy PRIVATE "/bigobj")
+endif()
     install(TARGETS _pixpy DESTINATION pixpy)
 else ()
     #add_subdirectory(external/pybind11)
-    add_executable(pixpy src/python.cpp)
-    target_link_libraries(pixpy PUBLIC pybind11::embed Warnings pix Extra)
+    add_executable(pixpy src/python.cpp src/treesitter.cpp)
+    target_link_libraries(pixpy PUBLIC treesitter pybind11::embed Warnings pix Extra)
+    if (WIN32)
+        target_compile_options(pixpy PRIVATE "/bigobj")
+    endif()
 endif()

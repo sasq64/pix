@@ -462,7 +462,11 @@ int main()
     py::scoped_interpreter guard{}; // start the interpreter and keep it alive
     py::module_ sys = py::module_::import("sys");
     py::list sys_path = sys.attr("path");
+#ifdef _WIN32
+    _putenv("PYTHONHOME=..\\venv");
+#else
     setenv("PYTHONHOME", "../venv", 1);
+#endif
     py::list path = sys.attr("path");
     sys_path.insert(0, "../venv/lib/python3.13/site-packages");
 
