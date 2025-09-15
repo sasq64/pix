@@ -31,8 +31,9 @@ make_console(int32_t cols, int32_t rows,
         font_size = 16;
     }
 
+    auto s = font_file->string();
     auto font = !have_font ? FreetypeFont::unscii
-                           : std::make_shared<FreetypeFont>(font_file->c_str(),
+                           : std::make_shared<FreetypeFont>(s.c_str(),
                                                             font_size);
 
     auto tile_set = std::make_shared<TileSet>(font, font_size, ts);
