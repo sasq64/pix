@@ -74,7 +74,7 @@ inline auto add_image_class(py::module_ const& mod, auto ctx_class)
                 "update",
                 [](pix::ImageView& img, py::bytes pixels) {
                     char* buffer;
-                    ssize_t length;
+                    Py_ssize_t length;
                     if (PYBIND11_BYTES_AS_STRING_AND_SIZE(pixels.ptr(), &buffer,
                                                           &length)) {
                         throw std::runtime_error("Failed to extract bytes");

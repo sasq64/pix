@@ -165,7 +165,7 @@ target_include_directories(tess2 PUBLIC external/libtess2/Include)
 
 set(TREESITTER external/tree-sitter)
 set(TREESITTER_PY external/tree-sitter-python)
-set(TS_FLAGS -O3 -Wall -Wextra -Wshadow -Wpedantic -Werror=incompatible-pointer-types -std=c11 -fPIC -fvisibility=hidden -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE)
+set(TS_FLAGS -O3 -Wall -std=c11 -fPIC -fvisibility=hidden -D_POSIX_C_SOURCE=200112L -D_DEFAULT_SOURCE)
 set(TS_INCLUDES ${TREESITTER}/lib/src ${TREESITTER}/lib/include)
 
 set(TS ${TREESITTER}/lib/src)
