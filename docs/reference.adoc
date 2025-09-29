@@ -1,0 +1,2172 @@
+= PIXPY
+:toc: left
+:toclevels: 5
+:source-highlighter: rouge
+
+== pixpy (module)
+
+=== Methods
+
+==== pixpy.add_event_listener
+
+[source,python]
+----
+add_event_listener(func: Callable[[object], bool], filter: int) -> int
+----
+
+Add a function that can intercept events. The function should return
+_False_ if the event should not be propagated. Returns `id`.
+
+==== pixpy.all_events
+
+[source,python]
+----
+all_events() -> list[object]
+----
+
+Return the list of all pending events, and clear them.
+
+==== pixpy.allow_break
+
+[source,python]
+----
+allow_break(on: bool) -> None
+----
+
+Allow Ctrl-C to break out of run loop
+
+==== pixpy.blend_color
+
+[source,python]
+----
+blend_color(color0: int, color1: int, t: float) -> int
+----
+
+Blend two colors together. `t` should be between 0 and 1.
+
+==== pixpy.blend_colors
+
+[source,python]
+----
+blend_colors(colors: list[int], t: float) -> int
+----
+
+Get a color from a color range. Works similar to bilinear filtering of
+an 1D texture.
+
+==== pixpy.get_clipboard
+
+[source,python]
+----
+get_clipboard() -> str
+----
+
+Get the current clipboard content as a string.
+
+==== pixpy.get_display
+
+[source,python]
+----
+get_display() -> Screen
+----
+
+Get the current display, if any.
+
+==== pixpy.get_pointer
+
+[source,python]
+----
+get_pointer() -> Float2
+----
+
+Get the xy coordinate of the mouse pointer (in screen space).
+
+==== pixpy.inside_polygon
+
+[source,python]
+----
+inside_polygon(points: list[Float2], point: Float2) -> bool
+----
+
+Check if the `point` is inside the polygon formed by `points`.
+
+==== pixpy.is_pressed
+
+[source,python]
+----
+is_pressed(key: int | str) -> bool
+----
+
+Returns _True_ if the keyboard or mouse key is held down.
+
+==== pixpy.load_font
+
+[source,python]
+----
+load_font(name: os.PathLike, size: int = 0) -> Font
+----
+
+Load a TTF font.
+
+==== pixpy.load_png
+
+[source,python]
+----
+load_png(file_name: os.PathLike) -> Image
+----
+
+Create an _Image_ from a png file on disk.
+
+==== pixpy.open_display
+
+[source,python]
+----
+open_display(width: int = -1, height: int = -1, full_screen: bool = False, visible: bool = True) -> Screen
+----
+
+==== pixpy.open_display
+
+[source,python]
+----
+open_display(size: Int2, full_screen: bool = False, visible: bool = True) -> Screen
+----
+
+Opens a new window with the given size. This also initializes pix and is
+expected to have been called before any other pix calls. Subsequent
+calls to this method returns the same screen instance, since you can
+only have one active display in pix.
+
+==== pixpy.post_event
+
+[source,python]
+----
+post_event(event: object) -> None
+----
+
+Post an event to pixpy, that will be returned by the next call to
+`all_events()`.
+
+==== pixpy.quit_loop
+
+[source,python]
+----
+quit_loop() -> None
+----
+
+Make run_loop() return False. Thread safe.
+
+==== pixpy.remove_event_listener
+
+[source,python]
+----
+remove_event_listener(id: int) -> None
+----
+
+Remove event listener via its `id`.
+
+==== pixpy.rgba
+
+[source,python]
+----
+rgba(red: float, green: float, blue: float, alpha: float) -> int
+----
+
+Combine four color float components into a 32-bit color.
+
+==== pixpy.run_every_frame
+
+[source,python]
+----
+run_every_frame(func: Callable[[], bool]) -> None
+----
+
+Add a function that should be run every frame. If the function returns
+false it will stop being called.
+
+==== pixpy.run_loop
+
+[source,python]
+----
+run_loop() -> bool
+----
+
+Should be called first in your main rendering loop. Clears all pending
+events and all pressed keys. Returns _True_ as long as the application
+is running (the user has not closed the window or quit in some other way
+
+==== pixpy.save_png
+
+[source,python]
+----
+save_png(image: Image, file_name: os.PathLike) -> None
+----
+
+Save an _Image_ to disk
+
+==== pixpy.set_clipboard
+
+[source,python]
+----
+set_clipboard(text: str) -> None
+----
+
+Set the clipboard content to the provided text.
+
+==== pixpy.set_keyboard_device
+
+[source,python]
+----
+set_keyboard_device(device: int) -> None
+----
+
+Set the device number that keyboard events will originate from. This can
+be used to handle multiple readline calls from consoles.
+
+==== pixpy.update_tweens
+
+[source,python]
+----
+update_tweens() -> None
+----
+
+Manually update tweens
+
+==== pixpy.was_pressed
+
+[source,python]
+----
+was_pressed(key: int | str) -> bool
+----
+
+Returns _True_ if the keyboard or mouse key was pressed this loop.
+`run_loop()` refreshes these states.
+
+==== pixpy.was_released
+
+[source,python]
+----
+was_released(key: int | str) -> bool
+----
+
+Returns _True_ if the keyboard or mouse key was pressed this loop.
+`run_loop()` refreshes these states.
+
+=== Constants
+
+[source,python]
+----
+
+pixpy.BLEND_ADD = 0x03020001
+pixpy.BLEND_COPY = 0x00010000
+pixpy.BLEND_MULTIPLY = 0x03060000
+pixpy.BLEND_NORMAL = 0x03020303
+----
+
+== Canvas
+
+A `Canvas` is used for rendering. It is implemented by both `Screen` and
+`Image`.
+
+=== Properties
+
+==== Canvas.backface_culling
+
+`bool`
+
+If true, backward facing polygons will not be rendered.
+
+==== Canvas.blend_mode
+
+`int`
+
+Set the blend mode. Normally one of the constants `BLEND_ADD`,
+`BLEND_MULTIPLY` or `BLEND_NORMAL`.
+
+==== Canvas.draw_color
+
+`int`
+
+Set the draw color.
+
+==== Canvas.line_width
+
+`float`
+
+Set the line with in fractional pixels.
+
+==== Canvas.offset
+
+`Float2`
+
+The offset into a the source canvas this canvas was created from, if
+any.
+
+==== Canvas.point_size
+
+`float`
+
+Set the point size in fractional pixels.
+
+==== Canvas.scale
+
+`Float2`
+
+==== Canvas.size
+
+`Float2`
+
+The size of this canvas in pixels
+
+==== Canvas.target_size
+
+`Float2`
+
+=== Methods
+
+==== Canvas.begin_lines
+
+[source,python]
+----
+begin_lines(self: Canvas) -> None
+----
+
+Clear the last line point. The next call to `line(p)` or
+`rounded_line(p, r)` will start a new line sequence.
+
+==== Canvas.circle
+
+[source,python]
+----
+circle(center: Float2, radius: float) -> None
+----
+
+Draw an (outline) circle
+
+==== Canvas.clear
+
+[source,python]
+----
+clear(color: int = color.BLACK) -> None
+----
+
+Clear the canvas using given color.
+
+==== Canvas.complex_polygon
+
+[source,python]
+----
+complex_polygon(contours: list[list[Float2]]) -> None
+----
+
+Draw a complex filled polygon that can consist of holes.
+
+==== Canvas.copy
+
+[source,python]
+----
+copy(self: Canvas) -> Canvas
+----
+
+Make a copy of the self.
+
+==== Canvas.draw
+
+[source,python]
+----
+draw(image: Image, top_left: Optional[Float2] = None, center: Optional[Float2] = None, size: Float2 = Float2.ZERO, rot: float = 0) -> None
+----
+
+Render an image. The image can either be aligned to its top left corner,
+or centered, in which case it can also be rotated.
+
+==== Canvas.draw
+
+[source,python]
+----
+draw(drawable: Console, top_left: Float2 = Float2.ZERO, size: Float2 = Float2.ZERO) -> None
+----
+
+Render a console. `top_left` and `size` are in pixels. If `size` is not
+given, it defaults to `tile_size*grid_size`.
+
+To render a full screen console (scaling as needed):
+
+`console.render(screen, size=screen.size)`
+
+==== Canvas.filled_circle
+
+[source,python]
+----
+filled_circle(center: Float2, radius: float) -> None
+----
+
+Draw a filled circle.
+
+==== Canvas.filled_rect
+
+[source,python]
+----
+filled_rect(top_left: Float2, size: Float2) -> None
+----
+
+Draw a filled rectangle.
+
+==== Canvas.flood_fill
+
+[source,python]
+----
+flood_fill(pos: Int2, color: int) -> None
+----
+
+Flood fill starting from the given position with the specified color.
+
+==== Canvas.flush
+
+[source,python]
+----
+flush(self: Canvas) -> None
+----
+
+Flush pixel operations
+
+==== Canvas.get_pointer
+
+[source,python]
+----
+get_pointer(self: Canvas) -> Float2
+----
+
+Get the xy coordinate of the mouse pointer (in canvas space).
+
+==== Canvas.line
+
+[source,python]
+----
+line(start: Float2, end: Float2) -> None
+----
+
+Draw a line between start and end.
+
+==== Canvas.line
+
+[source,python]
+----
+line(end: Float2) -> None
+----
+
+Draw a line from the end of the last line to the given position.
+
+==== Canvas.lines
+
+[source,python]
+----
+lines(points: list[Float2]) -> None
+----
+
+Draw a line strip from all the given points.
+
+==== Canvas.log_to
+
+[source,python]
+----
+log_to(path: os.PathLike) -> None
+----
+
+Log draw commands to this file
+
+==== Canvas.plot
+
+[source,python]
+----
+plot(center: Float2, color: int) -> None
+----
+
+Draw a point.
+
+==== Canvas.plot
+
+[source,python]
+----
+plot(points: object, colors: object) -> None
+----
+
+Draw `n` points given by the array like objects. `points` should n*2
+floats and `colors` should contain `n` unsigned ints.
+
+==== Canvas.polygon
+
+[source,python]
+----
+polygon(points: list[Float2], convex: bool = False) -> None
+----
+
+Draw a filled polygon by stringing together the given points. If convex
+is `true` the polygon is rendered as a simple triangle fan, otherwise
+the polygon is split into triangles using the ear-clipping method.
+
+==== Canvas.rect
+
+[source,python]
+----
+rect(top_left: Float2, size: Float2) -> None
+----
+
+Draw a rectangle.
+
+==== Canvas.rounded_line
+
+[source,python]
+----
+rounded_line(start: Float2, rad0: float, end: Float2, rad1: float) -> None
+----
+
+Draw a line between start and end.
+
+==== Canvas.rounded_line
+
+[source,python]
+----
+rounded_line(end: Float2, radius: float) -> None
+----
+
+Draw a line from the end of the last line to the given position.
+
+==== Canvas.set_pixel
+
+[source,python]
+----
+set_pixel(pos: Int2, color: int) -> None
+----
+
+Write a pixel into the image.
+
+==== Canvas.to_image
+
+[source,python]
+----
+to_image(self: Canvas) -> Image
+----
+
+Create a new image from this canvas
+
+== Console
+
+A console is a 2D grid of tiles that can be rendered.
+
+=== Properties
+
+==== Console.autoscroll
+
+`bool`
+
+Should we scroll console upwards when writes pass bottom edge?
+
+==== Console.bg_color
+
+`int`
+
+Background color.
+
+==== Console.cursor_color
+
+`int`
+
+Cursor color.
+
+==== Console.cursor_on
+
+`bool`
+
+Determine if the cursor should be visible.
+
+==== Console.cursor_pos
+
+`Int2`
+
+The current location of the cursor. This will be used when calling
+`write()`.
+
+==== Console.fg_color
+
+`int`
+
+Foreground color.
+
+==== Console.grid_size
+
+`Int2`
+
+Get number cols and rows.
+
+==== Console.reading_line
+
+`bool`
+
+True if console is in read_line mode at the moment.
+
+==== Console.size
+
+`Int2`
+
+Get size of consoles in pixels (tile_size * grid_size).
+
+==== Console.tile_size
+
+`Int2`
+
+Get size of a single tile.
+
+==== Console.wrap_lines
+
+`bool`
+
+Should we wrap when writing passing right edge?
+
+=== Constructors
+
+[source,python]
+----
+Console(cols: int, rows: int, font_file: Optional[os.PathLike] = None, tile_size: Float2 = Int2(-1, -1), font_size: int = -1)
+----
+
+Create a new Console holding `cols`*`rows` tiles.
+
+`font_file` is the file name of a TTF font to use as backing. If no font
+is given, the built in _Unscii_ font will be used.
+
+`tile_size` sets the size in pixels of each tile. If not given, it will
+be derived from the size of a character in the font with the provided
+`font_size`.
+
+[source,python]
+----
+Console(cols: int, rows: int, tile_set: TileSet)
+----
+
+Create a new Console holding `cols`*`row` tiles. Use the provided
+`tile_set`.
+
+=== Methods
+
+==== Console.cancel_line
+
+[source,python]
+----
+cancel_line(self: Console) -> None
+----
+
+Stop line edit mode.
+
+==== Console.clear
+
+[source,python]
+----
+clear(self: Console) -> None
+----
+
+Clear the console.
+
+==== Console.clear_area
+
+[source,python]
+----
+clear_area(x: int, y: int, w: int, h: int) -> None
+----
+
+Clear the given rectangle, setting the current foreground and background
+colors.
+
+==== Console.colorize_section
+
+[source,python]
+----
+colorize_section(x: int, y: int, width: int) -> None
+----
+
+Colorize the given area with the current foreground and background
+color, without changing the characters
+
+==== Console.get
+
+[source,python]
+----
+get(arg0: Int2) -> int
+----
+
+Get tile at position
+
+==== Console.get_image_for
+
+[source,python]
+----
+get_image_for(tile: int) -> Image
+----
+
+Get the image of a specific tile. Use to render the tile manually, or to
+copy another image into the tile;
+
+`console.get_image_for(1024).copy_from(some_tile_image)`.
+
+==== Console.get_tiles
+
+[source,python]
+----
+get_tiles(self: Console) -> list[int]
+----
+
+Get all the tiles and colors as an array of ints. Format is:
+`[tile0, fg0, bg0, tile1, fg1, bg1 ...]` etc.
+
+==== Console.put
+
+[source,python]
+----
+put(pos: Int2, tile: int, fg: Optional[int] = None, bg: Optional[int] = None) -> None
+----
+
+Put `tile` at given position, optionally setting a specific foreground
+and/or background color
+
+==== Console.read_line
+
+[source,python]
+----
+read_line(self: Console) -> None
+----
+
+Puts the console in line edit mode.
+
+A cursor will be shown and all text events will be captured by the
+console until `Enter` is pressed. At this point the entire line will be
+pushed as a `TextEvent`.
+
+==== Console.set_color
+
+[source,python]
+----
+set_color(fg: int, bg: int) -> None
+----
+
+Set the default colors used when putting/writing to the console.
+
+==== Console.set_device_no
+
+[source,python]
+----
+set_device_no(devno: int) -> None
+----
+
+Set the device number that will be reported for TextEvents from this
+console.
+
+==== Console.set_line
+
+[source,python]
+----
+set_line(text: str) -> None
+----
+
+Change the edited line.
+
+==== Console.set_readline_callback
+
+[source,python]
+----
+set_readline_callback(callback: Callable[[str, int], None]) -> None
+----
+
+Sets a cllback that will be called when a line of text was entered by
+the user. Setting this will stop the normal TextEvent from being sent.
+
+==== Console.set_tile_images
+
+[source,python]
+----
+set_tile_images(start_no: int, images: list[Image]) -> None
+----
+
+Set images to use for a set of indexes, starting at `start_no`.
+
+==== Console.set_tiles
+
+[source,python]
+----
+set_tiles(tiles: list[int]) -> None
+----
+
+Set tiles from an array of ints.
+
+==== Console.write
+
+[source,python]
+----
+write(tiles: list[str]) -> None
+----
+
+==== Console.write
+
+[source,python]
+----
+write(text: str) -> None
+----
+
+Write text to the console at the current cursor position and using the
+current colors. Will advance cursor position, and wrap if it passes the
+right border of the console.
+
+== Float2
+
+Represents an floating point coordinate or size. Mostly behaves like a
+normal float when used in arithmetic operations.
+
+=== Properties
+
+==== Float2.with_x0
+
+`Float2`
+
+==== Float2.with_y0
+
+`Float2`
+
+==== Float2.x
+
+`float`
+
+==== Float2.xx
+
+`Float2`
+
+==== Float2.y
+
+`float`
+
+==== Float2.yx
+
+`Float2`
+
+==== Float2.yy
+
+`Float2`
+
+=== Constructors
+
+[source,python]
+----
+Float2(x: int = 0, y: int = 0)
+----
+
+[source,python]
+----
+Float2(x: int = 0, y: float = 0)
+----
+
+[source,python]
+----
+Float2(x: float = 0, y: int = 0)
+----
+
+[source,python]
+----
+Float2(x: float = 0, y: float = 0)
+----
+
+[source,python]
+----
+Float2(arg0: tuple[float, float])
+----
+
+=== Methods
+
+==== Float2.angle
+
+[source,python]
+----
+angle(self: Float2) -> float
+----
+
+Get the (counter-clockwise) angle between the vector and the X-axis
+(1,0).
+
+==== Float2.clamp
+
+[source,python]
+----
+clamp(low: Float2, high: Float2) -> Float2
+----
+
+Separately clamp the x and y component between the corresponding
+components in the given arguments.
+
+==== Float2.clip
+
+[source,python]
+----
+clip(low: Float2, high: Float2) -> Float2
+----
+
+Compare the point against the bounding box defined by low/high. Returns
+(0,0) if point is inside the box, or a negative or positive distance to
+the edge if outside.
+
+==== Float2.cossin
+
+[source,python]
+----
+cossin(self: Float2) -> Float2
+----
+
+Returns (cos(x), sin(y)).
+
+==== Float2.from_angle
+
+[source,python]
+----
+from_angle(angle: float) -> Float2
+----
+
+Rotates the X-axis (1,0) around `angle` clockwise and returns the
+result.
+
+==== Float2.inside_polygon
+
+[source,python]
+----
+inside_polygon(points: list[Float2]) -> bool
+----
+
+Check if the `point` is inside the polygon formed by `points`.
+
+==== Float2.mag
+
+[source,python]
+----
+mag(self: Float2) -> float
+----
+
+Get magnitude (length) of vector
+
+==== Float2.mag2
+
+[source,python]
+----
+mag2(self: Float2) -> float
+----
+
+Get the squared magnitude
+
+==== Float2.norm
+
+[source,python]
+----
+norm(self: Float2) -> Float2
+----
+
+Get the normalized vector.
+
+==== Float2.random
+
+[source,python]
+----
+random(self: Float2) -> Float2
+----
+
+Returns Float2(rnd(x), rnd(y)) where rnd(n) returns a random number
+between 0 and n.
+
+==== Float2.toi
+
+[source,python]
+----
+toi(self: Float2) -> Int2
+----
+
+Convert a `Float2` to an `Int2`
+
+==== Float2.tween_from
+
+[source,python]
+----
+tween_from(value: Float2, secs: float = 1.0, ease: Callable[[float], float] = <built-in method of PyCapsule object at 0x707f7bce2e20>) -> Float2
+----
+
+Animate this Float2 from `from` to its current value in `secs` seconds.
+
+==== Float2.tween_to
+
+[source,python]
+----
+tween_to(value: Float2, secs: float = 1.0, ease: Callable[[float], float] = <built-in method of PyCapsule object at 0x707f7bc97fc0>) -> Float2
+----
+
+Animate this Float2 so it reaches `to` in `secs` seconds.
+
+==== Float2.tween_velocity
+
+[source,python]
+----
+tween_velocity(speed: Float2, duration: float = 0.0) -> Float2
+----
+
+Move Vec2f with velocity `speed`.
+
+== Font
+
+Represents a TTF (Freetype) font that can be used to create text images.
+
+=== Constructors
+
+[source,python]
+----
+Font(font_file: str = '')
+----
+
+Create a font from a TTF file.
+
+=== Methods
+
+==== Font.make_image
+
+[source,python]
+----
+make_image(text: str, size: int, color: int = color.WHITE) -> Image
+----
+
+Create an image containing the given text.
+
+==== Font.text_size
+
+[source,python]
+----
+text_size(text: str, size: int) -> Float2
+----
+
+Return the size (bounding rectangle) of the given text.
+
+== Image
+
+A (GPU Side) _image_, represented by a texture reference and 4 UV
+coordinates. Images works like arrays in the sense that it is cheap to
+create new views into images (using crop(), split() etc).
+
+=== Properties
+
+==== Image.backface_culling
+
+`bool`
+
+If true, backward facing polygons will not be rendered.
+
+==== Image.blend_mode
+
+`int`
+
+Set the blend mode. Normally one of the constants `BLEND_ADD`,
+`BLEND_MULTIPLY` or `BLEND_NORMAL`.
+
+==== Image.draw_color
+
+`int`
+
+Set the draw color.
+
+==== Image.height
+
+`float`
+
+==== Image.line_width
+
+`float`
+
+Set the line with in fractional pixels.
+
+==== Image.offset
+
+`Float2`
+
+The offset into a the source canvas this canvas was created from, if
+any.
+
+==== Image.point_size
+
+`float`
+
+Set the point size in fractional pixels.
+
+==== Image.pos
+
+`Float2`
+
+The position of this image in its texture. Will normally be (0, 0)
+unless this image was split or cropped from another image.
+
+==== Image.scale
+
+`Float2`
+
+==== Image.size
+
+`Float2`
+
+Size of the image in (fractional) pixels.
+
+==== Image.target_size
+
+`Float2`
+
+==== Image.width
+
+`float`
+
+=== Constructors
+
+[source,python]
+----
+Image(width: int, height: int)
+----
+
+[source,python]
+----
+Image(size: Float2)
+----
+
+Create an empty image of the given size.
+
+[source,python]
+----
+Image(width: int, pixels: list[int])
+----
+
+Create an image from an array of 32-bit colors.
+
+=== Methods
+
+==== Image.begin_lines
+
+[source,python]
+----
+begin_lines(self: Canvas) -> None
+----
+
+Clear the last line point. The next call to `line(p)` or
+`rounded_line(p, r)` will start a new line sequence.
+
+==== Image.circle
+
+[source,python]
+----
+circle(center: Float2, radius: float) -> None
+----
+
+Draw an (outline) circle
+
+==== Image.clear
+
+[source,python]
+----
+clear(color: int = color.BLACK) -> None
+----
+
+Clear the canvas using given color.
+
+==== Image.complex_polygon
+
+[source,python]
+----
+complex_polygon(contours: list[list[Float2]]) -> None
+----
+
+Draw a complex filled polygon that can consist of holes.
+
+==== Image.copy
+
+[source,python]
+----
+copy(self: Canvas) -> Canvas
+----
+
+Make a copy of the self.
+
+==== Image.copy_from
+
+[source,python]
+----
+copy_from(image: Image) -> None
+----
+
+Render another image into this one.
+
+==== Image.copy_to
+
+[source,python]
+----
+copy_to(image: Image) -> None
+----
+
+Render this image into another.
+
+==== Image.crop
+
+[source,python]
+----
+crop(top_left: Optional[Float2] = None, size: Optional[Float2] = None) -> Image
+----
+
+Crop an image. Returns a view into the old image.
+
+==== Image.draw
+
+[source,python]
+----
+draw(image: Image, top_left: Optional[Float2] = None, center: Optional[Float2] = None, size: Float2 = Float2.ZERO, rot: float = 0) -> None
+----
+
+Render an image. The image can either be aligned to its top left corner,
+or centered, in which case it can also be rotated.
+
+==== Image.draw
+
+[source,python]
+----
+draw(drawable: Console, top_left: Float2 = Float2.ZERO, size: Float2 = Float2.ZERO) -> None
+----
+
+Render a console. `top_left` and `size` are in pixels. If `size` is not
+given, it defaults to `tile_size*grid_size`.
+
+To render a full screen console (scaling as needed):
+
+`console.render(screen, size=screen.size)`
+
+==== Image.filled_circle
+
+[source,python]
+----
+filled_circle(center: Float2, radius: float) -> None
+----
+
+Draw a filled circle.
+
+==== Image.filled_rect
+
+[source,python]
+----
+filled_rect(top_left: Float2, size: Float2) -> None
+----
+
+Draw a filled rectangle.
+
+==== Image.flood_fill
+
+[source,python]
+----
+flood_fill(pos: Int2, color: int) -> None
+----
+
+Flood fill starting from the given position with the specified color.
+
+==== Image.flush
+
+[source,python]
+----
+flush(self: Canvas) -> None
+----
+
+Flush pixel operations
+
+==== Image.get_pointer
+
+[source,python]
+----
+get_pointer(self: Canvas) -> Float2
+----
+
+Get the xy coordinate of the mouse pointer (in canvas space).
+
+==== Image.line
+
+[source,python]
+----
+line(start: Float2, end: Float2) -> None
+----
+
+Draw a line between start and end.
+
+==== Image.line
+
+[source,python]
+----
+line(end: Float2) -> None
+----
+
+Draw a line from the end of the last line to the given position.
+
+==== Image.lines
+
+[source,python]
+----
+lines(points: list[Float2]) -> None
+----
+
+Draw a line strip from all the given points.
+
+==== Image.log_to
+
+[source,python]
+----
+log_to(path: os.PathLike) -> None
+----
+
+Log draw commands to this file
+
+==== Image.plot
+
+[source,python]
+----
+plot(center: Float2, color: int) -> None
+----
+
+Draw a point.
+
+==== Image.plot
+
+[source,python]
+----
+plot(points: object, colors: object) -> None
+----
+
+Draw `n` points given by the array like objects. `points` should n*2
+floats and `colors` should contain `n` unsigned ints.
+
+==== Image.polygon
+
+[source,python]
+----
+polygon(points: list[Float2], convex: bool = False) -> None
+----
+
+Draw a filled polygon by stringing together the given points. If convex
+is `true` the polygon is rendered as a simple triangle fan, otherwise
+the polygon is split into triangles using the ear-clipping method.
+
+==== Image.rect
+
+[source,python]
+----
+rect(top_left: Float2, size: Float2) -> None
+----
+
+Draw a rectangle.
+
+==== Image.rounded_line
+
+[source,python]
+----
+rounded_line(start: Float2, rad0: float, end: Float2, rad1: float) -> None
+----
+
+Draw a line between start and end.
+
+==== Image.rounded_line
+
+[source,python]
+----
+rounded_line(end: Float2, radius: float) -> None
+----
+
+Draw a line from the end of the last line to the given position.
+
+==== Image.set_pixel
+
+[source,python]
+----
+set_pixel(pos: Int2, color: int) -> None
+----
+
+Write a pixel into the image.
+
+==== Image.set_texture_filter
+
+[source,python]
+----
+set_texture_filter(min: bool, max: bool) -> None
+----
+
+Set whether the texture should apply linear filtering.
+
+==== Image.split
+
+[source,python]
+----
+split(cols: int = -1, rows: int = -1, width: int = 8, height: int = 8) -> list[Image]
+----
+
+Splits the image into as many _width_ * _height_ images as possible,
+first going left to right, then top to bottom.
+
+==== Image.split
+
+[source,python]
+----
+split(size: Float2) -> list[Image]
+----
+
+Split the image into exactly size.x * size.y images.
+
+==== Image.to_image
+
+[source,python]
+----
+to_image(self: Canvas) -> Image
+----
+
+Create a new image from this canvas
+
+==== Image.update
+
+[source,python]
+----
+update(pixels: bytes) -> None
+----
+
+Update the texture with a raw buffer that must fit the texture format.
+
+== Int2
+
+Represents an integer coordinate or size. Mostly behaves like a normal
+int when used in arithmetic operations.
+
+=== Properties
+
+==== Int2.with_x0
+
+`Int2`
+
+==== Int2.with_y0
+
+`Int2`
+
+==== Int2.x
+
+`int`
+
+==== Int2.xx
+
+`Int2`
+
+==== Int2.y
+
+`int`
+
+==== Int2.yx
+
+`Int2`
+
+==== Int2.yy
+
+`Int2`
+
+=== Constructors
+
+[source,python]
+----
+Int2(x: int = 0, y: int = 0)
+----
+
+[source,python]
+----
+Int2(x: int = 0, y: float = 0)
+----
+
+[source,python]
+----
+Int2(x: float = 0, y: int = 0)
+----
+
+[source,python]
+----
+Int2(x: float = 0, y: float = 0)
+----
+
+[source,python]
+----
+Int2(arg0: tuple[int, int])
+----
+
+=== Methods
+
+==== Int2.clamp
+
+[source,python]
+----
+clamp(low: Int2, high: Int2) -> Int2
+----
+
+Separately clamp the x and y component between the corresponding
+components in the given arguments.
+
+==== Int2.random
+
+[source,python]
+----
+random(self: Int2) -> Int2
+----
+
+Returns Int2(rnd(x), rnd(y)) where rnd(n) returns a random number
+between 0 and n.
+
+==== Int2.tof
+
+[source,python]
+----
+tof(self: Int2) -> Float2
+----
+
+Convert an `Int2` to a `Float2`
+
+== Screen
+
+The main window. Currently there can be only one instance of this class.
+
+=== Properties
+
+==== Screen.backface_culling
+
+`bool`
+
+If true, backward facing polygons will not be rendered.
+
+==== Screen.blend_mode
+
+`int`
+
+Set the blend mode. Normally one of the constants `BLEND_ADD`,
+`BLEND_MULTIPLY` or `BLEND_NORMAL`.
+
+==== Screen.delta
+
+`float`
+
+Time in seconds for last frame.
+
+==== Screen.draw_color
+
+`int`
+
+Set the draw color.
+
+==== Screen.fps
+
+`int`
+
+Current FPS. Set to 0 to disable fixed FPS. Then use `seconds` or
+`delta` to sync your movement.
+
+==== Screen.frame_counter
+
+`int`
+
+==== Screen.height
+
+`int`
+
+==== Screen.line_width
+
+`float`
+
+Set the line with in fractional pixels.
+
+==== Screen.offset
+
+`Float2`
+
+The offset into a the source canvas this canvas was created from, if
+any.
+
+==== Screen.point_size
+
+`float`
+
+Set the point size in fractional pixels.
+
+==== Screen.refresh_rate
+
+`int`
+
+Actual refresh rate of current monitor.
+
+==== Screen.scale
+
+`Float2`
+
+==== Screen.seconds
+
+`float`
+
+Total seconds elapsed since starting pix.
+
+==== Screen.size
+
+`Float2`
+
+Size (in pixels) of screen.
+
+==== Screen.target_size
+
+`Float2`
+
+==== Screen.visible
+
+`bool`
+
+Is the window visible?
+
+==== Screen.width
+
+`int`
+
+=== Methods
+
+==== Screen.begin_lines
+
+[source,python]
+----
+begin_lines(self: Canvas) -> None
+----
+
+Clear the last line point. The next call to `line(p)` or
+`rounded_line(p, r)` will start a new line sequence.
+
+==== Screen.circle
+
+[source,python]
+----
+circle(center: Float2, radius: float) -> None
+----
+
+Draw an (outline) circle
+
+==== Screen.clear
+
+[source,python]
+----
+clear(color: int = color.BLACK) -> None
+----
+
+Clear the canvas using given color.
+
+==== Screen.complex_polygon
+
+[source,python]
+----
+complex_polygon(contours: list[list[Float2]]) -> None
+----
+
+Draw a complex filled polygon that can consist of holes.
+
+==== Screen.copy
+
+[source,python]
+----
+copy(self: Canvas) -> Canvas
+----
+
+Make a copy of the self.
+
+==== Screen.crop
+
+[source,python]
+----
+crop(top_left: Optional[Float2] = None, size: Optional[Float2] = None) -> Screen
+----
+
+Crop the screen. Returns a screen reference that can be used to render
+to that part of the screen.
+
+==== Screen.draw
+
+[source,python]
+----
+draw(image: Image, top_left: Optional[Float2] = None, center: Optional[Float2] = None, size: Float2 = Float2.ZERO, rot: float = 0) -> None
+----
+
+Render an image. The image can either be aligned to its top left corner,
+or centered, in which case it can also be rotated.
+
+==== Screen.draw
+
+[source,python]
+----
+draw(drawable: Console, top_left: Float2 = Float2.ZERO, size: Float2 = Float2.ZERO) -> None
+----
+
+Render a console. `top_left` and `size` are in pixels. If `size` is not
+given, it defaults to `tile_size*grid_size`.
+
+To render a full screen console (scaling as needed):
+
+`console.render(screen, size=screen.size)`
+
+==== Screen.filled_circle
+
+[source,python]
+----
+filled_circle(center: Float2, radius: float) -> None
+----
+
+Draw a filled circle.
+
+==== Screen.filled_rect
+
+[source,python]
+----
+filled_rect(top_left: Float2, size: Float2) -> None
+----
+
+Draw a filled rectangle.
+
+==== Screen.flood_fill
+
+[source,python]
+----
+flood_fill(pos: Int2, color: int) -> None
+----
+
+Flood fill starting from the given position with the specified color.
+
+==== Screen.flush
+
+[source,python]
+----
+flush(self: Canvas) -> None
+----
+
+Flush pixel operations
+
+==== Screen.get_pointer
+
+[source,python]
+----
+get_pointer(self: Canvas) -> Float2
+----
+
+Get the xy coordinate of the mouse pointer (in canvas space).
+
+==== Screen.line
+
+[source,python]
+----
+line(start: Float2, end: Float2) -> None
+----
+
+Draw a line between start and end.
+
+==== Screen.line
+
+[source,python]
+----
+line(end: Float2) -> None
+----
+
+Draw a line from the end of the last line to the given position.
+
+==== Screen.lines
+
+[source,python]
+----
+lines(points: list[Float2]) -> None
+----
+
+Draw a line strip from all the given points.
+
+==== Screen.log_to
+
+[source,python]
+----
+log_to(path: os.PathLike) -> None
+----
+
+Log draw commands to this file
+
+==== Screen.plot
+
+[source,python]
+----
+plot(center: Float2, color: int) -> None
+----
+
+Draw a point.
+
+==== Screen.plot
+
+[source,python]
+----
+plot(points: object, colors: object) -> None
+----
+
+Draw `n` points given by the array like objects. `points` should n*2
+floats and `colors` should contain `n` unsigned ints.
+
+==== Screen.polygon
+
+[source,python]
+----
+polygon(points: list[Float2], convex: bool = False) -> None
+----
+
+Draw a filled polygon by stringing together the given points. If convex
+is `true` the polygon is rendered as a simple triangle fan, otherwise
+the polygon is split into triangles using the ear-clipping method.
+
+==== Screen.rect
+
+[source,python]
+----
+rect(top_left: Float2, size: Float2) -> None
+----
+
+Draw a rectangle.
+
+==== Screen.rounded_line
+
+[source,python]
+----
+rounded_line(start: Float2, rad0: float, end: Float2, rad1: float) -> None
+----
+
+Draw a line between start and end.
+
+==== Screen.rounded_line
+
+[source,python]
+----
+rounded_line(end: Float2, radius: float) -> None
+----
+
+Draw a line from the end of the last line to the given position.
+
+==== Screen.set_pixel
+
+[source,python]
+----
+set_pixel(pos: Int2, color: int) -> None
+----
+
+Write a pixel into the image.
+
+==== Screen.split
+
+[source,python]
+----
+split(size: Float2) -> list[Screen]
+----
+
+Split the screen into exactly size.x * size.y screen references that can
+be used as a render target for that part of the screen.
+
+==== Screen.swap
+
+[source,python]
+----
+swap(self: Screen) -> None
+----
+
+Synchronize with the frame rate of the display and swap buffers so what
+you have drawn becomes visible. This is normally the last thing you do
+in your render loop.
+
+==== Screen.swap_async
+
+[source,python]
+----
+swap_async(self: Screen) -> object
+----
+
+Async version of swap(). Returns an awaitable that completes when the
+swap is finished.
+
+==== Screen.to_image
+
+[source,python]
+----
+to_image(self: Canvas) -> Image
+----
+
+Create a new image from this canvas
+
+== TileSet
+
+A tileset is a texture split up into tiles for rendering. It is used by
+the `Console` class but can also be used directly.
+
+=== Properties
+
+==== TileSet.tile_size
+
+`Int2`
+
+=== Constructors
+
+[source,python]
+----
+TileSet(font_file: str, size: int = -1, tile_size: Int2 = Int2(-1, -1), distance: Int2 = Int2(0, 0))
+----
+
+Create a TileSet from a ttf font with the given size. The tile size will
+be derived from the font size.
+
+[source,python]
+----
+TileSet(font: Font, size: int = -1, tile_size: Int2 = Int2(-1, -1), distance: Int2 = Int2(0, 0))
+----
+
+Create a TileSet from an existing font. The tile size will be derived
+from the font size.
+
+[source,python]
+----
+TileSet(tile_size: Float2)
+----
+
+Create an empty tileset with the given tile size.
+
+=== Methods
+
+==== TileSet.get_image_for
+
+[source,python]
+----
+get_image_for(tile: int) -> Image
+----
+
+Get the image for a specific tile. Use `copy_to()` on the image to
+redefine that tile with new graphics. Will allocate a new tile if
+necessary. Will throw an exception if there is no room.for the new tile
+in the tile texture.
+
+==== TileSet.get_image_for
+
+[source,python]
+----
+get_image_for(character: str) -> Image
+----
+
+Get the image for a specific character. Use `copy_to()` on the image to
+redefine that tile with new graphics. Will allocate a new tile if
+necessary. Will throw an exception if there is no room for the new tile
+in the tile texture.
+
+==== TileSet.get_tileset_image
+
+[source,python]
+----
+get_tileset_image(self: TileSet) -> Image
+----
+
+Get the entire tileset image. Typically used with `save_png()` to check
+generated tileset.
+
+==== TileSet.render_text
+
+[source,python]
+----
+render_text(screen: Screen, text: str, pos: Float2, size: Float2 = Float2.ZERO) -> None
+----
+
+Render characters from the TileSet at given `pos` and given `size`
+(defaults to tile_size).
+
+==== TileSet.render_text
+
+[source,python]
+----
+render_text(screen: Screen, text: str, points: list[Float2]) -> None
+----
+
+Render characters from the TileSet, each character using the next
+position from `points`, using the default tile size.
+
+== pixpy.event (module)
+
+== Click
+
+Event sent when screen was clicked.
+
+=== Properties
+
+==== Click.buttons
+
+`int`
+
+==== Click.mods
+
+`int`
+
+==== Click.pos
+
+`Float2`
+
+==== Click.x
+
+`float`
+
+==== Click.y
+
+`float`
+
+== Key
+
+Event sent when key was pressed.
+
+=== Properties
+
+==== Key.device
+
+`int`
+
+==== Key.key
+
+`int`
+
+==== Key.mods
+
+`int`
+
+== Move
+
+Event sent when mouse was moved.
+
+=== Properties
+
+==== Move.buttons
+
+`int`
+
+==== Move.pos
+
+`Float2`
+
+==== Move.x
+
+`float`
+
+==== Move.y
+
+`float`
+
+== Quit
+
+Event sent when window/app wants to close.
+
+== Resize
+
+Event sent when the window was resized
+
+=== Properties
+
+==== Resize.x
+
+`int`
+
+==== Resize.y
+
+`int`
+
+== Text
+
+Event sent when text was input into the window.
+
+=== Properties
+
+==== Text.device
+
+`int`
+
+==== Text.text
+
+`str`
+
+== pixpy.color (module)
+
+=== Constants
+
+[source,python]
+----
+
+color.BLACK = 0x000000ff
+color.BLUE = 0x0000aaff
+color.BROWN = 0x664400ff
+color.CYAN = 0xaaffedff
+color.DARK_GREY = 0x333333ff
+color.GREEN = 0x00cc54ff
+color.GREY = 0x777777ff
+color.LIGHT_BLUE = 0x0087ffff
+color.LIGHT_GREEN = 0xaaff66ff
+color.LIGHT_GREY = 0xbababaff
+color.LIGHT_RED = 0xff7777ff
+color.ORANGE = 0xdd8754ff
+color.PURPLE = 0xcc44ccff
+color.RED = 0x870000ff
+color.TRANSP = 0x00000000
+color.WHITE = 0xffffffff
+color.YELLOW = 0xeded77ff
+----
+
+== pixpy.key (module)
+
+=== Constants
+
+[source,python]
+----
+
+key.A1 = 0x00000005
+key.B1 = 0x00000008
+key.BACKSPACE = 0x00000008
+key.DELETE = 0x0000000d
+key.DOWN = 0x00000002
+key.END = 0x0000000b
+key.ENTER = 0x0000000a
+key.ESCAPE = 0x0000001b
+key.F1 = 0x00100000
+key.F10 = 0x00100009
+key.F11 = 0x0010000a
+key.F12 = 0x0010000b
+key.F2 = 0x00100001
+key.F3 = 0x00100002
+key.F4 = 0x00100003
+key.F5 = 0x00100004
+key.F6 = 0x00100005
+key.F7 = 0x00100006
+key.F8 = 0x00100007
+key.F9 = 0x00100008
+key.FIRE = 0x00000005
+key.HOME = 0x0000000c
+key.INSERT = 0x00000010
+key.L1 = 0x0000000c
+key.L2 = 0x0000000f
+key.LCTRL = 0x00100011
+key.LEFT = 0x00000003
+key.LEFT_MOUSE = 0x00100020
+key.LSHIFT = 0x00100010
+key.MIDDLE_MOUSE = 0x00100022
+key.MOD_ALT = 0x00000004
+key.MOD_CTRL = 0x00000002
+key.MOD_SHIFT = 0x00000001
+key.MOUSE4 = 0x00100023
+key.MOUSE5 = 0x00100024
+key.PAGEDOWN = 0x0000000e
+key.PAGEUP = 0x0000000f
+key.R1 = 0x0000000b
+key.R2 = 0x0000000e
+key.RCTRL = 0x00100019
+key.RIGHT = 0x00000001
+key.RIGHT_MOUSE = 0x00100021
+key.RSHIFT = 0x00100018
+key.SELECT = 0x00000009
+key.SPACE = 0x00000020
+key.START = 0x0000000a
+key.TAB = 0x00000009
+key.UP = 0x00000004
+key.X1 = 0x00000006
+key.Y1 = 0x00000007
+----
