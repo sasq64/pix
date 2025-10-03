@@ -7,8 +7,8 @@ template: no_toc.html
 ...and you can do
 
 <div style="text-align: right"><h2>Text</h2></div>
----
-<img src="/img/console.png" width="500px" style="float: right"/>
+<img src="img/console.png" width="500px" style="float: right"/>
+
 ```python
 import pixpy as pix
 screen = pix.open_display(width=1280, height=7220)
@@ -26,7 +26,8 @@ while pix.run_loop():
 ---
 ## Polygons
 
-<img src="/img/cube.png" width="300px" style="float: left"/>
+<img src="img/cube.png" width="300px" style="float: left"/>
+
 ```python
 ...
 mat = make_x_mat(xa) @ make_y_mat(ya) @ make_z_mat(za)
@@ -43,8 +44,9 @@ for i, quad in enumerate(quads):
 ...
 ```
 <div style="text-align: right"><h2>Sprites</h2></div>
----
-<img src="/img/knight.png" width="280px" style="float: right"/>
+
+<img src="img/knight.png" width="280px" style="float: right"/>
+
 ```python
 ...
 sprites = {}
@@ -62,9 +64,9 @@ def render(pos, dir):
     screen.draw(image=img, center=pos, size=img.size*dir)
 ```
 ## And more
----
 
-<img src="/img/balls.png" width="320px" style="float: left"/>
+<img src="img/balls.png" width="320px" style="float: left"/>
+
 ```python
 ...
 screen = pix.open_display(size=(1280, 720))
