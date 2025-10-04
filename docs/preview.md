@@ -1,13 +1,14 @@
 ---
-template: no_toc.html
+hide:
+  - toc
 ---
 
- `pip3 install pixpy`
+`pip3 install pixpy`
 
 ...and you can do
 
 <div style="text-align: right"><h2>Text</h2></div>
-<img src="../img/console.png" width="500px" style="float: right"/>
+<img src="../img/console.png" width="372px" style="float: right"/>
 
 ```python
 import pixpy as pix
@@ -23,13 +24,13 @@ while pix.run_loop():
     screen.draw(drawable=con, top_left=(0,0), size=screen.size)
     screen.swap()
 ```
----
+
 ## Polygons
 
-<img src="../img/cube.png" width="300px" style="float: left"/>
+<img src="../img/cube.png" width="340px" style="float: left"/>
 
 ```python
-...
+... 
 mat = make_x_mat(xa) @ make_y_mat(ya) @ make_z_mat(za)
 
 points = [v @ mat for v in vertices]
@@ -45,7 +46,7 @@ for i, quad in enumerate(quads):
 ```
 <div style="text-align: right"><h2>Sprites</h2></div>
 
-<img src="../img/knight.png" width="280px" style="float: right"/>
+<img src="../img/knight.png" width="340px" style="float: right"/>
 
 ```python
 ...
@@ -65,7 +66,7 @@ def render(pos, dir):
 ```
 ## And more
 
-<img src="../img/balls.png" width="320px" style="float: left"/>
+<img src="../img/balls.png" width="400px" style="float: left"/>
 
 ```python
 ...

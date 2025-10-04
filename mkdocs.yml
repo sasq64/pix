@@ -6,10 +6,19 @@ nav:
   - Preview: preview.md
 
 theme:
-  name: mkdocs
+  name: material
+  palette:
+    scheme: slate
   locale: en
   custom_dir: custom_dir/
+
+extra_css:
+  - override.css
 
 markdown_extensions:
   - toc:
       toc_depth: 2-4
+  - pymdownx.highlight:
+      anchor_linenums: true
+      pygments_style: dracula
+  - pymdownx.superfences

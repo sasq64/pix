@@ -706,13 +706,13 @@ Convert a `Float2` to an `Int2`
 
 #### Float2.tween_from
 ```python
-tween_from(value: Float2, secs: float = 1.0, ease: Callable[[float], float] = <built-in method of PyCapsule object at 0x707f7bce2e20>) -> Float2
+tween_from(value: Float2, secs: float = 1.0, ease: Callable[[float], float] = <built-in method of PyCapsule object at 0x104743880>) -> Float2
 ```
 Animate this Float2 from `from` to its current value in `secs` seconds.
 
 #### Float2.tween_to
 ```python
-tween_to(value: Float2, secs: float = 1.0, ease: Callable[[float], float] = <built-in method of PyCapsule object at 0x707f7bc97fc0>) -> Float2
+tween_to(value: Float2, secs: float = 1.0, ease: Callable[[float], float] = <built-in method of PyCapsule object at 0x104743740>) -> Float2
 ```
 Animate this Float2 so it reaches `to` in `secs` seconds.
 

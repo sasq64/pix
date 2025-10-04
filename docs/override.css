@@ -3,13 +3,39 @@ body {
 }
 
 h1 {
-  font-size: 48px;
+  font-size: 54px;
 }
 
 h2 {
-  font-size: 32px;
+  font-size: 48px;
 }
 
 h3 {
-  font-size: 24px;
+  font-size: 32px;
 }
+
+/* Black background and white text for preview.md only */
+body[data-page="preview"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+body[data-page="preview"] .navbar,
+body[data-page="preview"] nav,
+body[data-page="preview"] header {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+body[data-page="preview"] a {
+  color: #4a9eff !important;
+}
+
+body[data-page="preview"] a:visited {
+  color: #b294ff !important;
+}
+  .highlight pre code,
+  .codehilite pre code,
+  pre code {
+    font-size: 0.9em !important;  /* 1.2 times the parent font size */
+  }
