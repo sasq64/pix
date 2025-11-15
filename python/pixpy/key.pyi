@@ -1,5 +1,5 @@
 from __future__ import annotations
-__all__ = ['A1', 'B1', 'BACKSPACE', 'DELETE', 'DOWN', 'END', 'ENTER', 'ESCAPE', 'F1', 'F10', 'F11', 'F12', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'FIRE', 'HOME', 'INSERT', 'L1', 'L2', 'LCTRL', 'LEFT', 'LEFT_MOUSE', 'LSHIFT', 'MIDDLE_MOUSE', 'MOD_ALT', 'MOD_CTRL', 'MOD_SHIFT', 'MOUSE4', 'MOUSE5', 'PAGEDOWN', 'PAGEUP', 'R1', 'R2', 'RCTRL', 'RIGHT', 'RIGHT_MOUSE', 'RSHIFT', 'SELECT', 'SPACE', 'START', 'TAB', 'UP', 'X1', 'Y1']
+__all__: list[str] = ['A1', 'B1', 'BACKSPACE', 'DELETE', 'DOWN', 'END', 'ENTER', 'ESCAPE', 'F1', 'F10', 'F11', 'F12', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'FIRE', 'HOME', 'INSERT', 'L1', 'L2', 'LCTRL', 'LEFT', 'LEFT_MOUSE', 'LSHIFT', 'MIDDLE_MOUSE', 'MOD_ALT', 'MOD_CTRL', 'MOD_SHIFT', 'MOUSE4', 'MOUSE5', 'PAGEDOWN', 'PAGEUP', 'R1', 'R2', 'RCTRL', 'RIGHT', 'RIGHT_MOUSE', 'RSHIFT', 'SELECT', 'SPACE', 'START', 'TAB', 'UP', 'X1', 'Y1']
 A1: int = 5
 B1: int = 8
 BACKSPACE: int = 8

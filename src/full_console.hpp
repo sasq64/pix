@@ -19,10 +19,6 @@ class FullConsole
     std::shared_ptr<PixConsole> console;
     std::shared_ptr<System> system;
 
-    Vec2i edit_start{0, 0};
-    int xpos = 0;
-    int scroll_pos = 0;
-    std::u32string line;
     void refresh();
     int listener = -1;
     int device = 0;
@@ -121,6 +117,11 @@ public:
     {
         render2(context.get(), xy, sz);
     }
+
+    int xpos = 0;
+    Vec2i edit_start{0, 0};
+    std::u32string line;
+    int scroll_pos = 0;
 
     uint32_t fg = color::white;
     uint32_t bg = color::black;

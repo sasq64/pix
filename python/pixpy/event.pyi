@@ -2,7 +2,7 @@ from __future__ import annotations
 import pixpy._pixpy
 import typing
 import pixpy
-__all__ = ['AnyEvent', 'Click', 'Key', 'Move', 'NoEvent', 'Quit', 'Resize', 'Scroll', 'Text']
+__all__: list[str] = ['AnyEvent', 'Click', 'Key', 'Move', 'NoEvent', 'Quit', 'Resize', 'Scroll', 'Text']
 class Click:
     """
     Event sent when screen was clicked.

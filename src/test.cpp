@@ -62,6 +62,7 @@ int main()
         .screen = DisplayType::Window,
         .display_width = 960,
         .display_height = 720,
+        .resizeable = false, 
     });
     auto screen = std::make_shared<pix::Screen>(display);
     screen->vpscale = screen->get_scale();

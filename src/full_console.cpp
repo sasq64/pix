@@ -223,7 +223,7 @@ void FullConsole::set_line(const std::string& text)
     scroll_pos = 0;
 
     // Adjust scroll position if cursor is beyond visible area
-    auto available_width = console->get_size().second - edit_start.x;
+    auto available_width = console->get_size().first - edit_start.x;
     if (xpos >= available_width - 2) {
         scroll_pos = std::max(0, xpos - available_width + 3);
     }

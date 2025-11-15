@@ -9,7 +9,7 @@ from . import color
 from . import event
 from . import key
 from . import treesitter
-__all__ = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'add_event_listener', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_clipboard', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'post_event', 'quit_loop', 'remove_event_listener', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'set_clipboard', 'set_keyboard_device', 'treesitter', 'update_tweens', 'was_pressed', 'was_released']
+__all__: list[str] = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'add_event_listener', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_clipboard', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'post_event', 'quit_loop', 'remove_event_listener', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'set_clipboard', 'set_keyboard_device', 'treesitter', 'update_tweens', 'was_pressed', 'was_released']
 class Canvas:
     """
     A `Canvas` is used for rendering. It is implemented by both `Screen` and `Image`.
@@ -312,6 +312,22 @@ class Console:
     def cursor_pos(self, arg1: Union[Int2, Tuple[int, int]]) -> None:
         ...
     @property
+    def edit_line(self) -> str:
+        """
+        Currently edited line
+        """
+    @property
+    def edit_pos(self) -> int:
+        """
+        Current cursor position within edited line
+        """
+    @edit_pos.setter
+    def edit_pos(self, arg0: int) -> None:
+        ...
+    @property
+    def edit_start(self) -> Int2:
+        ...
+    @property
     def fg_color(self) -> int:
         """
         Foreground color.
@@ -324,6 +340,9 @@ class Console:
         """
         Get number cols and rows.
         """
+    @property
+    def line_scroll_pos(self) -> int:
+        ...
     @property
     def reading_line(self) -> bool:
         """
@@ -532,6 +551,7 @@ class Font:
     Represents a TTF (Freetype) font that can be used to create text images.
     """
     UNSCII_FONT: typing.ClassVar[Font]  # value = <Font object>
+    hinting: bool
     def __init__(self, font_file: str = '') -> None:
         """
         Create a font from a TTF file.
@@ -920,13 +940,13 @@ def load_png(file_name: Union[os.PathLike[str], str]) -> Image:
     Create an _Image_ from a png file on disk.
     """
 @typing.overload
-def open_display(width: int = -1, height: int = -1, full_screen: bool = False, visible: bool = True) -> Screen:
+def open_display(width: int = -1, height: int = -1, full_screen: bool = False, visible: bool = True, resizable: bool = True) -> Screen:
     """
     Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.
     Subsequent calls to this method returns the same screen instance, since you can only have one active display in pix.
     """
 @typing.overload
-def open_display(size: Union[Int2, Tuple[int, int]], full_screen: bool = False, visible: bool = True) -> Screen:
+def open_display(size: Union[Int2, Tuple[int, int]], full_screen: bool = False, visible: bool = True, resizable: bool = True) -> Screen:
     """
     Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.
     Subsequent calls to this method returns the same screen instance, since you can only have one active display in pix.

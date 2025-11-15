@@ -91,7 +91,7 @@ void init()
 }
 
 std::shared_ptr<pix::Screen> open_display(int width, int height,
-                                          bool full_screen, bool visible = true)
+                                          bool full_screen, bool visible = true, bool resizable = true)
 {
     if (pix::Screen::instance != nullptr) {
 
@@ -171,9 +171,9 @@ void set_allow_break(bool on)
 }
 
 std::shared_ptr<pix::Screen> open_display2(Vec2i size, bool full_screen,
-                                           bool visible = true)
+                                           bool visible = true, bool resizable = true)
 {
-    return open_display(size.x, size.y, full_screen, visible);
+    return open_display(size.x, size.y, full_screen, visible, resizable);
 }
 
 void save_png(pix::ImageView const& image, fs::path const& file_name)
@@ -273,12 +273,12 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
 
     mod.def(
         "open_display", &open_display, "width"_a = -1, "height"_a = -1,
-        "full_screen"_a = false, "visible"_a = true,
+        "full_screen"_a = false, "visible"_a = true, "resizable"_a = true,
         doc =
             "Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.\nSubsequent calls to this method returns the same screen instance, "
             "since you can only have one active display in pix.");
     mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false,
-            "visible"_a = true, doc);
+            "visible"_a = true, "resizable"_a = true, doc);
     mod.def(
         "get_display", [] { return pix::Screen::instance; },
         "Get the current display, if any.");

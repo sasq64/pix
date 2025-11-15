@@ -23,6 +23,12 @@ private:
     std::string msg;
 };
 
+enum Hinting {
+    Default,
+    Auto,
+    Force
+};
+
 class FreetypeFont
 {
     static inline FT_Library library = nullptr;
@@ -31,6 +37,7 @@ class FreetypeFont
     //std::pair<int, int> size;
 
 public:
+    bool force_autohint = false;
     static std::shared_ptr<FreetypeFont> unscii;
 
     FreetypeFont(const char* name, int size = 0);

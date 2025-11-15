@@ -32,9 +32,9 @@ make_console(int32_t cols, int32_t rows,
     }
 
     auto s = font_file->string();
-    auto font = !have_font ? FreetypeFont::unscii
-                           : std::make_shared<FreetypeFont>(s.c_str(),
-                                                            font_size);
+    auto font = !have_font
+                    ? FreetypeFont::unscii
+                    : std::make_shared<FreetypeFont>(s.c_str(), font_size);
 
     auto tile_set = std::make_shared<TileSet>(font, font_size, ts);
     auto con = std::make_shared<PixConsole>(cols, rows, tile_set);
@@ -74,7 +74,8 @@ inline void add_console_functions(auto& cls)
             "bg"_a = std::nullopt,
             "Put `tile` at given position, optionally setting a specific foreground and/or background color")
         .def("get", &FullConsole::get, "Get tile at position")
-        .def_readwrite("cursor_color", &FullConsole::cursor_color, "Cursor color.")
+        .def_readwrite("cursor_color", &FullConsole::cursor_color,
+                       "Cursor color.")
         .def_readwrite("fg_color", &FullConsole::fg, "Foreground color.")
         .def_readwrite("bg_color", &FullConsole::bg, "Background color.")
         .def_readwrite("cursor_on", &FullConsole::cursor_on,
@@ -108,8 +109,14 @@ inline void add_console_functions(auto& cls)
             "read_line", &FullConsole::read_line,
             "Puts the console in line edit mode.\n\nA cursor will be shown and all text events will be captured by the console until `Enter` is pressed. At this point the entire line will be pushed as a `TextEvent`.")
         .def("cancel_line", &FullConsole::stop_line, "Stop line edit mode.")
+        .def_readwrite("edit_pos", &FullConsole::xpos, "Current cursor position within edited line") 
+        .def_readonly("edit_start", &FullConsole::edit_start) 
+        .def_readonly("line_scroll_pos", &FullConsole::scroll_pos) 
+        .def_property_readonly("edit_line", [](FullConsole const& console) {
+            return utf8::utf8_encode(console.line);
+        }, "Currently edited line")
         .def("set_line", &FullConsole::set_line, "text"_a,
-             "Change the edited line.")
+         "Change the edited line.")
         .def("get_font_image", &FullConsole::get_font_texture)
         .def(
             "clear_area", &FullConsole::clear_area, "x"_a, "y"_a, "w"_a, "h"_a,

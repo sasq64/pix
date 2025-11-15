@@ -47,6 +47,7 @@ inline auto add_font_class(py::module_ const& mod)
     py::class_<FreetypeFont, std::shared_ptr<FreetypeFont>>(mod, "Font")
         .def(py::init<>(&make_font), "font_file"_a = "",
              "Create a font from a TTF file.")
+        .def_readwrite("force_autohint", &FreetypeFont::force_autohint)
         .def("text_size", &text_size, py::arg("text"), "size"_a,
              "Return the size (bounding rectangle) of the given text.")
         .def("make_image", &text_to_image, py::arg("text"), "size"_a,

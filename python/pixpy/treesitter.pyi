@@ -1,6 +1,6 @@
 from __future__ import annotations
 import typing
-__all__ = ['TSNode', 'TreeSitter']
+__all__: list[str] = ['TSNode', 'TreeSitter']
 class TSNode:
     @property
     def end(self) -> tuple[int, int]:

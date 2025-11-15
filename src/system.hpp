@@ -110,6 +110,7 @@ public:
         int display_width = 1600;
         int display_height = 1200;
         bool visible = true;
+        bool resizeable = false;
     };
 
     struct Time

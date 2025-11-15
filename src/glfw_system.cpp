@@ -249,7 +249,9 @@ public:
         } else {
             monitor = nullptr;
         }
-         if (!settings.visible) { glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); }
+        // NOTE: Setting resizble false causes broken behaviour in Hyprland
+        // glfwWindowHint(GLFW_RESIZABLE, settings.resizeable);
+        glfwWindowHint(GLFW_VISIBLE, settings.visible);
         if (width <= 0 || height <= 0) {
             throw system_exception("Illegal window size");
         }
@@ -306,17 +308,17 @@ public:
     }
 
     std::deque<AnyEvent> event_queue;
-    //int current_device = 0;
+    // int current_device = 0;
 
     void post_event(AnyEvent const& event) override
     {
         event_queue.emplace_back(event);
     }
 
-    //void set_keyboard_device(int dev) override
+    // void set_keyboard_device(int dev) override
     //{
-    //    current_device = dev;
-    //}
+    //     current_device = dev;
+    // }
 
     void mouse_move(double x, double y)
     {
@@ -382,8 +384,8 @@ public:
                 auto k32 = static_cast<uint32_t>(it->second);
                 if (down) {
                     pressed.insert(k32);
-                    event_queue.emplace_back(
-                        KeyEvent{k32, static_cast<uint32_t>(mods), current_device});
+                    event_queue.emplace_back(KeyEvent{
+                        k32, static_cast<uint32_t>(mods), current_device});
                 } else {
                     released.insert(k32);
                 }
@@ -462,9 +464,7 @@ public:
     std::string get_clipboard() const override
     {
         const char* clipboard_text = glfwGetClipboardString(window);
-        if (clipboard_text != nullptr) {
-            return std::string(clipboard_text);
-        }
+        if (clipboard_text != nullptr) { return std::string(clipboard_text); }
         return "";
     }
 

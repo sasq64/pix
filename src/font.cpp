@@ -46,7 +46,8 @@ std::pair<int, int> FreetypeFont::render_text(std::string_view txt, T* target,
     auto const text32 = utf8::utf8_decode(txt);
 
     for (auto const c : text32) {
-        auto const error = FT_Load_Char(face, c, FT_LOAD_RENDER);
+        auto const error = FT_Load_Char(
+            face, c, FT_LOAD_RENDER | (hinting ? FT_LOAD_FORCE_AUTOHINT : 0));
         FT_GlyphSlot const slot = face->glyph;
         if (error) { continue; } /* ignore errors */
         // fmt::print("{}x{} pixels to y={}\n", slot->bitmap.width,
@@ -117,8 +118,7 @@ FreetypeFont::FreetypeFont(const unsigned char* data, size_t data_size,
         // It's a bitmap or hybrid font with fixed sizes
         puts("FIXED SIZE!");
         for (int i = 0; i < face->num_fixed_sizes; ++i) {
-            printf("Size %d: %hd x %hd\n", i,
-                   face->available_sizes[i].width,
+            printf("Size %d: %hd x %hd\n", i, face->available_sizes[i].width,
                    face->available_sizes[i].height);
         }
         FT_Select_Size(face, 0); // Usually index 0 is 8x8

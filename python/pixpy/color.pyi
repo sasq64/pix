@@ -1,5 +1,5 @@
 from __future__ import annotations
-__all__ = ['BLACK', 'BLUE', 'BROWN', 'CYAN', 'DARK_GREY', 'GREEN', 'GREY', 'LIGHT_BLUE', 'LIGHT_GREEN', 'LIGHT_GREY', 'LIGHT_RED', 'ORANGE', 'PURPLE', 'RED', 'TRANSP', 'WHITE', 'YELLOW']
+__all__: list[str] = ['BLACK', 'BLUE', 'BROWN', 'CYAN', 'DARK_GREY', 'GREEN', 'GREY', 'LIGHT_BLUE', 'LIGHT_GREEN', 'LIGHT_GREY', 'LIGHT_RED', 'ORANGE', 'PURPLE', 'RED', 'TRANSP', 'WHITE', 'YELLOW']
 BLACK: int = 255
 BLUE: int = 43775
 BROWN: int = 1715732735
