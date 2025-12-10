@@ -23,11 +23,6 @@ private:
     std::string msg;
 };
 
-enum Hinting {
-    Default,
-    Auto,
-    Force
-};
 
 class FreetypeFont
 {

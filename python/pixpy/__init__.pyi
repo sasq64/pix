@@ -551,7 +551,7 @@ class Font:
     Represents a TTF (Freetype) font that can be used to create text images.
     """
     UNSCII_FONT: typing.ClassVar[Font]  # value = <Font object>
-    hinting: bool
+    force_autohint: bool
     def __init__(self, font_file: str = '') -> None:
         """
         Create a font from a TTF file.
@@ -740,6 +740,8 @@ class Int2:
         """
         Separately clamp the x and y component between the corresponding components in the given arguments.
         """
+    def grid_coordinates(self) -> typing.Iterator[Int2]:
+        ...
     def inside(self, arg0: Union[Int2, Tuple[int, int]], arg1: Union[Int2, Tuple[int, int]]) -> bool:
         ...
     def random(self) -> Int2:

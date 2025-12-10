@@ -47,7 +47,7 @@ std::pair<int, int> FreetypeFont::render_text(std::string_view txt, T* target,
 
     for (auto const c : text32) {
         auto const error = FT_Load_Char(
-            face, c, FT_LOAD_RENDER | (hinting ? FT_LOAD_FORCE_AUTOHINT : 0));
+            face, c, FT_LOAD_RENDER | (force_autohint ? FT_LOAD_FORCE_AUTOHINT : 0));
         FT_GlyphSlot const slot = face->glyph;
         if (error) { continue; } /* ignore errors */
         // fmt::print("{}x{} pixels to y={}\n", slot->bitmap.width,
@@ -63,8 +63,8 @@ std::pair<int, int> FreetypeFont::render_text(std::string_view txt, T* target,
 std::pair<int, int> FreetypeFont::get_mono_size() const
 {
     auto m = face->size->metrics;
-    int char_width = (m.max_advance + 32) >> 6;
-    int char_height = (m.height + 32) >> 6;
+    int char_width = (m.max_advance + 31) >> 6;
+    int char_height = (m.height + 31) >> 6;
     return {char_width, char_height};
 }
 
