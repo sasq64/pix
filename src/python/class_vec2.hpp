@@ -362,7 +362,11 @@ inline void add_vec2_class(py::module_& mod)
         .def("__sub__",
              [](Vec2i self, double other) { return Vec2f{self} - other; })
         .def_readonly_static("ONE", &vec2i_one, "Constant (1,1)")
-        .def_readonly_static("ZERO", &vec2i_zero, "Constant (0,0)");
+        .def_readonly_static("ZERO", &vec2i_zero, "Constant (0,0)")
+        .def("grid_coordinates", [](Vec2i self) {
+            auto iter = self.grid_coordinates();
+            return py::make_iterator(iter.begin(), iter.end());
+        });
     vi.doc() =
         "Represents an integer coordinate or size. Mostly behaves like a normal int when used in arithmetic operations.";
 }
