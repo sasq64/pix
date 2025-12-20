@@ -91,7 +91,8 @@ void init()
 }
 
 std::shared_ptr<pix::Screen> open_display(int width, int height,
-                                          bool full_screen, bool visible = true, bool resizable = true)
+                                          bool full_screen, bool visible = true, bool resizable = true,
+                                          std::string title = "", std::string id = "")
 {
     if (pix::Screen::instance != nullptr) {
 
@@ -127,7 +128,10 @@ std::shared_ptr<pix::Screen> open_display(int width, int height,
         .screen = full_screen ? DisplayType::Full : DisplayType::Window,
         .display_width = width,
         .display_height = height,
-        .visible = visible};
+        .visible = visible,
+        .title = title,
+        .id = id,
+    };
 
     auto display = m.sys->init_screen(settings);
     auto screen = std::make_shared<pix::Screen>(display);
@@ -171,9 +175,9 @@ void set_allow_break(bool on)
 }
 
 std::shared_ptr<pix::Screen> open_display2(Vec2i size, bool full_screen,
-                                           bool visible = true, bool resizable = true)
+                                           bool visible = true, bool resizable = true, std::string title = "", std::string id = "")
 {
-    return open_display(size.x, size.y, full_screen, visible, resizable);
+    return open_display(size.x, size.y, full_screen, visible, resizable, title, id);
 }
 
 void save_png(pix::ImageView const& image, fs::path const& file_name)
@@ -274,11 +278,14 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
     mod.def(
         "open_display", &open_display, "width"_a = -1, "height"_a = -1,
         "full_screen"_a = false, "visible"_a = true, "resizable"_a = true,
+            "title"_a = "pix", "id"_a = "",
         doc =
             "Opens a new window with the given size. This also initializes pix and is expected to have been called before any other pix calls.\nSubsequent calls to this method returns the same screen instance, "
             "since you can only have one active display in pix.");
     mod.def("open_display", &open_display2, "size"_a, "full_screen"_a = false,
-            "visible"_a = true, "resizable"_a = true, doc);
+            "visible"_a = true, "resizable"_a = true, 
+            "title"_a = "pix", "id"_a = "",
+            doc);
     mod.def(
         "get_display", [] { return pix::Screen::instance; },
         "Get the current display, if any.");

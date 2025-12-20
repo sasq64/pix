@@ -232,6 +232,9 @@ public:
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
+        glfwWindowHintString(GLFW_X11_CLASS_NAME, "pix");
+        glfwWindowHintString(GLFW_X11_INSTANCE_NAME, settings.id.c_str());
+        glfwWindowHintString(GLFW_WAYLAND_APP_ID, settings.id.c_str());
 
         int width = settings.display_width;
         int height = settings.display_height;

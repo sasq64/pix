@@ -106,11 +106,12 @@ public:
     struct Settings
     {
         DisplayType screen = DisplayType::Window;
-        std::string title = "pix";
         int display_width = 1600;
         int display_height = 1200;
         bool visible = true;
         bool resizeable = false;
+        std::string title = "pix";
+        std::string id = "pix";
     };
 
     struct Time
