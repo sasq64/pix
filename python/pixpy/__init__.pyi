@@ -9,7 +9,7 @@ from . import color
 from . import event
 from . import key
 from . import treesitter
-__all__: list[str] = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'add_event_listener', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_clipboard', 'get_display', 'get_pointer', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'post_event', 'quit_loop', 'remove_event_listener', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'set_clipboard', 'set_keyboard_device', 'treesitter', 'update_tweens', 'was_pressed', 'was_released']
+__all__: list[str] = ['BLEND_ADD', 'BLEND_COPY', 'BLEND_MULTIPLY', 'BLEND_NORMAL', 'Canvas', 'Console', 'Float2', 'Font', 'Image', 'Int2', 'Screen', 'TileSet', 'add_color', 'add_event_listener', 'all_events', 'allow_break', 'blend_color', 'blend_colors', 'color', 'event', 'get_clipboard', 'get_delta', 'get_display', 'get_pointer', 'get_seconds', 'inside_polygon', 'is_pressed', 'key', 'load_font', 'load_png', 'open_display', 'post_event', 'quit_loop', 'remove_event_listener', 'rgba', 'run_every_frame', 'run_loop', 'save_png', 'set_clipboard', 'set_keyboard_device', 'treesitter', 'update_tweens', 'was_pressed', 'was_released']
 class Canvas:
     """
     A `Canvas` is used for rendering. It is implemented by both `Screen` and `Image`.
@@ -917,6 +917,10 @@ def get_clipboard() -> str:
     """
     Get the current clipboard content as a string.
     """
+def get_delta() -> float:
+    """
+    Time in seconds for last frame.
+    """
 def get_display() -> Screen:
     """
     Get the current display, if any.
@@ -924,6 +928,10 @@ def get_display() -> Screen:
 def get_pointer() -> Float2:
     """
     Get the xy coordinate of the mouse pointer (in screen space).
+    """
+def get_seconds() -> float:
+    """
+    Total seconds elapsed since starting pix.
     """
 def inside_polygon(points: list[Float2], point: Union[Float2, Int2, Tuple[float, float]]) -> bool:
     """

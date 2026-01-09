@@ -461,6 +461,14 @@ PYBIND11_EMBEDDED_MODULE(_pixpy, mod)
         "set_keyboard_device",
         [](int device) { m.sys->set_keyboard_device(device); }, "device"_a,
         "Set the device number that keyboard events will originate from. This can be used to handle multiple readline calls from consoles.");
+    mod.def(
+        "get_seconds",
+        []() { return pix::Screen::instance->get_time().seconds; },
+        "Total seconds elapsed since starting pix.");
+    mod.def(
+        "get_delta",
+        []() { return pix::Screen::instance->get_time().delta; },
+        "Time in seconds for last frame.");
 }
 
 #ifndef PYTHON_MODULE
